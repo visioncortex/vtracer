@@ -20,6 +20,12 @@
         .uk-dark .container {
             background: #fff;
         }
+        .uk-dark #vc-logo-light {
+            display: none;
+        }
+        .uk-light #vc-logo {
+            display: none;
+        }
         .uk-light body,
         .uk-light .container,
         .uk-light .uk-modal-dialog {
@@ -124,7 +130,8 @@
         <div class="container uk-padding" uk-grid>
             <div class="uk-width-1-1 uk-navbar-container uk-navbar-transparent" uk-navbar>
                 <div class="uk-navbar-left uk-text-large uk-text-bolder">
-                    <a class="uk-logo" href="#"><img style="height: 50px; margin: -30px 0 -25px 0;" src="./assets/visioncortex-logo-light.svg"></a>
+                    <a id="vc-logo" class="uk-logo" href="//www.visioncortex.org"><img style="height: 50px; margin: -30px 0 -25px 0;" src="./assets/visioncortex-logo.svg"></a>
+                    <a id="vc-logo-light" class="uk-logo" href="//www.visioncortex.org"><img style="height: 50px; margin: -30px 0 -25px 0;" src="./assets/visioncortex-logo-light.svg"></a>
                     &nbsp;
                     VTracer
                 </div>
