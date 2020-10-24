@@ -6,7 +6,9 @@ VTracer is a program to convert raster images (like jpg & png) into vector graph
 
 Comparing to Potrace which only accept binarized inputs (Black & White pixmap), VTracer has an image processing pipeline which can handle colored inputs. 
 
-Comparing to Illustrator's Live Trace, VTracer's output is much more compact (less curves) as we adopt a stacking strategy and avoid producing shapes with holes.
+Comparing to Adobe Illustrator's Live Trace, VTracer's output is much more compact (less curves) as we adopt a stacking strategy and avoid producing shapes with holes.
+
+A detailed description of the algorithm is at [visioncortex.org/vtracer-docs](//www.visioncortex.org/vtracer-docs).
 
 ![screenshot](docs/images/screenshot-01.png)
 
