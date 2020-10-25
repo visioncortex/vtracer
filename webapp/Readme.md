@@ -1,4 +1,4 @@
-# Vision Cortex VTracer
+# visioncortex VTracer
 
 A web app to convert raster images into vector graphics.
 
