@@ -12,7 +12,7 @@ A technical description of the algorithm is on [visioncortex.org/vtracer-docs](/
 
 ## Tech Stack
 
-The supported target for now is WASM. It is interactive and fast, and is a perfect showcase of the capability of the Rust + HTML5 platform. We do plan to develop a command line program for VTracer.
+VTracer and its core library is implemented in [Rust](//www.rust-lang.org/). It provides us a solid foundation to develop robust and efficient algorithms and easily bring it to interactive applications. The supported target for now is WASM. It is interactive and fast, and is a perfect showcase of the capability of the Rust + HTML5 platform. We do plan to develop a command line program for VTracer.
 
 ## Screenshots
 
