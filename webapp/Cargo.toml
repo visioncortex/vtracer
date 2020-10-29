@@ -3,15 +3,11 @@ name = "vtracer-webapp"
 version = "0.1.0"
 authors = ["Chris Tsang <tyt2y7@gmail.com>"]
 edition = "2018"
-description = "Semantic Computer Vision"
-license = "MIT OR Apache-2.0"
+description = "A web app to convert images into vector graphics."
 homepage = "http://www.visioncortex.org/vtracer"
 repository = "https://github.com/visioncortex/vtracer/"
-categories = ["graphics", "computer-vision"]
-keywords = ["computer-graphics", "computer-vision"]
-exclude = [
-    "docs/*",
-]
+categories = ["graphics"]
+keywords = ["svg", "computer-graphics"]
 
 [lib]
 crate-type = ["cdylib"]
@@ -33,9 +29,6 @@ visioncortex = "0.1.0"
 # code size when deploying.
 console_error_panic_hook = { version = "0.1", optional = true }
 
-[dev-dependencies]
-wasm-bindgen-test = "0.2"
-
 [dependencies.web-sys]
 version = "0.3"
 features = [
@@ -47,12 +40,3 @@ features = [
   "ImageData",
   "Window",
 ]
-
-# [profile.release]
-# opt-level = 'z'
-# lto = true
-
-# `wasm-opt` is on by default in for the release profile, but it can be
-# disabled by setting it to `false`
-[package.metadata.wasm-pack.profile.release]
-wasm-opt = false
