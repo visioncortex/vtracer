@@ -15,22 +15,22 @@ svg.style.display = 'none';
 
 // Paste from clipboard
 document.addEventListener('paste', function (e) {
-    if (e.clipboardData) {
-        var items = e.clipboardData.items;
-        if (!items) return;
+	if (e.clipboardData) {
+		var items = e.clipboardData.items;
+		if (!items) return;
 
-        //access data directly
-        for (var i = 0; i < items.length; i++) {
-            if (items[i].type.indexOf("image") !== -1) {
-                //image
-                var blob = items[i].getAsFile();
-                var URLObj = window.URL || window.webkitURL;
-                var source = URLObj.createObjectURL(blob);
-                setSourceAndRestart(source);
-            }
-        }
-        e.preventDefault();
-    }
+		//access data directly
+		for (var i = 0; i < items.length; i++) {
+			if (items[i].type.indexOf("image") !== -1) {
+				//image
+				var blob = items[i].getAsFile();
+				var URLObj = window.URL || window.webkitURL;
+				var source = URLObj.createObjectURL(blob);
+				setSourceAndRestart(source);
+			}
+		}
+		e.preventDefault();
+	}
 });
 
 // Download as SVG
@@ -46,32 +46,32 @@ document.getElementById('export').addEventListener('click', function (e) {
 
 // Function to load a given config WITHOUT restarting
 function loadConfig(config) {
-    mode = config.mode;
-    clustering_mode = config.clustering_mode;
+	mode = config.mode;
+	clustering_mode = config.clustering_mode;
 
-    globalcorner = config.corner_threshold;
-    document.getElementById('cornervalue').innerHTML = globalcorner;
-    document.getElementById('corner').value = globalcorner;
-    
-    globallength = config.length_threshold;
-    document.getElementById('lengthvalue').innerHTML = globallength;
-    document.getElementById('length').value = globallength;
-    
-    globalsplice = config.splice_threshold;
-    document.getElementById('splicevalue').innerHTML = globalsplice;
-    document.getElementById('splice').value = globalsplice;
+	globalcorner = config.corner_threshold;
+	document.getElementById('cornervalue').innerHTML = globalcorner;
+	document.getElementById('corner').value = globalcorner;
+	
+	globallength = config.length_threshold;
+	document.getElementById('lengthvalue').innerHTML = globallength;
+	document.getElementById('length').value = globallength;
+	
+	globalsplice = config.splice_threshold;
+	document.getElementById('splicevalue').innerHTML = globalsplice;
+	document.getElementById('splice').value = globalsplice;
 
-    globalfilterspeckle = config.filter_speckle;
-    document.getElementById('filterspecklevalue').innerHTML = globalfilterspeckle;
-    document.getElementById('filterspeckle').value = globalfilterspeckle;
+	globalfilterspeckle = config.filter_speckle;
+	document.getElementById('filterspecklevalue').innerHTML = globalfilterspeckle;
+	document.getElementById('filterspeckle').value = globalfilterspeckle;
 
-    globalcolorprecision = config.color_precision;
-    document.getElementById('colorprecisionvalue').innerHTML = globalcolorprecision;
-    document.getElementById('colorprecision').value = globalcolorprecision;
+	globalcolorprecision = config.color_precision;
+	document.getElementById('colorprecisionvalue').innerHTML = globalcolorprecision;
+	document.getElementById('colorprecision').value = globalcolorprecision;
 
-    globallayerdifference = config.layer_difference;
-    document.getElementById('layerdifferencevalue').innerHTML = globallayerdifference;
-    document.getElementById('layerdifference').value = globallayerdifference;
+	globallayerdifference = config.layer_difference;
+	document.getElementById('layerdifferencevalue').innerHTML = globallayerdifference;
+	document.getElementById('layerdifference').value = globallayerdifference;
 
 }
 
@@ -267,25 +267,33 @@ class ConverterRunner {
             svg.style.background = '';
             canvas.style.display = '';
         }
+        canvas.style.opacity = '';
     }
 
     run () {
         const This = this;
-        requestAnimationFrame(function tick () {
+        setTimeout(function tick () {
             if (!This.stopped) {
-                if (!This.converter.tick()) {
-                    progress.value = This.converter.progress();
-                    if (progress.value >= 50) {
-                        canvas.style.display = 'none';
-                    }
-                    if (progress.value >= progress.max) {
-                        progressregion.style.display = 'none';
-                        progress.value = 0;
-                    }
-                    requestAnimationFrame(tick);
+                let done = false;
+                const startTick = performance.now();
+                while (!(done = This.converter.tick()) &&
+                    performance.now() - startTick < 25) {
+                }
+                progress.value = This.converter.progress();
+                if (progress.value >= 50) {
+                    canvas.style.display = 'none';
+                } else {
+                    canvas.style.opacity = (50 - progress.value) / 25;
+                }
+                if (progress.value >= progress.max) {
+                    progressregion.style.display = 'none';
+                    progress.value = 0;
+                }
+                if (!done) {
+                    setTimeout(tick, 1);
                 }
             }
-        });
+        }, 1);
     }
 
     stop () {
