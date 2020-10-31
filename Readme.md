@@ -1,6 +1,24 @@
-![logo](docs/images/visioncortex-banner.png)
+<div align="center">
 
-# visioncortex VTracer
+  <img src="docs/images/visioncortex-banner.png">
+  <h1>visioncortex VTracer</h1>
+
+  <p>
+    <strong>Raster to Vector Graphics Converter built on top of visioncortex</strong>
+  </p>
+
+  <h3>
+    <a href="//www.visioncortex.org/vtracer-docs">Docs</a>
+    <span> | </span>
+    <a href="//www.visioncortex.org/vtracer/">Demo</a>
+    <span> | </span>
+    <a href="//crates.io/crates/vtracer">Crate</a>
+  </h3>
+
+  <sub>Built with 🦀 by <a href="//www.visioncortex.org/">The Vision Cortex Research Group</a></sub>
+</div>
+
+## Introduction
 
 visioncortex VTracer is an open source software to convert raster images (like jpg & png) into vector graphics (svg). It can vectorize graphics and photographs and trace the curves to output compact vector files.
 
@@ -49,4 +67,13 @@ OPTIONS:
 ### Usage
 ```
 ./vtracer --input input.jpg --output output.svg
+```
+
+## Library
+
+The library can be found on [crates.io/vtracer](//crates.io/crates/vtracer).
+
+### Install
+```
+vtracer = "0.1.0"
 ```
