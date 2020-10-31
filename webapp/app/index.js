@@ -44,6 +44,102 @@ document.getElementById('export').addEventListener('click', function (e) {
     this.download = 'export-' + new Date().toISOString().slice(0, 19).replace(/:/g, '').replace('T', ' ') + '.svg';
 });
 
+// Store template config
+var presetConfigs = [
+    {
+        src: 'assets/samples/K1_drawing.jpg',
+        clustering_mode: 'binary',
+        filter_speckle: 4,
+        color_precision: 6,
+        layer_difference: 16,
+        mode: 'spline',
+        corner_threshold: 60,
+        length_threshold: 4,
+        splice_threshold: 45,
+        source: 'https://commons.wikimedia.org/wiki/File:K1_drawing.jpg',
+        credit: '<a href="https://commons.wikimedia.org/">Wikimedia</a>',
+    },
+    {
+        src: 'assets/samples/Cityscape Sunset_DFM3-01.jpg',
+        clustering_mode: 'color',
+        filter_speckle: 4,
+        color_precision: 8,
+        layer_difference: 25,
+        mode: 'spline',
+        corner_threshold: 60,
+        length_threshold: 4,
+        splice_threshold: 45,
+        source: 'https://www.vecteezy.com/vector-art/227400-beautiful-cityscape-at-sunset',
+        credit: '<a href="https://www.vecteezy.com/free-vector/building">Building Vectors by Vecteezy</a>',
+    },
+    {
+        src: 'assets/samples/Gum Tree Vector.jpg',
+        clustering_mode: 'color',
+        filter_speckle: 4,
+        color_precision: 8,
+        layer_difference: 28,
+        mode: 'spline',
+        corner_threshold: 60,
+        length_threshold: 4,
+        splice_threshold: 45,
+        source: 'https://www.vecteezy.com/vector-art/172177-gum-tree-vector',
+        credit: '<a href="https://www.vecteezy.com/free-vector/nature">Nature Vectors by Vecteezy</a>',
+    },
+    {
+        src: 'assets/samples/vectorstock_31191940.png',
+        clustering_mode: 'color',
+        filter_speckle: 8,
+        color_precision: 7,
+        layer_difference: 64,
+        mode: 'spline',
+        corner_threshold: 60,
+        length_threshold: 4,
+        splice_threshold: 45,
+        source: 'https://www.vectorstock.com/royalty-free-vector/dessert-poster-design-with-chocolate-cake-mousses-vector-31191940',
+        credit: '<a href="https://www.vectorstock.com/royalty-free-vector/dessert-poster-design-with-chocolate-cake-mousses-vector-31191940">Vector image by VectorStock / vectorstock</a>',
+    },
+    {
+        src: 'assets/samples/averie-woodard-4nulm-JUYFo-unsplash-s.jpg',
+        clustering_mode: 'color',
+        filter_speckle: 8,
+        color_precision: 7,
+        layer_difference: 24,
+        mode: 'spline',
+        corner_threshold: 60,
+        length_threshold: 4,
+        splice_threshold: 45,
+        source: 'https://unsplash.com/photos/4nulm-JUYFo',
+        credit: '<span>Photo by <a href="https://unsplash.com/@averieclaire?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText">averie woodard</a> on <a href="https://unsplash.com/s/photos/portrait?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText">Unsplash</a></span>',
+    },
+    {
+        src: 'assets/samples/angel-luciano-LATYeZyw88c-unsplash-s.jpg',
+        clustering_mode: 'color',
+        filter_speckle: 10,
+        color_precision: 8,
+        layer_difference: 48,
+        mode: 'spline',
+        corner_threshold: 180,
+        length_threshold: 4,
+        splice_threshold: 45,
+        source: 'https://unsplash.com/photos/LATYeZyw88c',
+        credit: '<span>Photo by <a href="https://unsplash.com/@roaming_angel?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText">Angel Luciano</a> on <a href="https://unsplash.com/s/photos/dog?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText">Unsplash</a></span>',
+    },
+];
+
+// Insert gallery items dynamically
+for (let i = 0; i < presetConfigs.length; ++i) {
+	document.getElementById('galleryslider').innerHTML += 
+	`<li>
+	<div class="galleryitem uk-panel uk-flex uk-flex-center">
+		<a href="#">
+			<img src="${presetConfigs[i].src}" title="${presetConfigs[i].source}">
+		</a>
+	</div>
+	</li>`;
+    document.getElementById('credits-modal-content').innerHTML += 
+    `<p>${presetConfigs[i].credit}</p>`;
+}
+
 // Function to load a given config WITHOUT restarting
 function loadConfig(config) {
 	mode = config.mode;
@@ -74,6 +170,21 @@ function loadConfig(config) {
 	document.getElementById('layerdifference').value = globallayerdifference;
 
 }
+
+// Choose template from gallery
+let chooseGalleryButtons = document.querySelectorAll('.galleryitem a');
+chooseGalleryButtons.forEach(item => {
+	item.addEventListener('click', function (e) {
+		// Load preset template config
+		let i = Array.prototype.indexOf.call(chooseGalleryButtons, item);
+		if (presetConfigs.length > i) {
+			loadConfig(presetConfigs[i]);
+		}
+
+		// Set source as specified
+		setSourceAndRestart(this.firstElementChild.src);
+	});
+});
 
 // Upload button
 var imageSelect = document.getElementById('imageSelect'),
@@ -125,6 +236,16 @@ var globalcorner = parseInt(document.getElementById('corner').value),
     globalfilterspeckle = parseInt(document.getElementById('filterspeckle').value),
     globalcolorprecision = parseInt(document.getElementById('colorprecision').value),
     globallayerdifference = parseInt(document.getElementById('layerdifference').value);
+
+// Load past inputs from localStorage
+/*
+if (localStorage.VSsettings) {
+    var settings = JSON.parse(localStorage.VSsettings);
+    document.getElementById('cornervalue').innerHTML = document.getElementById('corner').value = globalcorner = settings.globalcorner;
+    document.getElementById('lengthvalue').innerHTML = document.getElementById('length').value = globallength = settings.globallength;
+    document.getElementById('splicevalue').innerHTML = document.getElementById('splice').value = globalsplice = settings.globalsplice;
+}
+*/
 
 document.getElementById('none').addEventListener('click', function (e) {
     mode = 'none';
@@ -187,6 +308,17 @@ document.getElementById('splice').addEventListener('change', function (e) {
     restart();
 });
 
+// Save inputs before unloading
+/*
+window.addEventListener('beforeunload', function () {
+    localStorage.VSsettings = JSON.stringify({
+        globalcorner: globalcorner,
+        globallength: globallength,
+        globalsplice: globalsplice,
+    });
+});
+*/
+
 function setSourceAndRestart(source) {
     img.src = source instanceof File ? URL.createObjectURL(source) : source;
     img.onload = function () {
@@ -224,7 +356,7 @@ function restart() {
     while (svg.firstChild) {
         svg.removeChild(svg.firstChild);
     }
-    ctx.clearRect(0, 0, canvas.width,canvas.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, 0, 0);
     let converter_params = JSON.stringify({
         'canvas_id': canvas.id,
