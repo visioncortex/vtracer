@@ -1,7 +1,7 @@
+use std::str::FromStr;
 use std::path::PathBuf;
 use clap::{Arg, App};
 use visioncortex::path::PathSimplifyMode;
-use super::util::{path_simplify_mode, preset, deg2rad};
 
 pub enum Preset {
     Bw,
@@ -10,10 +10,17 @@ pub enum Preset {
 }
 
 #[derive(Debug)]
+pub enum ColorMode {
+    Color,
+    Binary,
+}
+
+/// Converter config
+#[derive(Debug)]
 pub struct Config {
     pub input_path: PathBuf,
     pub output_path: PathBuf,
-    pub color_mode: String,
+    pub color_mode: ColorMode,
     pub filter_speckle: usize,
     pub color_precision: i32,
     pub layer_difference: i32,
@@ -25,10 +32,10 @@ pub struct Config {
 }
 
 #[derive(Debug)]
-pub struct ConverterConfig {
+pub(crate) struct ConverterConfig {
     pub input_path: PathBuf,
     pub output_path: PathBuf,
-    pub color_mode: String,
+    pub color_mode: ColorMode,
     pub filter_speckle_area: usize,
     pub color_precision_loss: i32,
     pub layer_difference: i32,
@@ -44,8 +51,8 @@ impl Default for Config {
         Self {
             input_path: PathBuf::default(),
             output_path: PathBuf::default(),
-            color_mode: String::from("color"),
-            mode: path_simplify_mode("spline"),
+            color_mode: ColorMode::Color,
+            mode: PathSimplifyMode::Spline,
             filter_speckle: 4,
             color_precision: 6,
             layer_difference: 16,
@@ -54,6 +61,40 @@ impl Default for Config {
             splice_threshold: 45,
             max_iterations: 10,
         }
+    }
+}
+
+impl FromStr for ColorMode {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "color" => Ok(Self::Color),
+            "binary" => Ok(Self::Binary),
+            _ => Err(format!("unknown ColorMode {}", s)),
+        }
+    }
+}
+
+impl FromStr for Preset {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "bw" => Ok(Self::Bw),
+            "poster" => Ok(Self::Poster),
+            "photo" => Ok(Self::Photo),
+            _ => Err(format!("unknown Preset {}", s)),
+        }
+    }
+}
+
+fn path_simplify_mode_from_str(s: &str) -> PathSimplifyMode {
+    match s {
+        "polygon" => PathSimplifyMode::Polygon,
+        "spline" => PathSimplifyMode::Spline,
+        "none" => PathSimplifyMode::None,
+        _ => panic!("unknown PathSimplifyMode {}", s),
     }
 }
 
@@ -135,19 +176,19 @@ impl Config {
         let output_path = matches.value_of("output").expect("Output path is required, please specify it by --output or -o.");
 
         if let Some(value) = matches.value_of("preset") {
-            config = Self::from_preset(preset(value), input_path, output_path);
+            config = Self::from_preset(Preset::from_str(value).unwrap(), input_path, output_path);
         }
 
         config.input_path = PathBuf::from(input_path);
         config.output_path = PathBuf::from(output_path);
 
         if let Some(value) = matches.value_of("color_mode") {
-            config.color_mode = String::from(if value.trim() == "bw" || value.trim() == "BW" {"binary"} else {"color"})
+            config.color_mode = ColorMode::from_str(if value.trim() == "bw" || value.trim() == "BW" {"binary"} else {"color"}).unwrap()
         }
 
         if let Some(value) = matches.value_of("mode") {
             let value = value.trim();
-            config.mode = path_simplify_mode(if value == "pixel" {
+            config.mode = path_simplify_mode_from_str(if value == "pixel" {
                 "none"
             } else if value == "polygon" {
                 "polygon"
@@ -240,11 +281,11 @@ impl Config {
             Preset::Bw => Self {
                 input_path,
                 output_path,
-                color_mode: String::from("binary"),
+                color_mode: ColorMode::Binary,
                 filter_speckle: 4,
                 color_precision: 6,
                 layer_difference: 16,
-                mode: path_simplify_mode("spline"),
+                mode: PathSimplifyMode::Spline,
                 corner_threshold: 60,
                 length_threshold: 4.0,
                 max_iterations: 10,
@@ -253,11 +294,11 @@ impl Config {
             Preset::Poster => Self {
                 input_path,
                 output_path,
-                color_mode: String::from("color"),
+                color_mode: ColorMode::Color,
                 filter_speckle: 4,
                 color_precision: 8,
                 layer_difference: 16,
-                mode: path_simplify_mode("spline"),
+                mode: PathSimplifyMode::Spline,
                 corner_threshold: 60,
                 length_threshold: 4.0,
                 max_iterations: 10,
@@ -266,11 +307,11 @@ impl Config {
             Preset::Photo => Self {
                 input_path,
                 output_path,
-                color_mode: String::from("color"),
+                color_mode: ColorMode::Color,
                 filter_speckle: 10,
                 color_precision: 8,
                 layer_difference: 48,
-                mode: path_simplify_mode("spline"),
+                mode: PathSimplifyMode::Spline,
                 corner_threshold: 180,
                 length_threshold: 4.0,
                 max_iterations: 10,
@@ -279,7 +320,7 @@ impl Config {
         }
     }
 
-    pub fn into_converter_config(self) -> ConverterConfig {
+    pub(crate) fn into_converter_config(self) -> ConverterConfig {
         ConverterConfig {
             input_path: self.input_path,
             output_path: self.output_path,
@@ -294,4 +335,8 @@ impl Config {
             splice_threshold: deg2rad(self.splice_threshold),
         }
     }
+}
+
+fn deg2rad(deg: i32) -> f64 {
+    deg as f64 / 180.0 * std::f64::consts::PI
 }

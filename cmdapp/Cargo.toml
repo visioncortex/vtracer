@@ -1,15 +1,16 @@
-    [package]
-    name = "vtracer"
-    version = "0.1.0"
-    authors = ["Chris Tsang <tyt2y7@gmail.com>"]
-    edition = "2018"
-    description = "A cmd app to convert images into vector graphics."
-    homepage = "http://www.visioncortex.org/vtracer"
-    repository = "https://github.com/visioncortex/vtracer/"
-    categories = ["graphics"]
-    keywords = ["svg", "computer-graphics"]
+[package]
+name = "vtracer"
+version = "0.1.0"
+authors = ["Chris Tsang <tyt2y7@gmail.com>"]
+edition = "2018"
+description = "A cmd app to convert images into vector graphics."
+license = "MIT OR Apache-2.0"
+homepage = "http://www.visioncortex.org/vtracer"
+repository = "https://github.com/visioncortex/vtracer/"
+categories = ["graphics"]
+keywords = ["svg", "computer-graphics"]
 
-    [dependencies]
-    clap = "2.33.3"
-    image = "0.23.10"
-    visioncortex = { path = "../visioncortex" }
+[dependencies]
+clap = "2.33.3"
+image = "0.23.10"
+visioncortex = "0.2.0"

@@ -1,24 +1,20 @@
 use std::path::PathBuf;
 use std::{fs::File, io::Write};
 
-use visioncortex::Color;
-use visioncortex::{ColorName, color_clusters::RunnerConfig};
-use visioncortex::{ColorImage, color_clusters::Runner};
-use super::config::{Config, ConverterConfig};
+use visioncortex::{Color, ColorImage, ColorName, color_clusters::RunnerConfig, color_clusters::Runner};
+use super::config::{Config, ColorMode, ConverterConfig};
 use super::svg::SvgFile;
 
+/// Convert an image file into svg file
 pub fn convert_image_to_svg(config: Config) -> Result<(), String> {
     let config = config.into_converter_config();
-    if config.color_mode == "color" {
-        color_image_to_svg(config)
-    } else if config.color_mode == "binary" {
-        binary_image_to_svg(config)
-    } else {
-        Err(format!("Unknown color mode: {}", config.color_mode))
+    match config.color_mode {
+        ColorMode::Color => color_image_to_svg(config),
+        ColorMode::Binary => binary_image_to_svg(config),
     }
 }
 
-pub fn color_image_to_svg(config: ConverterConfig) -> Result<(), String> {
+fn color_image_to_svg(config: ConverterConfig) -> Result<(), String> {
     let (img, width, height);
     match read_image(config.input_path) {
         Ok(values) => {
@@ -69,7 +65,7 @@ pub fn color_image_to_svg(config: ConverterConfig) -> Result<(), String> {
     Ok(())
 }
 
-pub fn binary_image_to_svg(config: ConverterConfig) -> Result<(), String> {
+fn binary_image_to_svg(config: ConverterConfig) -> Result<(), String> {
     
     let (img, width, height);
     match read_image(config.input_path) {

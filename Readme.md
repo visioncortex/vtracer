@@ -10,12 +10,43 @@ Comparing to Adobe Illustrator's Live Trace, VTracer's output is much more compa
 
 A technical description of the algorithm is on [visioncortex.org/vtracer-docs](//www.visioncortex.org/vtracer-docs).
 
-## Tech Stack
+## Web App
 
-VTracer and its [core library](//github.com/visioncortex/visioncortex) is implemented in [Rust](//www.rust-lang.org/). It provides us a solid foundation to develop robust and efficient algorithms and easily bring it to interactive applications. The supported target for now is WASM. It is interactive and fast, and is a perfect showcase of the capability of the Rust + HTML5 platform. We do plan to develop a command line program for VTracer.
-
-## Screenshots
+VTracer and its [core library](//github.com/visioncortex/visioncortex) is implemented in [Rust](//www.rust-lang.org/). It provides us a solid foundation to develop robust and efficient algorithms and easily bring it to interactive applications. The webapp is a perfect showcase of the capability of the Rust + HTML5 platform.
 
 ![screenshot](docs/images/screenshot-01.png)
 
 ![screenshot](docs/images/screenshot-02.png)
+
+## Command Line
+```
+visioncortex VTracer                                                                                                      
+A cmd app to convert images into vector graphics.                                                                         
+                                                                                                                          
+USAGE:                                                                                                                    
+    vtracer [OPTIONS] --input <input> --output <output>                                                                   
+                                                                                                                          
+FLAGS:                                                                                                                    
+    -h, --help       Prints help information                                                                              
+    -V, --version    Prints version information                                                                           
+                                                                                                                          
+OPTIONS:                                                                                                                  
+        --colormode <color_mode>                 True color image `color` (default) or Binary image `bw`                  
+    -p, --color_precision <color_precision>      Number of significant bits to use in an RGB channel                      
+    -c, --corner_threshold <corner_threshold>    Minimum momentary angle (degree) to be considered a corner               
+    -f, --filter_speckle <filter_speckle>        Discard patches smaller than X px in size                                
+    -g, --gradient_step <gradient_step>          Color difference between gradient layers                                 
+    -i, --input <input>                          Path to input raster image                                               
+    -m, --mode <mode>                            Curver fitting mode `pixel`, `polygon`, `spline`                         
+    -o, --output <output>                        Path to output vector graphics                                           
+        --preset <preset>                        Use one of the preset configs `bw`, `poster`, `photo`                    
+    -l, --segment_length <segment_length>                                                                                 
+            Perform iterative subdivide smooth until all segments are shorter than this length                            
+                                                                                                                          
+    -s, --splice_threshold <splice_threshold>    Minimum angle displacement (degree) to splice a spline                   
+```
+
+### Usage
+```
+./vtracer --input input.jpg --output output.svg
+```
