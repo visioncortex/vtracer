@@ -29,8 +29,7 @@ impl SvgFile {
 
     pub fn to_svg_file(&self) -> String {
         let mut result: Vec<String> = vec![format!(r#"<?xml version="1.0" encoding="UTF-8"?>
-        <svg width="{}" height="{}">
-        "#, self.width, self.height)];
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="{}" height="{}">"#, self.width, self.height)];
 
         for patch in &self.patches {
             let color = patch.color;
