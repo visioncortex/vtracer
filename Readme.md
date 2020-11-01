@@ -11,6 +11,8 @@
     <a href="//www.visioncortex.org/vtracer-docs">Docs</a>
     <span> | </span>
     <a href="//www.visioncortex.org/vtracer/">Demo</a>
+    <span> | </span>
+    <a href="//github.com/visioncortex/vtracer/releases/latest">Download</a>
   </h3>
 
   <sub>Built with 🦀 by <a href="//www.visioncortex.org/">The Vision Cortex Research Group</a></sub>
