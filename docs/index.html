@@ -11,6 +11,13 @@
         <!-- UIkit JS -->
         <script src="./uikit/js/uikit.min.js"></script>
         <script src="./uikit/js/uikit-icons.min.js"></script>
+        <script type="text/javascript">
+        (function(c,l,a,r,i,t,y){
+            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window, document, "clarity", "script", "403biw7tra");
+        </script>
         <style>
         html, body {
             width: 100%;
@@ -158,7 +165,7 @@
                 <div id="drop" class="uk-padding uk-flex uk-flex-center">
                     <div id="canvas-container" class="uk-width-1-1" style="height: 480px;">
                         <div id="droptext" class="uk-flex uk-flex-middle uk-flex-center">
-                            <p>Drag an image here or <a href="#" id="imageSelect">Select file</a></p>
+                            <p>Drag an image here, Cmd-V to paste or <a href="#" id="imageSelect">Select file</a></p>
                         </div>
                         <canvas id="frame"></canvas>
                         <svg id="svg" version="1.1" xmlns="http://www.w3.org/2000/svg"></svg>
