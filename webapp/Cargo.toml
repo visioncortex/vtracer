@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Chris Tsang <tyt2y7@gmail.com>"]
 edition = "2018"
 description = "A web app to convert images into vector graphics."
+license = "MIT OR Apache-2.0"
 homepage = "http://www.visioncortex.org/vtracer"
 repository = "https://github.com/visioncortex/vtracer/"
 categories = ["graphics"]
