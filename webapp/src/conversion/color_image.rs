@@ -1,5 +1,5 @@
 use wasm_bindgen::prelude::*;
-use visioncortex::{PathSimplifyMode, PointI32};
+use visioncortex::PathSimplifyMode;
 use visioncortex::color_clusters::{IncrementalBuilder, Clusters, Runner, RunnerConfig};
 
 use crate::canvas::*;
@@ -94,16 +94,15 @@ impl ColorImageConverter {
                 if self.counter < view.clusters_output.len() {
                     self.canvas.log("Vectorize tick");
                     let cluster = view.get_cluster(view.clusters_output[self.counter]);
-                    let svg_path = cluster.to_svg_path(
+                    let paths = cluster.to_compound_path(
                         &view, false, self.mode,
                         self.params.corner_threshold,
                         self.params.length_threshold,
                         self.params.max_iterations,
                         self.params.splice_threshold
                     );
-                    self.svg.prepend_path_with_fill(
-                        &svg_path,
-                        &PointI32::new(0, 0),
+                    self.svg.prepend_path(
+                        &paths,
                         &cluster.residue_color(),
                     );
                     self.counter += 1;

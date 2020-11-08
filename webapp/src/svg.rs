@@ -1,5 +1,5 @@
 use web_sys::Element;
-use visioncortex::{Color, PointI32};
+use visioncortex::{Color, CompoundPath, PointF64};
 use super::common::document;
 
 pub struct Svg {
@@ -13,11 +13,12 @@ impl Svg {
         Self { element }
     }
 
-    pub fn prepend_path_with_fill(&mut self, path_string: &str, offset: &PointI32, color: &Color) {
+    pub fn prepend_path(&mut self, paths: &CompoundPath, color: &Color) {
         let path = document()
             .create_element_ns(Some("http://www.w3.org/2000/svg"), "path")
             .unwrap();
-        path.set_attribute("d", path_string).unwrap();
+        let (string, offset) = paths.to_svg_string(true, PointF64::default());
+        path.set_attribute("d", &string).unwrap();
         path.set_attribute(
             "transform",
             format!("translate({},{})", offset.x, offset.y).as_str(),

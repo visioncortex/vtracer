@@ -42,7 +42,7 @@ fn color_image_to_svg(config: ConverterConfig) -> Result<(), String> {
     let mut svg = SvgFile::new(width, height);
     for &cluster_index in view.clusters_output.iter().rev() {
         let cluster = view.get_cluster(cluster_index);
-        let svg_path = cluster.to_svg_path(
+        let paths = cluster.to_compound_path(
             &view,
             false,
             config.mode,
@@ -51,22 +51,14 @@ fn color_image_to_svg(config: ConverterConfig) -> Result<(), String> {
             config.max_iterations,
             config.splice_threshold
         );
-        svg.add_path(svg_path, cluster.residue_color());
+        svg.add_path(paths, cluster.residue_color());
     }
 
-    let out_file = File::create(config.output_path);
-    let mut out_file = match out_file {
-        Ok(file) => file,
-        Err(_) => return Err(String::from("Cannot create output file.")),
-    };
-    
-    out_file.write_all(&svg.to_svg_file().as_bytes()).unwrap();
-
-    Ok(())
+    write_svg(svg, config.output_path)
 }
 
 fn binary_image_to_svg(config: ConverterConfig) -> Result<(), String> {
-    
+
     let (img, width, height);
     match read_image(config.input_path) {
         Ok(values) => {
@@ -79,20 +71,19 @@ fn binary_image_to_svg(config: ConverterConfig) -> Result<(), String> {
     let img = img.to_binary_image(|x| x.r < 128);
 
     let clusters = img.to_clusters(false);
-    
+
     let mut svg = SvgFile::new(width, height);
     for i in 0..clusters.len() {
         let cluster = clusters.get_cluster(i);
         if cluster.size() >= config.filter_speckle_area {
-            let svg_path = cluster.to_svg_path(
+            let paths = cluster.to_compound_path(
                 config.mode,
                 config.corner_threshold,
                 config.length_threshold,
                 config.max_iterations,
                 config.splice_threshold,
             );
-            let color = Color::color(&ColorName::Black);
-            svg.add_path(svg_path, color);
+            svg.add_path(paths, Color::color(&ColorName::Black));
         }
     }
 
@@ -118,8 +109,8 @@ fn write_svg(svg: SvgFile, output_path: PathBuf) -> Result<(), String> {
         Ok(file) => file,
         Err(_) => return Err(String::from("Cannot create output file.")),
     };
-    
-    out_file.write_all(&svg.to_svg_file().as_bytes()).unwrap();
+
+    write!(&mut out_file, "{}", svg).expect("failed to write file.");
 
     Ok(())
 }

@@ -1,5 +1,5 @@
 use wasm_bindgen::prelude::*;
-use visioncortex::{clusters::Clusters, Color, ColorName, PointI32, PathSimplifyMode};
+use visioncortex::{clusters::Clusters, Color, ColorName, PathSimplifyMode};
 
 use crate::{canvas::*};
 use crate::svg::*;
@@ -69,7 +69,7 @@ impl BinaryImageConverter {
             self.canvas.log(&format!("tick {}", self.counter));
             let cluster = self.clusters.get_cluster(self.counter);
             if cluster.size() >= self.params.filter_speckle {
-                let svg_path = cluster.to_svg_path(
+                let paths = cluster.to_compound_path(
                     self.mode,
                     self.params.corner_threshold,
                     self.params.length_threshold,
@@ -77,9 +77,8 @@ impl BinaryImageConverter {
                     self.params.splice_threshold
                 );
                 let color = Color::color(&ColorName::White);
-                self.svg.prepend_path_with_fill(
-                    &svg_path,
-                    &PointI32::default(),
+                self.svg.prepend_path(
+                    &paths,
                     &color,
                 );
             }
