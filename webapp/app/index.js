@@ -430,5 +430,6 @@ class ConverterRunner {
 
     stop () {
         this.stopped = true;
+        this.converter.free();
     }
 }
