@@ -75,5 +75,5 @@ The library can be found on [crates.io/vtracer](//crates.io/crates/vtracer).
 
 ### Install
 ```
-vtracer = "0.1.0"
+vtracer = "*"
 ```
