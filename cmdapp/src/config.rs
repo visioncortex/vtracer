@@ -100,7 +100,8 @@ fn path_simplify_mode_from_str(s: &str) -> PathSimplifyMode {
 
 impl Config {
     pub fn from_args() -> Self {
-        let app = App::new("visioncortex VTracer").about("A cmd app to convert images into vector graphics.");
+        let app = App::new("visioncortex VTracer ".to_owned() + env!("CARGO_PKG_VERSION"))
+            .about("A cmd app to convert images into vector graphics.");
 
         let app = app.arg(Arg::with_name("input")
             .long("input")
