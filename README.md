@@ -26,6 +26,8 @@ Comparing to [Potrace]() which only accept binarized inputs (Black & White pixma
 
 Comparing to Adobe Illustrator's Live Trace, VTracer's output is much more compact (less shapes) as we adopt a stacking strategy and avoid producing shapes with holes.
 
+By setting both `filter_speckle` and `layer_difference` to `0`, VTracer can also handle pixel art.
+
 A technical description of the algorithm is on [visioncortex.org/vtracer-docs](//www.visioncortex.org/vtracer-docs).
 
 ## Web App
