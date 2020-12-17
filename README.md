@@ -1,7 +1,7 @@
 <div align="center">
 
   <img src="docs/images/visioncortex-banner.png">
-  <h1>visioncortex VTracer</h1>
+  <h1>VTracer</h1>
 
   <p>
     <strong>Raster to Vector Graphics Converter built on top of visioncortex</strong>
