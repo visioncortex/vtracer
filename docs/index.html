@@ -79,8 +79,7 @@
         }
         #canvas-container {
             position: relative;
-            width: 100%;
-            height: 100%;
+            height: max-content;
         }
         #svg, #frame {
             position: absolute;
@@ -91,7 +90,7 @@
             stroke: #ff0;
         }
         #droptext {
-            height: 100%;
+            height: 480px;
             color: #CC972E;
         }
         input[type=range]::-webkit-slider-thumb {
@@ -107,11 +106,11 @@
             background: #00275D;
             border-color: #CC972E;
         }
-        #gallery, #options {
+        #drop, #gallery, #options {
             border-top: 1px solid #686868;
         }
         #gallery {
-            border-bottom: 1px solid #686868;
+            padding-bottom: 0;
         }
         .galleryitem {
             cursor: pointer;
@@ -152,6 +151,15 @@
                 <progress id="progressbar" class="uk-progress uk-align-right" value="0" max="100" style="width: 98%;"></progress>
             </div>
             <div class="uk-width-3-4">
+                <div id="drop" class="uk-padding uk-flex uk-flex-center">
+                    <div id="canvas-container" class="uk-width-1-1" style="height: 480px;">
+                        <div id="droptext" class="uk-flex uk-flex-middle uk-flex-center">
+                            <p>Drag an image here, Cmd-V to paste or <a href="#" id="imageSelect">Select file</a></p>
+                        </div>
+                        <canvas id="frame"></canvas>
+                        <svg id="svg" version="1.1" xmlns="http://www.w3.org/2000/svg"></svg>
+                    </div>
+                </div>
                 <div id="gallery" class="uk-padding">
                     <div class="uk-inline" uk-slider>
                         <ul id="galleryslider" class="uk-slider-items uk-child-width-1-6 uk-grid uk-grid-small">
@@ -161,15 +169,6 @@
                         <a class="uk-position-center-right uk-position-small uk-hidden-hover" href="#" uk-slidenav-next uk-slider-item="next"></a>
                     </div>
                     <a class="uk-align-right uk-text-meta" style="margin:-5px;" uk-toggle="target: #credits-modal">Photo Credits</a>
-                </div>
-                <div id="drop" class="uk-padding uk-flex uk-flex-center">
-                    <div id="canvas-container" class="uk-width-1-1" style="height: 480px;">
-                        <div id="droptext" class="uk-flex uk-flex-middle uk-flex-center">
-                            <p>Drag an image here, Cmd-V to paste or <a href="#" id="imageSelect">Select file</a></p>
-                        </div>
-                        <canvas id="frame"></canvas>
-                        <svg id="svg" version="1.1" xmlns="http://www.w3.org/2000/svg"></svg>
-                    </div>
                 </div>
             </div>
             <div id="options" class="uk-width-1-4 uk-height-1-1 uk-grid-small uk-flex uk-flex-center" uk-grid>
