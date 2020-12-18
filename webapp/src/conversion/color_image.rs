@@ -1,6 +1,6 @@
 use wasm_bindgen::prelude::*;
 use visioncortex::PathSimplifyMode;
-use visioncortex::color_clusters::{IncrementalBuilder, Clusters, Runner, RunnerConfig};
+use visioncortex::color_clusters::{IncrementalBuilder, Clusters, Runner, RunnerConfig, HIERARCHICAL_MAX};
 
 use crate::canvas::*;
 use crate::svg::*;
@@ -64,8 +64,10 @@ impl ColorImageConverter {
     pub fn init(&mut self) {
         let width = self.canvas.width() as u32;
         let height = self.canvas.height() as u32;
-        let image = self.canvas.get_image_data_as_image(0, 0, width, height);
+        let image = self.canvas.get_image_data_as_color_image(0, 0, width, height);
         let runner = Runner::new(RunnerConfig {
+            diagonal: self.params.layer_difference == 0,
+            hierarchical: HIERARCHICAL_MAX,
             batch_size: 25600,
             good_min_area: self.params.filter_speckle,
             good_max_area: (width * height) as usize,

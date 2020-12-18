@@ -46,7 +46,7 @@ impl Canvas {
         image.data().to_vec()
     }
 
-    pub fn get_image_data_as_image(&self, x: u32, y: u32, width: u32, height: u32) -> ColorImage {
+    pub fn get_image_data_as_color_image(&self, x: u32, y: u32, width: u32, height: u32) -> ColorImage {
         ColorImage {
             pixels: self.get_image_data(x, y, width, height),
             width: width as usize,

@@ -54,7 +54,7 @@ impl BinaryImageConverter {
     pub fn init(&mut self) {
         let width = self.canvas.width() as u32;
         let height = self.canvas.height() as u32;
-        let image = self.canvas.get_image_data_as_image(0, 0, width, height);
+        let image = self.canvas.get_image_data_as_color_image(0, 0, width, height);
         let binary_image = image.to_binary_image(|x| x.r < 128);
         self.clusters = binary_image.to_clusters(false);
         self.canvas.log(&format!(

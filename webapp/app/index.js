@@ -99,19 +99,6 @@ var presetConfigs = [
         credit: '<a href="https://www.vectorstock.com/royalty-free-vector/dessert-poster-design-with-chocolate-cake-mousses-vector-31191940">Vector image by VectorStock / vectorstock</a>',
     },
     {
-        src: 'assets/samples/averie-woodard-4nulm-JUYFo-unsplash-s.jpg',
-        clustering_mode: 'color',
-        filter_speckle: 8,
-        color_precision: 7,
-        layer_difference: 24,
-        mode: 'spline',
-        corner_threshold: 60,
-        length_threshold: 4,
-        splice_threshold: 45,
-        source: 'https://unsplash.com/photos/4nulm-JUYFo',
-        credit: '<span>Photo by <a href="https://unsplash.com/@averieclaire?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText">averie woodard</a> on <a href="https://unsplash.com/s/photos/portrait?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText">Unsplash</a></span>',
-    },
-    {
         src: 'assets/samples/angel-luciano-LATYeZyw88c-unsplash-s.jpg',
         clustering_mode: 'color',
         filter_speckle: 10,
@@ -124,10 +111,23 @@ var presetConfigs = [
         source: 'https://unsplash.com/photos/LATYeZyw88c',
         credit: '<span>Photo by <a href="https://unsplash.com/@roaming_angel?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText">Angel Luciano</a> on <a href="https://unsplash.com/s/photos/dog?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText">Unsplash</a></span>',
     },
+    {
+        src: 'assets/samples/tank-unit-preview.png',
+        clustering_mode: 'color',
+        filter_speckle: 0,
+        color_precision: 8,
+        layer_difference: 0,
+        mode: 'none',
+        corner_threshold: 180,
+        length_threshold: 4,
+        splice_threshold: 45,
+        source: 'https://opengameart.org/content/sideview-sci-fi-patreon-collection',
+        credit: '<span>Artwork by <a href="https://opengameart.org/content/sideview-sci-fi-patreon-collection">Luis Zuno</a> on <a href="https://opengameart.org/">opengameart.org</a></span>',
+    },
 ];
 
 // Insert gallery items dynamically
-for (let i = 0; i < presetConfigs.length; ++i) {
+for (let i = 0; i < presetConfigs.length; i++) {
 	document.getElementById('galleryslider').innerHTML += 
 	`<li>
 	<div class="galleryitem uk-panel uk-flex uk-flex-center">
@@ -322,9 +322,19 @@ window.addEventListener('beforeunload', function () {
 function setSourceAndRestart(source) {
     img.src = source instanceof File ? URL.createObjectURL(source) : source;
     img.onload = function () {
-        svg.setAttribute('viewBox', `0 0 ${img.naturalWidth} ${img.naturalHeight}`);
+        const width = img.naturalWidth, height = img.naturalHeight;
+        svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
         canvas.width = img.naturalWidth;
         canvas.height = img.naturalHeight;
+        if (height > width) {
+            document.getElementById('canvas-container').style.width = '50%';
+            document.getElementById('canvas-container').style.marginBottom = (height / width * 50) + '%';
+        } else {
+            document.getElementById('canvas-container').style.width = '';
+            document.getElementById('canvas-container').style.marginBottom = (height / width * 100) + '%';
+        }
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        ctx.getImageData(0, 0, canvas.width, canvas.height);
         restart();
     }
     // Show display

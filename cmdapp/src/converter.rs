@@ -1,7 +1,8 @@
 use std::path::PathBuf;
 use std::{fs::File, io::Write};
 
-use visioncortex::{Color, ColorImage, ColorName, color_clusters::RunnerConfig, color_clusters::Runner};
+use visioncortex::{Color, ColorImage, ColorName};
+use visioncortex::color_clusters::{Runner, RunnerConfig, HIERARCHICAL_MAX};
 use super::config::{Config, ColorMode, ConverterConfig};
 use super::svg::SvgFile;
 
@@ -26,6 +27,8 @@ fn color_image_to_svg(config: ConverterConfig) -> Result<(), String> {
     }
 
     let runner = Runner::new(RunnerConfig {
+        diagonal: config.layer_difference == 0,
+        hierarchical: HIERARCHICAL_MAX,
         batch_size: 25600,
         good_min_area: config.filter_speckle_area,
         good_max_area: (width * height),

@@ -1,7 +1,7 @@
 use std::str::FromStr;
 use std::path::PathBuf;
 use clap::{Arg, App};
-use visioncortex::path::PathSimplifyMode;
+use visioncortex::PathSimplifyMode;
 
 pub enum Preset {
     Bw,
