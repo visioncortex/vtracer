@@ -26,7 +26,7 @@ Comparing to [Potrace]() which only accept binarized inputs (Black & White pixma
 
 Comparing to Adobe Illustrator's Live Trace, VTracer's output is much more compact (less shapes) as we adopt a stacking strategy and avoid producing shapes with holes.
 
-VTracer is originally designed for processing high resolution scans of historic blueprints up to gigapixels. By setting both `filter_speckle` and `layer_difference` to `0`, VTracer can also handle low resolution pixel art, effectively achieving `image-rendering: pixelated` for retro game artworks.
+VTracer is originally designed for processing high resolution scans of historic blueprints up to gigapixels. At the same time, VTracer can also handle low resolution pixel art, simulating `image-rendering: pixelated` for retro game artworks.
 
 A technical description of the algorithm is on [visioncortex.org/vtracer-docs](//www.visioncortex.org/vtracer-docs).
 
