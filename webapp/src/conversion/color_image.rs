@@ -13,6 +13,7 @@ pub struct ColorImageConverterParams {
     pub canvas_id: String,
     pub svg_id: String,
     pub mode: String,
+    pub hierarchical: String,
     pub corner_threshold: f64,
     pub length_threshold: f64,
     pub max_iterations: usize,
@@ -35,6 +36,7 @@ pub struct ColorImageConverter {
 pub enum Stage {
     New,
     Clustering(IncrementalBuilder),
+    Reclustering(IncrementalBuilder),
     Vectorize(Clusters),
 }
 
@@ -87,6 +89,35 @@ impl ColorImageConverter {
             Stage::Clustering(builder) => {
                 self.canvas.log("Clustering tick");
                 if builder.tick() {
+                    match self.params.hierarchical.as_str() {
+                        "stacked" => {
+                            self.stage = Stage::Vectorize(builder.result());
+                        },
+                        "cutout" => {
+                            let clusters = builder.result();
+                            let view = clusters.view();
+                            let image = view.to_color_image();
+                            let runner = Runner::new(RunnerConfig {
+                                diagonal: false,
+                                hierarchical: 64,
+                                batch_size: 25600,
+                                good_min_area: 0,
+                                good_max_area: (image.width * image.height) as usize,
+                                is_same_color_a: 0,
+                                is_same_color_b: 1,
+                                deepen_diff: 0,
+                                hollow_neighbours: 0,
+                            }, image);
+                            self.stage = Stage::Reclustering(runner.start());
+                        },
+                        _ => panic!("unknown hierarchical `{}`", self.params.hierarchical)
+                    }
+                }
+                false
+            },
+            Stage::Reclustering(builder) => {
+                self.canvas.log("Reclustering tick");
+                if builder.tick() {
                     self.stage = Stage::Vectorize(builder.result())
                 }
                 false
@@ -124,6 +155,9 @@ impl ColorImageConverter {
             },
             Stage::Clustering(builder) => {
                 builder.progress() / 2
+            },
+            Stage::Reclustering(_builder) => {
+                50
             },
             Stage::Vectorize(clusters) => {
                 50 + 50 * self.counter as u32 / clusters.view().clusters_output.len() as u32

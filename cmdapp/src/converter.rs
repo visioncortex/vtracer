@@ -3,7 +3,7 @@ use std::{fs::File, io::Write};
 
 use visioncortex::{Color, ColorImage, ColorName};
 use visioncortex::color_clusters::{Runner, RunnerConfig, HIERARCHICAL_MAX};
-use super::config::{Config, ColorMode, ConverterConfig};
+use super::config::{Config, ColorMode, Hierarchical, ConverterConfig};
 use super::svg::SvgFile;
 
 /// Convert an image file into svg file
@@ -38,7 +38,27 @@ fn color_image_to_svg(config: ConverterConfig) -> Result<(), String> {
         hollow_neighbours: 1,
     }, img);
 
-    let clusters = runner.run();
+    let mut clusters = runner.run();
+
+    match config.hierarchical {
+        Hierarchical::Stacked => {}
+        Hierarchical::Cutout => {
+            let view = clusters.view();
+            let image = view.to_color_image();
+            let runner = Runner::new(RunnerConfig {
+                diagonal: false,
+                hierarchical: 64,
+                batch_size: 25600,
+                good_min_area: 0,
+                good_max_area: (image.width * image.height) as usize,
+                is_same_color_a: 0,
+                is_same_color_b: 1,
+                deepen_diff: 0,
+                hollow_neighbours: 0,
+            }, image);
+            clusters = runner.run();
+        },
+    }
 
     let view = clusters.view();
 

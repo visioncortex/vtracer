@@ -9,18 +9,22 @@ pub enum Preset {
     Photo
 }
 
-#[derive(Debug)]
 pub enum ColorMode {
     Color,
     Binary,
 }
 
+pub enum Hierarchical {
+    Stacked,
+    Cutout,
+}
+
 /// Converter config
-#[derive(Debug)]
 pub struct Config {
     pub input_path: PathBuf,
     pub output_path: PathBuf,
     pub color_mode: ColorMode,
+    pub hierarchical: Hierarchical,
     pub filter_speckle: usize,
     pub color_precision: i32,
     pub layer_difference: i32,
@@ -31,11 +35,11 @@ pub struct Config {
     pub splice_threshold: i32,
 }
 
-#[derive(Debug)]
 pub(crate) struct ConverterConfig {
     pub input_path: PathBuf,
     pub output_path: PathBuf,
     pub color_mode: ColorMode,
+    pub hierarchical: Hierarchical,
     pub filter_speckle_area: usize,
     pub color_precision_loss: i32,
     pub layer_difference: i32,
@@ -52,6 +56,7 @@ impl Default for Config {
             input_path: PathBuf::default(),
             output_path: PathBuf::default(),
             color_mode: ColorMode::Color,
+            hierarchical: Hierarchical::Stacked,
             mode: PathSimplifyMode::Spline,
             filter_speckle: 4,
             color_precision: 6,
@@ -72,6 +77,18 @@ impl FromStr for ColorMode {
             "color" => Ok(Self::Color),
             "binary" => Ok(Self::Binary),
             _ => Err(format!("unknown ColorMode {}", s)),
+        }
+    }
+}
+
+impl FromStr for Hierarchical {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "stacked" => Ok(Self::Stacked),
+            "cutout" => Ok(Self::Cutout),
+            _ => Err(format!("unknown Hierarchical {}", s)),
         }
     }
 }
@@ -121,6 +138,14 @@ impl Config {
             .long("colormode")
             .takes_value(true)
             .help("True color image `color` (default) or Binary image `bw`"));
+
+        let app = app.arg(Arg::with_name("hierarchical")
+            .long("hierarchical")
+            .takes_value(true)
+            .help(
+                "Hierarchical clustering `stacked` (default) or non-stacked `cutout`. \
+                Only applies to color mode. "
+            ));
 
         let app = app.arg(Arg::with_name("preset")
             .long("preset")
@@ -185,6 +210,10 @@ impl Config {
 
         if let Some(value) = matches.value_of("color_mode") {
             config.color_mode = ColorMode::from_str(if value.trim() == "bw" || value.trim() == "BW" {"binary"} else {"color"}).unwrap()
+        }
+
+        if let Some(value) = matches.value_of("hierarchical") {
+            config.hierarchical = Hierarchical::from_str(value).unwrap()
         }
 
         if let Some(value) = matches.value_of("mode") {
@@ -283,6 +312,7 @@ impl Config {
                 input_path,
                 output_path,
                 color_mode: ColorMode::Binary,
+                hierarchical: Hierarchical::Stacked,
                 filter_speckle: 4,
                 color_precision: 6,
                 layer_difference: 16,
@@ -296,6 +326,7 @@ impl Config {
                 input_path,
                 output_path,
                 color_mode: ColorMode::Color,
+                hierarchical: Hierarchical::Stacked,
                 filter_speckle: 4,
                 color_precision: 8,
                 layer_difference: 16,
@@ -309,6 +340,7 @@ impl Config {
                 input_path,
                 output_path,
                 color_mode: ColorMode::Color,
+                hierarchical: Hierarchical::Stacked,
                 filter_speckle: 10,
                 color_precision: 8,
                 layer_difference: 48,
@@ -326,6 +358,7 @@ impl Config {
             input_path: self.input_path,
             output_path: self.output_path,
             color_mode: self.color_mode,
+            hierarchical: self.hierarchical,
             filter_speckle_area: self.filter_speckle * self.filter_speckle,
             color_precision_loss: 8 - self.color_precision,
             layer_difference: self.layer_difference,

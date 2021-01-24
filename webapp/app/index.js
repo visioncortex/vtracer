@@ -7,7 +7,7 @@ const svg = document.getElementById('svg');
 const img = new Image();
 const progress = document.getElementById('progressbar');
 const progressregion = document.getElementById('progressregion');
-let mode = 'spline', clustering_mode = 'color';
+let mode = 'spline', clustering_mode = 'color', clustering_hierarchical = 'stacked';
 
 // Hide canas and svg on load
 canvas.style.display = 'none';
@@ -15,22 +15,22 @@ svg.style.display = 'none';
 
 // Paste from clipboard
 document.addEventListener('paste', function (e) {
-	if (e.clipboardData) {
-		var items = e.clipboardData.items;
-		if (!items) return;
+    if (e.clipboardData) {
+        var items = e.clipboardData.items;
+        if (!items) return;
 
-		//access data directly
-		for (var i = 0; i < items.length; i++) {
-			if (items[i].type.indexOf("image") !== -1) {
-				//image
-				var blob = items[i].getAsFile();
-				var URLObj = window.URL || window.webkitURL;
-				var source = URLObj.createObjectURL(blob);
-				setSourceAndRestart(source);
-			}
-		}
-		e.preventDefault();
-	}
+        //access data directly
+        for (var i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf("image") !== -1) {
+                //image
+                var blob = items[i].getAsFile();
+                var URLObj = window.URL || window.webkitURL;
+                var source = URLObj.createObjectURL(blob);
+                setSourceAndRestart(source);
+            }
+        }
+        e.preventDefault();
+    }
 });
 
 // Download as SVG
@@ -49,6 +49,7 @@ var presetConfigs = [
     {
         src: 'assets/samples/K1_drawing.jpg',
         clustering_mode: 'binary',
+        clustering_hierarchical: 'stacked',
         filter_speckle: 4,
         color_precision: 6,
         layer_difference: 16,
@@ -62,6 +63,7 @@ var presetConfigs = [
     {
         src: 'assets/samples/Cityscape Sunset_DFM3-01.jpg',
         clustering_mode: 'color',
+        clustering_hierarchical: 'stacked',
         filter_speckle: 4,
         color_precision: 8,
         layer_difference: 25,
@@ -75,6 +77,7 @@ var presetConfigs = [
     {
         src: 'assets/samples/Gum Tree Vector.jpg',
         clustering_mode: 'color',
+        clustering_hierarchical: 'cutout',
         filter_speckle: 4,
         color_precision: 8,
         layer_difference: 28,
@@ -88,6 +91,7 @@ var presetConfigs = [
     {
         src: 'assets/samples/vectorstock_31191940.png',
         clustering_mode: 'color',
+        clustering_hierarchical: 'stacked',
         filter_speckle: 8,
         color_precision: 7,
         layer_difference: 64,
@@ -101,6 +105,7 @@ var presetConfigs = [
     {
         src: 'assets/samples/angel-luciano-LATYeZyw88c-unsplash-s.jpg',
         clustering_mode: 'color',
+        clustering_hierarchical: 'stacked',
         filter_speckle: 10,
         color_precision: 8,
         layer_difference: 48,
@@ -114,6 +119,7 @@ var presetConfigs = [
     {
         src: 'assets/samples/tank-unit-preview.png',
         clustering_mode: 'color',
+        clustering_hierarchical: 'stacked',
         filter_speckle: 0,
         color_precision: 8,
         layer_difference: 0,
@@ -127,63 +133,66 @@ var presetConfigs = [
 ];
 
 // Insert gallery items dynamically
-for (let i = 0; i < presetConfigs.length; i++) {
-	document.getElementById('galleryslider').innerHTML += 
-	`<li>
-	<div class="galleryitem uk-panel uk-flex uk-flex-center">
-		<a href="#">
-			<img src="${presetConfigs[i].src}" title="${presetConfigs[i].source}">
-		</a>
-	</div>
-	</li>`;
-    document.getElementById('credits-modal-content').innerHTML += 
-    `<p>${presetConfigs[i].credit}</p>`;
+if (document.getElementById('galleryslider')) {
+    for (let i = 0; i < presetConfigs.length; i++) {
+        document.getElementById('galleryslider').innerHTML += 
+        `<li>
+        <div class="galleryitem uk-panel uk-flex uk-flex-center">
+            <a href="#">
+                <img src="${presetConfigs[i].src}" title="${presetConfigs[i].source}">
+            </a>
+        </div>
+        </li>`;
+        document.getElementById('credits-modal-content').innerHTML += 
+        `<p>${presetConfigs[i].credit}</p>`;
+    }
 }
 
 // Function to load a given config WITHOUT restarting
 function loadConfig(config) {
-	mode = config.mode;
-	clustering_mode = config.clustering_mode;
+    mode = config.mode;
+    clustering_mode = config.clustering_mode;
+    clustering_hierarchical = config.clustering_hierarchical;
 
-	globalcorner = config.corner_threshold;
-	document.getElementById('cornervalue').innerHTML = globalcorner;
-	document.getElementById('corner').value = globalcorner;
-	
-	globallength = config.length_threshold;
-	document.getElementById('lengthvalue').innerHTML = globallength;
-	document.getElementById('length').value = globallength;
-	
-	globalsplice = config.splice_threshold;
-	document.getElementById('splicevalue').innerHTML = globalsplice;
-	document.getElementById('splice').value = globalsplice;
+    globalcorner = config.corner_threshold;
+    document.getElementById('cornervalue').innerHTML = globalcorner;
+    document.getElementById('corner').value = globalcorner;
+    
+    globallength = config.length_threshold;
+    document.getElementById('lengthvalue').innerHTML = globallength;
+    document.getElementById('length').value = globallength;
+    
+    globalsplice = config.splice_threshold;
+    document.getElementById('splicevalue').innerHTML = globalsplice;
+    document.getElementById('splice').value = globalsplice;
 
-	globalfilterspeckle = config.filter_speckle;
-	document.getElementById('filterspecklevalue').innerHTML = globalfilterspeckle;
-	document.getElementById('filterspeckle').value = globalfilterspeckle;
+    globalfilterspeckle = config.filter_speckle;
+    document.getElementById('filterspecklevalue').innerHTML = globalfilterspeckle;
+    document.getElementById('filterspeckle').value = globalfilterspeckle;
 
-	globalcolorprecision = config.color_precision;
-	document.getElementById('colorprecisionvalue').innerHTML = globalcolorprecision;
-	document.getElementById('colorprecision').value = globalcolorprecision;
+    globalcolorprecision = config.color_precision;
+    document.getElementById('colorprecisionvalue').innerHTML = globalcolorprecision;
+    document.getElementById('colorprecision').value = globalcolorprecision;
 
-	globallayerdifference = config.layer_difference;
-	document.getElementById('layerdifferencevalue').innerHTML = globallayerdifference;
-	document.getElementById('layerdifference').value = globallayerdifference;
+    globallayerdifference = config.layer_difference;
+    document.getElementById('layerdifferencevalue').innerHTML = globallayerdifference;
+    document.getElementById('layerdifference').value = globallayerdifference;
 
 }
 
 // Choose template from gallery
 let chooseGalleryButtons = document.querySelectorAll('.galleryitem a');
 chooseGalleryButtons.forEach(item => {
-	item.addEventListener('click', function (e) {
-		// Load preset template config
-		let i = Array.prototype.indexOf.call(chooseGalleryButtons, item);
-		if (presetConfigs.length > i) {
-			loadConfig(presetConfigs[i]);
-		}
+    item.addEventListener('click', function (e) {
+        // Load preset template config
+        let i = Array.prototype.indexOf.call(chooseGalleryButtons, item);
+        if (presetConfigs.length > i) {
+            loadConfig(presetConfigs[i]);
+        }
 
-		// Set source as specified
-		setSourceAndRestart(this.firstElementChild.src);
-	});
+        // Set source as specified
+        setSourceAndRestart(this.firstElementChild.src);
+    });
 });
 
 // Upload button
@@ -272,6 +281,16 @@ document.getElementById('clustering-color').addEventListener('click', function (
     restart();
 }, false);
 
+document.getElementById('clustering-cutout').addEventListener('click', function (e) {
+    clustering_hierarchical = 'cutout';
+    restart();
+}, false);
+
+document.getElementById('clustering-stacked').addEventListener('click', function (e) {
+    clustering_hierarchical = 'stacked';
+    restart();
+}, false);
+
 document.getElementById('filterspeckle').addEventListener('change', function (e) {
     globalfilterspeckle = parseInt(this.value);
     document.getElementById('filterspecklevalue').innerHTML = this.value;
@@ -352,6 +371,10 @@ function restart() {
         el.style.display = clustering_mode == 'color' ? '' : 'none';
     });
 
+    document.getElementById('clustering-cutout').classList.remove('selected');
+    document.getElementById('clustering-stacked').classList.remove('selected');
+    document.getElementById('clustering-' + clustering_hierarchical).classList.add('selected');
+
     document.getElementById('none').classList.remove('selected');
     document.getElementById('polygon').classList.remove('selected');
     document.getElementById('spline').classList.remove('selected');
@@ -373,6 +396,7 @@ function restart() {
         'svg_id': svg.id,
         'mode': mode,
         'clustering_mode': clustering_mode,
+        'hierarchical': clustering_hierarchical,
         'corner_threshold': deg2rad(globalcorner),
         'length_threshold': globallength,
         'max_iterations': 10,
