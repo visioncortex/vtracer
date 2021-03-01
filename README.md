@@ -39,31 +39,35 @@ VTracer and its [core library](//github.com/visioncortex/visioncortex) is implem
 ![screenshot](docs/images/screenshot-02.png)
 
 ## Command Line
-```
-visioncortex VTracer                                                                                                      
-A cmd app to convert images into vector graphics.                                                                         
-                                                                                                                          
-USAGE:                                                                                                                    
-    vtracer [OPTIONS] --input <input> --output <output>                                                                   
-                                                                                                                          
-FLAGS:                                                                                                                    
-    -h, --help       Prints help information                                                                              
-    -V, --version    Prints version information                                                                           
-                                                                                                                          
-OPTIONS:                                                                                                                  
-        --colormode <color_mode>                 True color image `color` (default) or Binary image `bw`                  
-    -p, --color_precision <color_precision>      Number of significant bits to use in an RGB channel                      
-    -c, --corner_threshold <corner_threshold>    Minimum momentary angle (degree) to be considered a corner               
-    -f, --filter_speckle <filter_speckle>        Discard patches smaller than X px in size                                
-    -g, --gradient_step <gradient_step>          Color difference between gradient layers                                 
-    -i, --input <input>                          Path to input raster image                                               
-    -m, --mode <mode>                            Curver fitting mode `pixel`, `polygon`, `spline`                         
-    -o, --output <output>                        Path to output vector graphics                                           
-        --preset <preset>                        Use one of the preset configs `bw`, `poster`, `photo`                    
-    -l, --segment_length <segment_length>                                                                                 
-            Perform iterative subdivide smooth until all segments are shorter than this length                            
-                                                                                                                          
-    -s, --splice_threshold <splice_threshold>    Minimum angle displacement (degree) to splice a spline                   
+
+```sh
+visioncortex VTracer 0.3.0
+A cmd app to convert images into vector graphics.
+
+USAGE:
+    vtracer [OPTIONS] --input <input> --output <output>
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+OPTIONS:
+        --colormode <color_mode>                 True color image `color` (default) or Binary image `bw`
+    -p, --color_precision <color_precision>      Number of significant bits to use in an RGB channel
+    -c, --corner_threshold <corner_threshold>    Minimum momentary angle (degree) to be considered a corner
+    -f, --filter_speckle <filter_speckle>        Discard patches smaller than X px in size
+    -g, --gradient_step <gradient_step>          Color difference between gradient layers
+        --hierarchical <hierarchical>
+            Hierarchical clustering `stacked` (default) or non-stacked `cutout`. Only applies to color mode.
+
+    -i, --input <input>                          Path to input raster image
+    -m, --mode <mode>                            Curver fitting mode `pixel`, `polygon`, `spline`
+    -o, --output <output>                        Path to output vector graphics
+        --preset <preset>                        Use one of the preset configs `bw`, `poster`, `photo`
+    -l, --segment_length <segment_length>
+            Perform iterative subdivide smooth until all segments are shorter than this length
+
+    -s, --splice_threshold <splice_threshold>    Minimum angle displacement (degree) to splice a spline
 ```
 
 ### Usage
