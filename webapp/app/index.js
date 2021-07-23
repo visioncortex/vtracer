@@ -52,6 +52,7 @@ var presetConfigs = [
         clustering_hierarchical: 'stacked',
         filter_speckle: 4,
         color_precision: 6,
+        path_precision: 8,
         layer_difference: 16,
         mode: 'spline',
         corner_threshold: 60,
@@ -66,6 +67,7 @@ var presetConfigs = [
         clustering_hierarchical: 'stacked',
         filter_speckle: 4,
         color_precision: 8,
+        path_precision: 8,
         layer_difference: 25,
         mode: 'spline',
         corner_threshold: 60,
@@ -77,9 +79,10 @@ var presetConfigs = [
     {
         src: 'assets/samples/Gum Tree Vector.jpg',
         clustering_mode: 'color',
-        clustering_hierarchical: 'cutout',
+        clustering_hierarchical: 'stacked',
         filter_speckle: 4,
         color_precision: 8,
+        path_precision: 8,
         layer_difference: 28,
         mode: 'spline',
         corner_threshold: 60,
@@ -94,6 +97,7 @@ var presetConfigs = [
         clustering_hierarchical: 'stacked',
         filter_speckle: 8,
         color_precision: 7,
+        path_precision: 8,
         layer_difference: 64,
         mode: 'spline',
         corner_threshold: 60,
@@ -108,6 +112,7 @@ var presetConfigs = [
         clustering_hierarchical: 'stacked',
         filter_speckle: 10,
         color_precision: 8,
+        path_precision: 8,
         layer_difference: 48,
         mode: 'spline',
         corner_threshold: 180,
@@ -122,6 +127,7 @@ var presetConfigs = [
         clustering_hierarchical: 'stacked',
         filter_speckle: 0,
         color_precision: 8,
+        path_precision: 8,
         layer_difference: 0,
         mode: 'none',
         corner_threshold: 180,
@@ -178,6 +184,9 @@ function loadConfig(config) {
     document.getElementById('layerdifferencevalue').innerHTML = globallayerdifference;
     document.getElementById('layerdifference').value = globallayerdifference;
 
+    globalpathprecision = config.path_precision;
+    document.getElementById('pathprecisionvalue').innerHTML = globalpathprecision;
+    document.getElementById('pathprecision').value = globalpathprecision;
 }
 
 // Choose template from gallery
@@ -244,7 +253,8 @@ var globalcorner = parseInt(document.getElementById('corner').value),
     globalsplice = parseInt(document.getElementById('splice').value),
     globalfilterspeckle = parseInt(document.getElementById('filterspeckle').value),
     globalcolorprecision = parseInt(document.getElementById('colorprecision').value),
-    globallayerdifference = parseInt(document.getElementById('layerdifference').value);
+    globallayerdifference = parseInt(document.getElementById('layerdifference').value),
+    globalpathprecision = parseInt(document.getElementById('pathprecision').value);
 
 // Load past inputs from localStorage
 /*
@@ -327,6 +337,12 @@ document.getElementById('splice').addEventListener('change', function (e) {
     restart();
 });
 
+document.getElementById('pathprecision').addEventListener('change', function (e) {
+    globalpathprecision = parseInt(this.value);
+    document.getElementById('pathprecisionvalue').innerHTML = this.value;
+    restart();
+});
+
 // Save inputs before unloading
 /*
 window.addEventListener('beforeunload', function () {
@@ -404,6 +420,7 @@ function restart() {
         'filter_speckle': globalfilterspeckle*globalfilterspeckle,
         'color_precision': 8-globalcolorprecision,
         'layer_difference': globallayerdifference,
+        'path_precision': globalpathprecision,
     });
     if (runner) {
         runner.stop();

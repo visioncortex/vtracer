@@ -21,6 +21,7 @@ pub struct ColorImageConverterParams {
     pub filter_speckle: usize,
     pub color_precision: i32,
     pub layer_difference: i32,
+    pub path_precision: u32,
 }
 
 #[wasm_bindgen]
@@ -137,6 +138,7 @@ impl ColorImageConverter {
                     self.svg.prepend_path(
                         &paths,
                         &cluster.residue_color(),
+                        Some(self.params.path_precision),
                     );
                     self.counter += 1;
                     false

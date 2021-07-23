@@ -33,6 +33,7 @@ pub struct Config {
     pub length_threshold: f64,
     pub max_iterations: usize,
     pub splice_threshold: i32,
+    pub path_precision: Option<u32>,
 }
 
 pub(crate) struct ConverterConfig {
@@ -48,6 +49,7 @@ pub(crate) struct ConverterConfig {
     pub length_threshold: f64,
     pub max_iterations: usize,
     pub splice_threshold: f64,
+    pub path_precision: Option<u32>,
 }
 
 impl Default for Config {
@@ -65,6 +67,7 @@ impl Default for Config {
             length_threshold: 4.0,
             splice_threshold: 45,
             max_iterations: 10,
+            path_precision: Some(8),
         }
     }
 }
@@ -194,6 +197,11 @@ impl Config {
             .takes_value(true)
             .help("Curver fitting mode `pixel`, `polygon`, `spline`"));
 
+        let app = app.arg(Arg::with_name("path_precision")
+            .long("path_precision")
+            .takes_value(true)
+            .help("Number of deciaml places to use in path string"));
+
         // Extract matches
         let matches = app.get_matches();
 
@@ -225,7 +233,7 @@ impl Config {
             } else if value == "spline" {
                 "spline"
             } else {
-                panic!("Parser Error: Curve fitting mode is invalid with value {}", value);
+                panic!("Parser Error: Curve fitting mode is invalid: {}", value);
             });
         }
 
@@ -237,7 +245,7 @@ impl Config {
                 }
                 config.filter_speckle = value;
             } else {
-                panic!("Parser Error: Filter speckle is not a positive integer with value {}.", value);
+                panic!("Parser Error: Filter speckle is not a positive integer: {}.", value);
             }
         }
 
@@ -249,7 +257,7 @@ impl Config {
                 }
                 config.color_precision = value;
             } else {
-                panic!("Parser Error: Color precision is not an integer with value {}.", value);
+                panic!("Parser Error: Color precision is not an integer: {}.", value);
             }
         }
 
@@ -261,7 +269,7 @@ impl Config {
                 }
                 config.layer_difference = value;
             } else {
-                panic!("Parser Error: Gradient step is not an integer with value {}.", value);
+                panic!("Parser Error: Gradient step is not an integer: {}.", value);
             }
         }
 
@@ -273,7 +281,7 @@ impl Config {
                 }
                 config.corner_threshold = value
             } else {
-                panic!("Parser Error: Corner threshold is not numeric with value {}.", value);
+                panic!("Parser Error: Corner threshold is not numeric: {}.", value);
             }
         }
 
@@ -285,7 +293,7 @@ impl Config {
                 }
                 config.length_threshold = value;
             } else {
-                panic!("Parser Error: Segment length is not numeric with value {}.", value);
+                panic!("Parser Error: Segment length is not numeric: {}.", value);
             }
         }
 
@@ -297,7 +305,16 @@ impl Config {
                 }
                 config.splice_threshold = value;
             } else {
-                panic!("Parser Error: Segment length is not numeric with value {}.", value);
+                panic!("Parser Error: Segment length is not numeric: {}.", value);
+            }
+        }
+
+        if let Some(value) = matches.value_of("path_precision") {
+            if value.trim().parse::<u32>().is_ok() { // is numeric
+                let value = value.trim().parse::<u32>().ok();
+                config.path_precision = value;
+            } else {
+                panic!("Parser Error: Path precision is not an unsigned integer: {}.", value);
             }
         }
 
@@ -321,6 +338,7 @@ impl Config {
                 length_threshold: 4.0,
                 max_iterations: 10,
                 splice_threshold: 45,
+                path_precision: Some(8),
             },
             Preset::Poster => Self {
                 input_path,
@@ -335,6 +353,7 @@ impl Config {
                 length_threshold: 4.0,
                 max_iterations: 10,
                 splice_threshold: 45,
+                path_precision: Some(8),
             },
             Preset::Photo => Self {
                 input_path,
@@ -349,6 +368,7 @@ impl Config {
                 length_threshold: 4.0,
                 max_iterations: 10,
                 splice_threshold: 45,
+                path_precision: Some(8),
             }
         }
     }
@@ -367,6 +387,7 @@ impl Config {
             length_threshold: self.length_threshold,
             max_iterations: self.max_iterations,
             splice_threshold: deg2rad(self.splice_threshold),
+            path_precision: self.path_precision,
         }
     }
 }

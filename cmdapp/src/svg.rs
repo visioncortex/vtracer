@@ -10,6 +10,7 @@ pub struct SvgFile {
 pub struct SvgPath {
     pub path: CompoundPath,
     pub color: Color,
+    pub path_precision: Option<u32>,
 }
 
 impl SvgFile {
@@ -21,10 +22,11 @@ impl SvgFile {
         }
     }
 
-    pub fn add_path(&mut self, path: CompoundPath, color: Color) {
+    pub fn add_path(&mut self, path: CompoundPath, color: Color, path_precision: Option<u32>) {
         self.paths.push(SvgPath {
             path,
             color,
+            path_precision,
         })
     }
 }
@@ -47,7 +49,7 @@ impl fmt::Display for SvgFile {
 
 impl fmt::Display for SvgPath {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let (string, offset) = self.path.to_svg_string(true, PointF64::default());
+        let (string, offset) = self.path.to_svg_string(true, PointF64::default(), self.path_precision);
         writeln!(
             f, "<path d=\"{}\" fill=\"{}\" transform=\"translate({},{})\"/>",
             string, self.color.to_hex_string(),

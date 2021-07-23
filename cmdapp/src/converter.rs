@@ -74,7 +74,7 @@ fn color_image_to_svg(config: ConverterConfig) -> Result<(), String> {
             config.max_iterations,
             config.splice_threshold
         );
-        svg.add_path(paths, cluster.residue_color());
+        svg.add_path(paths, cluster.residue_color(), config.path_precision);
     }
 
     write_svg(svg, config.output_path)
@@ -106,7 +106,7 @@ fn binary_image_to_svg(config: ConverterConfig) -> Result<(), String> {
                 config.max_iterations,
                 config.splice_threshold,
             );
-            svg.add_path(paths, Color::color(&ColorName::Black));
+            svg.add_path(paths, Color::color(&ColorName::Black), config.path_precision);
         }
     }
 

@@ -13,11 +13,11 @@ impl Svg {
         Self { element }
     }
 
-    pub fn prepend_path(&mut self, paths: &CompoundPath, color: &Color) {
+    pub fn prepend_path(&mut self, paths: &CompoundPath, color: &Color, precision: Option<u32>) {
         let path = document()
             .create_element_ns(Some("http://www.w3.org/2000/svg"), "path")
             .unwrap();
-        let (string, offset) = paths.to_svg_string(true, PointF64::default());
+        let (string, offset) = paths.to_svg_string(true, PointF64::default(), precision);
         path.set_attribute("d", &string).unwrap();
         path.set_attribute(
             "transform",

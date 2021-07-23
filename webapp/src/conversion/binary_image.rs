@@ -17,6 +17,7 @@ pub struct BinaryImageConverterParams {
     pub max_iterations: usize,
     pub splice_threshold: f64,
     pub filter_speckle: usize,
+    pub path_precision: u32,
 }
 
 #[wasm_bindgen]
@@ -80,6 +81,7 @@ impl BinaryImageConverter {
                 self.svg.prepend_path(
                     &paths,
                     &color,
+                    Some(self.params.path_precision),
                 );
             }
             self.counter += 1;
