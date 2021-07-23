@@ -41,7 +41,7 @@ VTracer and its [core library](//github.com/visioncortex/visioncortex) is implem
 ## Command Line
 
 ```sh
-visioncortex VTracer 0.3.0
+visioncortex VTracer 0.4.0
 A cmd app to convert images into vector graphics.
 
 USAGE:
@@ -63,6 +63,7 @@ OPTIONS:
     -i, --input <input>                          Path to input raster image
     -m, --mode <mode>                            Curver fitting mode `pixel`, `polygon`, `spline`
     -o, --output <output>                        Path to output vector graphics
+        --path_precision <path_precision>        Number of deciaml places to use in path string
         --preset <preset>                        Use one of the preset configs `bw`, `poster`, `photo`
     -l, --segment_length <segment_length>
             Perform iterative subdivide smooth until all segments are shorter than this length
