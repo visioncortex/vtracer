@@ -22,7 +22,7 @@
 
 visioncortex VTracer is an open source software to convert raster images (like jpg & png) into vector graphics (svg). It can vectorize graphics and photographs and trace the curves to output compact vector files.
 
-Comparing to [Potrace]() which only accept binarized inputs (Black & White pixmap), VTracer has an image processing pipeline which can handle colored high resolution scans.
+Comparing to [Potrace](http://potrace.sourceforge.net/) which only accept binarized inputs (Black & White pixmap), VTracer has an image processing pipeline which can handle colored high resolution scans.
 
 Comparing to Adobe Illustrator's Live Trace, VTracer's output is much more compact (less shapes) as we adopt a stacking strategy and avoid producing shapes with holes.
 
