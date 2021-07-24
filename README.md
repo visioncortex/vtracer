@@ -24,7 +24,7 @@ visioncortex VTracer is an open source software to convert raster images (like j
 
 Comparing to [Potrace](http://potrace.sourceforge.net/) which only accept binarized inputs (Black & White pixmap), VTracer has an image processing pipeline which can handle colored high resolution scans.
 
-Comparing to Adobe Illustrator's Live Trace, VTracer's output is much more compact (less shapes) as we adopt a stacking strategy and avoid producing shapes with holes.
+Comparing to Adobe Illustrator's [Image Trace](https://helpx.adobe.com/illustrator/using/image-trace.html), VTracer's output is much more compact (less shapes) as we adopt a stacking strategy and avoid producing shapes with holes.
 
 VTracer is originally designed for processing high resolution scans of historic blueprints up to gigapixels. At the same time, VTracer can also handle low resolution pixel art, simulating `image-rendering: pixelated` for retro game artworks.
 
@@ -32,13 +32,13 @@ A technical description of the algorithm is on [visioncortex.org/vtracer-docs](/
 
 ## Web App
 
-VTracer and its [core library](//github.com/visioncortex/visioncortex) is implemented in [Rust](//www.rust-lang.org/). It provides us a solid foundation to develop robust and efficient algorithms and easily bring it to interactive applications. The webapp is a perfect showcase of the capability of the Rust + HTML5 platform.
+VTracer and its [core library](//github.com/visioncortex/visioncortex) is implemented in [Rust](//www.rust-lang.org/). It provides us a solid foundation to develop robust and efficient algorithms and easily bring it to interactive applications. The webapp is a perfect showcase of the capability of the Rust + wasm platform.
 
 ![screenshot](docs/images/screenshot-01.png)
 
 ![screenshot](docs/images/screenshot-02.png)
 
-## Command Line
+## Cmd App
 
 ```sh
 visioncortex VTracer 0.4.0
@@ -78,9 +78,9 @@ OPTIONS:
 
 ## Library
 
-The library can be found on [crates.io/vtracer](//crates.io/crates/vtracer).
+The library can be found on [crates.io/vtracer](//crates.io/crates/vtracer) and [crates.io/vtracer-webapp](//crates.io/crates/vtracer-webapp).
 
-### Install
+## Install
 ```
-vtracer = "*"
+cargo install vtracer
 ```
