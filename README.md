@@ -8,7 +8,7 @@
   </p>
 
   <h3>
-    <a href="//www.visioncortex.org/vtracer-docs">Document</a>
+    <a href="//www.visioncortex.org/vtracer-docs">Article</a>
     <span> | </span>
     <a href="//www.visioncortex.org/vtracer/">Demo</a>
     <span> | </span>
