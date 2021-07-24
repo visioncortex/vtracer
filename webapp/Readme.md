@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="https://github.com/visioncortex/vtracer/raw/master/docs/images/visioncortex-banner.png">
+</div>
+
 # visioncortex VTracer
 
 A web app to convert raster images into vector graphics.
