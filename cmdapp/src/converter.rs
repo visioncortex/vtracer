@@ -62,7 +62,7 @@ fn color_image_to_svg(config: ConverterConfig) -> Result<(), String> {
 
     let view = clusters.view();
 
-    let mut svg = SvgFile::new(width, height);
+    let mut svg = SvgFile::new(width, height, config.path_precision);
     for &cluster_index in view.clusters_output.iter().rev() {
         let cluster = view.get_cluster(cluster_index);
         let paths = cluster.to_compound_path(
@@ -74,7 +74,7 @@ fn color_image_to_svg(config: ConverterConfig) -> Result<(), String> {
             config.max_iterations,
             config.splice_threshold
         );
-        svg.add_path(paths, cluster.residue_color(), config.path_precision);
+        svg.add_path(paths, cluster.residue_color());
     }
 
     write_svg(svg, config.output_path)
@@ -95,7 +95,7 @@ fn binary_image_to_svg(config: ConverterConfig) -> Result<(), String> {
 
     let clusters = img.to_clusters(false);
 
-    let mut svg = SvgFile::new(width, height);
+    let mut svg = SvgFile::new(width, height, config.path_precision);
     for i in 0..clusters.len() {
         let cluster = clusters.get_cluster(i);
         if cluster.size() >= config.filter_speckle_area {
@@ -106,7 +106,7 @@ fn binary_image_to_svg(config: ConverterConfig) -> Result<(), String> {
                 config.max_iterations,
                 config.splice_threshold,
             );
-            svg.add_path(paths, Color::color(&ColorName::Black), config.path_precision);
+            svg.add_path(paths, Color::color(&ColorName::Black));
         }
     }
 

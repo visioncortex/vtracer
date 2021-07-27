@@ -5,28 +5,28 @@ pub struct SvgFile {
     pub paths: Vec<SvgPath>,
     pub width: usize,
     pub height: usize,
+    pub path_precision: Option<u32>,
 }
 
 pub struct SvgPath {
     pub path: CompoundPath,
     pub color: Color,
-    pub path_precision: Option<u32>,
 }
 
 impl SvgFile {
-    pub fn new(width: usize, height: usize) -> Self {
+    pub fn new(width: usize, height: usize, path_precision: Option<u32>) -> Self {
         SvgFile {
             paths: vec![],
             width,
             height,
+            path_precision,
         }
     }
 
-    pub fn add_path(&mut self, path: CompoundPath, color: Color, path_precision: Option<u32>) {
+    pub fn add_path(&mut self, path: CompoundPath, color: Color) {
         self.paths.push(SvgPath {
             path,
             color,
-            path_precision,
         })
     }
 }
@@ -40,7 +40,7 @@ impl fmt::Display for SvgFile {
         )?;
 
         for path in &self.paths {
-            path.fmt(f)?;
+            path.fmt_with_precision(f, self.path_precision)?;
         };
 
         writeln!(f, "</svg>")
@@ -49,7 +49,13 @@ impl fmt::Display for SvgFile {
 
 impl fmt::Display for SvgPath {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let (string, offset) = self.path.to_svg_string(true, PointF64::default(), self.path_precision);
+        self.fmt_with_precision(f, None)
+    }
+}
+
+impl SvgPath {
+    fn fmt_with_precision(&self, f: &mut fmt::Formatter, precision: Option<u32>) -> fmt::Result {
+        let (string, offset) = self.path.to_svg_string(true, PointF64::default(), precision);
         writeln!(
             f, "<path d=\"{}\" fill=\"{}\" transform=\"translate({},{})\"/>",
             string, self.color.to_hex_string(),
