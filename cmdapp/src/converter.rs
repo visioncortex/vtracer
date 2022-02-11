@@ -116,7 +116,7 @@ fn binary_image_to_svg(config: ConverterConfig) -> Result<(), String> {
 fn read_image(input_path: PathBuf) -> Result<(ColorImage, usize, usize), String> {
     let img = image::open(input_path);
     let img = match img {
-        Ok(file) => file.to_rgba(),
+        Ok(file) => file.to_rgba8(),
         Err(_) => return Err(String::from("No image file found at specified input path")),
     };
 
