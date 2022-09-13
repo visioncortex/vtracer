@@ -2,9 +2,11 @@ use std::path::PathBuf;
 use std::{fs::File, io::Write};
 
 use visioncortex::{Color, ColorImage, ColorName};
-use visioncortex::color_clusters::{Runner, RunnerConfig, HIERARCHICAL_MAX};
+use visioncortex::color_clusters::{Runner, RunnerConfig, KeyingAction, HIERARCHICAL_MAX};
 use super::config::{Config, ColorMode, Hierarchical, ConverterConfig};
 use super::svg::SvgFile;
+
+const NUM_UNUSED_COLOR_ITERATIONS: usize = 300;
 
 /// Convert an image file into svg file
 pub fn convert_image_to_svg(config: Config) -> Result<(), String> {
@@ -15,8 +17,41 @@ pub fn convert_image_to_svg(config: Config) -> Result<(), String> {
     }
 }
 
+fn color_exists_in_image(img: &ColorImage, color: Color) -> bool {
+    for y in 0..img.height {
+        for x in 0..img.width {
+            let pixel_color = img.get_pixel(x, y);
+            if pixel_color.r == color.r && pixel_color.g == color.g && pixel_color.b == color.b {
+                return true
+            }
+        }
+    }
+    false
+}
+
+fn find_unused_color_in_image(img: &ColorImage) -> Result<Color, String> {
+    let special_colors = IntoIterator::into_iter([
+        Color::new(255, 0, 0),
+        Color::new(0, 255, 0),
+        Color::new(0, 0, 255)
+    ]);
+    let random_colors = (0..NUM_UNUSED_COLOR_ITERATIONS).map(|_| {
+        Color::new(
+            rand::random(),
+            rand::random(),
+            rand::random(),
+        )
+    });
+    for color in special_colors.chain(random_colors) {
+        if !color_exists_in_image(img, color) {
+            return Ok(color);
+        }
+    }
+    Err(String::from("unable to find unused color in image to use as key"))
+}
+
 fn color_image_to_svg(config: ConverterConfig) -> Result<(), String> {
-    let (img, width, height);
+    let (mut img, width, height);
     match read_image(config.input_path) {
         Ok(values) => {
             img = values.0;
@@ -24,6 +59,15 @@ fn color_image_to_svg(config: ConverterConfig) -> Result<(), String> {
             height = values.2;
         },
         Err(msg) => return Err(msg),
+    }
+
+    let key_color = find_unused_color_in_image(&img)?;
+    for y in 0..height {
+        for x in 0..width {
+            if img.get_pixel(x, y).a == 0 {
+                img.set_pixel(x, y, &key_color);
+            }
+        }
     }
 
     let runner = Runner::new(RunnerConfig {
@@ -36,6 +80,12 @@ fn color_image_to_svg(config: ConverterConfig) -> Result<(), String> {
         is_same_color_b: 1,
         deepen_diff: config.layer_difference,
         hollow_neighbours: 1,
+        key_color,
+        keying_action: if matches!(config.hierarchical, Hierarchical::Cutout) {
+            KeyingAction::Keep
+        } else {
+            KeyingAction::Discard
+        },
     }, img);
 
     let mut clusters = runner.run();
@@ -55,6 +105,8 @@ fn color_image_to_svg(config: ConverterConfig) -> Result<(), String> {
                 is_same_color_b: 1,
                 deepen_diff: 0,
                 hollow_neighbours: 0,
+                key_color,
+                keying_action: KeyingAction::Discard,
             }, image);
             clusters = runner.run();
         },
@@ -65,16 +117,18 @@ fn color_image_to_svg(config: ConverterConfig) -> Result<(), String> {
     let mut svg = SvgFile::new(width, height, config.path_precision);
     for &cluster_index in view.clusters_output.iter().rev() {
         let cluster = view.get_cluster(cluster_index);
-        let paths = cluster.to_compound_path(
-            &view,
-            false,
-            config.mode,
-            config.corner_threshold,
-            config.length_threshold,
-            config.max_iterations,
-            config.splice_threshold
-        );
-        svg.add_path(paths, cluster.residue_color());
+        if cluster.color() != key_color {
+            let paths = cluster.to_compound_path(
+                &view,
+                false,
+                config.mode,
+                config.corner_threshold,
+                config.length_threshold,
+                config.max_iterations,
+                config.splice_threshold
+            );
+            svg.add_path(paths, cluster.residue_color());
+        }
     }
 
     write_svg(svg, config.output_path)
