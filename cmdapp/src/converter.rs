@@ -8,6 +8,9 @@ use super::config::{Config, ColorMode, Hierarchical, ConverterConfig};
 use super::svg::SvgFile;
 
 const NUM_UNUSED_COLOR_ITERATIONS: usize = 6;
+/// The fraction of pixels in the top/bottom rows of the image that need to be transparent before
+/// the entire image will be keyed.
+const KEYING_THRESHOLD: f32 = 0.2;
 
 /// Convert an image file into svg file
 pub fn convert_image_to_svg(config: Config) -> Result<(), String> {
@@ -52,6 +55,31 @@ fn find_unused_color_in_image(img: &ColorImage) -> Result<Color, String> {
     Err(String::from("unable to find unused color in image to use as key"))
 }
 
+fn should_key_image(img: &ColorImage) -> bool {
+    // Avoid potential integer underflow
+    if img.height == 0 {
+        return false;
+    }
+
+    // Check boundary pixels (top and bottom rows) for transparency.
+    let threshold = ((img.width * 2) as f32 * KEYING_THRESHOLD) as usize;
+    let mut num_transparent_boundary_pixels = 0;
+    for x in 0..img.width {
+        if img.get_pixel(x, 0).a == 0 {
+            num_transparent_boundary_pixels += 1;
+        }
+        if img.get_pixel(x, img.height - 1).a == 0 {
+            num_transparent_boundary_pixels += 1;
+        }
+
+        if num_transparent_boundary_pixels >= threshold {
+            return true;
+        }
+    }
+
+    false
+}
+
 fn color_image_to_svg(config: ConverterConfig) -> Result<(), String> {
     let (mut img, width, height);
     match read_image(config.input_path) {
@@ -63,14 +91,20 @@ fn color_image_to_svg(config: ConverterConfig) -> Result<(), String> {
         Err(msg) => return Err(msg),
     }
 
-    let key_color = find_unused_color_in_image(&img)?;
-    for y in 0..height {
-        for x in 0..width {
-            if img.get_pixel(x, y).a == 0 {
-                img.set_pixel(x, y, &key_color);
+    let key_color = if should_key_image(&img) {
+        let key_color = find_unused_color_in_image(&img)?;
+        for y in 0..height {
+            for x in 0..width {
+                if img.get_pixel(x, y).a == 0 {
+                    img.set_pixel(x, y, &key_color);
+                }
             }
         }
-    }
+        key_color
+    } else {
+        // The default color is all zeroes, which is treated by visioncortex as a special value meaning no keying will be applied.
+        Color::default()
+    };
 
     let runner = Runner::new(RunnerConfig {
         diagonal: config.layer_difference == 0,
