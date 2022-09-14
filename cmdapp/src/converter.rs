@@ -35,9 +35,12 @@ fn color_exists_in_image(img: &ColorImage, color: Color) -> bool {
 
 fn find_unused_color_in_image(img: &ColorImage) -> Result<Color, String> {
     let special_colors = IntoIterator::into_iter([
-        Color::new(255, 0, 0),
-        Color::new(0, 255, 0),
-        Color::new(0, 0, 255)
+        Color::new(255, 0,   0),
+        Color::new(0,   255, 0),
+        Color::new(0,   0,   255),
+        Color::new(255, 255, 0),
+        Color::new(0,   255, 255),
+        Color::new(255, 0,   255),
     ]);
     let rng = Rng::new();
     let random_colors = (0..NUM_UNUSED_COLOR_ITERATIONS).map(|_| {
