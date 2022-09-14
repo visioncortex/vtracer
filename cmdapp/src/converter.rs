@@ -7,7 +7,7 @@ use visioncortex::color_clusters::{Runner, RunnerConfig, KeyingAction, HIERARCHI
 use super::config::{Config, ColorMode, Hierarchical, ConverterConfig};
 use super::svg::SvgFile;
 
-const NUM_UNUSED_COLOR_ITERATIONS: usize = 300;
+const NUM_UNUSED_COLOR_ITERATIONS: usize = 6;
 
 /// Convert an image file into svg file
 pub fn convert_image_to_svg(config: Config) -> Result<(), String> {
