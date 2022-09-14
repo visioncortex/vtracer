@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 use std::{fs::File, io::Write};
 
+use fastrand::Rng;
 use visioncortex::{Color, ColorImage, ColorName};
 use visioncortex::color_clusters::{Runner, RunnerConfig, KeyingAction, HIERARCHICAL_MAX};
 use super::config::{Config, ColorMode, Hierarchical, ConverterConfig};
@@ -35,11 +36,12 @@ fn find_unused_color_in_image(img: &ColorImage) -> Result<Color, String> {
         Color::new(0, 255, 0),
         Color::new(0, 0, 255)
     ]);
+    let rng = Rng::new();
     let random_colors = (0..NUM_UNUSED_COLOR_ITERATIONS).map(|_| {
         Color::new(
-            rand::random(),
-            rand::random(),
-            rand::random(),
+            rng.u8(..),
+            rng.u8(..),
+            rng.u8(..),
         )
     });
     for color in special_colors.chain(random_colors) {
