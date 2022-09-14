@@ -13,5 +13,5 @@ keywords = ["svg", "computer-graphics"]
 [dependencies]
 clap = "2.33.3"
 image = "0.23.10"
-visioncortex = "0.7.0"
+visioncortex = { version = "0.7.0", git = "https://github.com/visioncortex/visioncortex" }
 rand = "0.8"
