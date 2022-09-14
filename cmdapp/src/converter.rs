@@ -117,18 +117,16 @@ fn color_image_to_svg(config: ConverterConfig) -> Result<(), String> {
     let mut svg = SvgFile::new(width, height, config.path_precision);
     for &cluster_index in view.clusters_output.iter().rev() {
         let cluster = view.get_cluster(cluster_index);
-        if cluster.color() != key_color {
-            let paths = cluster.to_compound_path(
-                &view,
-                false,
-                config.mode,
-                config.corner_threshold,
-                config.length_threshold,
-                config.max_iterations,
-                config.splice_threshold
-            );
-            svg.add_path(paths, cluster.residue_color());
-        }
+        let paths = cluster.to_compound_path(
+            &view,
+            false,
+            config.mode,
+            config.corner_threshold,
+            config.length_threshold,
+            config.max_iterations,
+            config.splice_threshold
+        );
+        svg.add_path(paths, cluster.residue_color());
     }
 
     write_svg(svg, config.output_path)
