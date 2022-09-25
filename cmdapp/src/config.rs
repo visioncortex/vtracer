@@ -200,7 +200,7 @@ impl Config {
         let app = app.arg(Arg::with_name("path_precision")
             .long("path_precision")
             .takes_value(true)
-            .help("Number of deciaml places to use in path string"));
+            .help("Number of decimal places to use in path string"));
 
         // Extract matches
         let matches = app.get_matches();
