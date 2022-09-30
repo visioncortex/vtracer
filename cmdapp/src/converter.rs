@@ -59,12 +59,11 @@ fn find_unused_color_in_image(img: &ColorImage) -> Result<Color, String> {
 }
 
 fn should_key_image(img: &ColorImage) -> bool {
-    // Avoid potential integer underflow
-    if img.height == 0 {
+    if img.width == 0 || img.height == 0 {
         return false;
     }
 
-    // Check boundary pixels (top and bottom rows) for transparency.
+    // Check for transparency in top and bottom rows of pixels
     let threshold = ((img.width * 2) as f32 * KEYING_THRESHOLD) as usize;
     let mut num_transparent_boundary_pixels = 0;
     for x in 0..img.width {
@@ -77,6 +76,17 @@ fn should_key_image(img: &ColorImage) -> bool {
 
         if num_transparent_boundary_pixels >= threshold {
             return true;
+        }
+    }
+
+    // Check for transparency in some inner pixels
+    let x_positions = [img.width / 4, img.width / 2, 3 * img.width / 4];
+    let y_positions = [img.height / 4, img.height / 2, 3 * img.height / 4];
+    for x in x_positions {
+        for y in y_positions {
+            if img.get_pixel(x, y).a == 0 {
+                return true;
+            }
         }
     }
 
