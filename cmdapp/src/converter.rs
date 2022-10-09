@@ -63,28 +63,16 @@ fn should_key_image(img: &ColorImage) -> bool {
         return false;
     }
 
-    // Check for transparency in top and bottom rows of pixels
+    // Check for transparency at several scanlines
     let threshold = ((img.width * 2) as f32 * KEYING_THRESHOLD) as usize;
     let mut num_transparent_boundary_pixels = 0;
-    for x in 0..img.width {
-        if img.get_pixel(x, 0).a == 0 {
-            num_transparent_boundary_pixels += 1;
-        }
-        if img.get_pixel(x, img.height - 1).a == 0 {
-            num_transparent_boundary_pixels += 1;
-        }
-
-        if num_transparent_boundary_pixels >= threshold {
-            return true;
-        }
-    }
-
-    // Check for transparency in some inner pixels
-    let x_positions = [img.width / 4, img.width / 2, 3 * img.width / 4];
-    let y_positions = [img.height / 4, img.height / 2, 3 * img.height / 4];
-    for x in x_positions {
-        for y in y_positions {
+    let y_positions = [0, img.height / 4, img.height / 2, 3 * img.height / 4, img.height - 1];
+    for y in y_positions {
+        for x in 0..img.width {
             if img.get_pixel(x, y).a == 0 {
+                num_transparent_boundary_pixels += 1;
+            }
+            if num_transparent_boundary_pixels >= threshold {
                 return true;
             }
         }
