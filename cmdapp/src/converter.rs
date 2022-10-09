@@ -1,10 +1,16 @@
 use std::path::PathBuf;
 use std::{fs::File, io::Write};
 
+use fastrand::Rng;
 use visioncortex::{Color, ColorImage, ColorName};
-use visioncortex::color_clusters::{Runner, RunnerConfig, HIERARCHICAL_MAX};
+use visioncortex::color_clusters::{Runner, RunnerConfig, KeyingAction, HIERARCHICAL_MAX};
 use super::config::{Config, ColorMode, Hierarchical, ConverterConfig};
 use super::svg::SvgFile;
+
+const NUM_UNUSED_COLOR_ITERATIONS: usize = 6;
+/// The fraction of pixels in the top/bottom rows of the image that need to be transparent before
+/// the entire image will be keyed.
+const KEYING_THRESHOLD: f32 = 0.2;
 
 /// Convert an image file into svg file
 pub fn convert_image_to_svg(config: Config) -> Result<(), String> {
@@ -15,8 +21,80 @@ pub fn convert_image_to_svg(config: Config) -> Result<(), String> {
     }
 }
 
+fn color_exists_in_image(img: &ColorImage, color: Color) -> bool {
+    for y in 0..img.height {
+        for x in 0..img.width {
+            let pixel_color = img.get_pixel(x, y);
+            if pixel_color.r == color.r && pixel_color.g == color.g && pixel_color.b == color.b {
+                return true
+            }
+        }
+    }
+    false
+}
+
+fn find_unused_color_in_image(img: &ColorImage) -> Result<Color, String> {
+    let special_colors = IntoIterator::into_iter([
+        Color::new(255, 0,   0),
+        Color::new(0,   255, 0),
+        Color::new(0,   0,   255),
+        Color::new(255, 255, 0),
+        Color::new(0,   255, 255),
+        Color::new(255, 0,   255),
+    ]);
+    let rng = Rng::new();
+    let random_colors = (0..NUM_UNUSED_COLOR_ITERATIONS).map(|_| {
+        Color::new(
+            rng.u8(..),
+            rng.u8(..),
+            rng.u8(..),
+        )
+    });
+    for color in special_colors.chain(random_colors) {
+        if !color_exists_in_image(img, color) {
+            return Ok(color);
+        }
+    }
+    Err(String::from("unable to find unused color in image to use as key"))
+}
+
+fn should_key_image(img: &ColorImage) -> bool {
+    if img.width == 0 || img.height == 0 {
+        return false;
+    }
+
+    // Check for transparency in top and bottom rows of pixels
+    let threshold = ((img.width * 2) as f32 * KEYING_THRESHOLD) as usize;
+    let mut num_transparent_boundary_pixels = 0;
+    for x in 0..img.width {
+        if img.get_pixel(x, 0).a == 0 {
+            num_transparent_boundary_pixels += 1;
+        }
+        if img.get_pixel(x, img.height - 1).a == 0 {
+            num_transparent_boundary_pixels += 1;
+        }
+
+        if num_transparent_boundary_pixels >= threshold {
+            return true;
+        }
+    }
+
+    // Check for transparency in some inner pixels
+    let x_positions = [img.width / 4, img.width / 2, 3 * img.width / 4];
+    let y_positions = [img.height / 4, img.height / 2, 3 * img.height / 4];
+    for x in x_positions {
+        for y in y_positions {
+            if img.get_pixel(x, y).a == 0 {
+                return true;
+            }
+        }
+    }
+
+    false
+}
+
 fn color_image_to_svg(config: ConverterConfig) -> Result<(), String> {
-    let (img, width, height);
+    let (mut img, width, height);
     match read_image(config.input_path) {
         Ok(values) => {
             img = values.0;
@@ -25,6 +103,21 @@ fn color_image_to_svg(config: ConverterConfig) -> Result<(), String> {
         },
         Err(msg) => return Err(msg),
     }
+
+    let key_color = if should_key_image(&img) {
+        let key_color = find_unused_color_in_image(&img)?;
+        for y in 0..height {
+            for x in 0..width {
+                if img.get_pixel(x, y).a == 0 {
+                    img.set_pixel(x, y, &key_color);
+                }
+            }
+        }
+        key_color
+    } else {
+        // The default color is all zeroes, which is treated by visioncortex as a special value meaning no keying will be applied.
+        Color::default()
+    };
 
     let runner = Runner::new(RunnerConfig {
         diagonal: config.layer_difference == 0,
@@ -36,6 +129,12 @@ fn color_image_to_svg(config: ConverterConfig) -> Result<(), String> {
         is_same_color_b: 1,
         deepen_diff: config.layer_difference,
         hollow_neighbours: 1,
+        key_color,
+        keying_action: if matches!(config.hierarchical, Hierarchical::Cutout) {
+            KeyingAction::Keep
+        } else {
+            KeyingAction::Discard
+        },
     }, img);
 
     let mut clusters = runner.run();
@@ -55,6 +154,8 @@ fn color_image_to_svg(config: ConverterConfig) -> Result<(), String> {
                 is_same_color_b: 1,
                 deepen_diff: 0,
                 hollow_neighbours: 0,
+                key_color,
+                keying_action: KeyingAction::Discard,
             }, image);
             clusters = runner.run();
         },
