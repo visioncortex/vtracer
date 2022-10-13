@@ -84,3 +84,17 @@ The library can be found on [crates.io/vtracer](//crates.io/crates/vtracer) and 
 ```
 cargo install vtracer
 ```
+
+## In the wild
+
+VTracer is used by the following products (feel free to add yours to the list):
+
+<table>
+  <tbody>
+    <tr>
+      <td><a href="https://filestar.com"><img src="docs/images/filestar-logo.svg" width="250"/></a></td>
+      <td></td>
+      <td></td>
+    </tr>
+  </tbody>
+</table>
