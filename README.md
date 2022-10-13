@@ -81,6 +81,13 @@ OPTIONS:
 The library can be found on [crates.io/vtracer](//crates.io/crates/vtracer) and [crates.io/vtracer-webapp](//crates.io/crates/vtracer-webapp).
 
 ## Install
+
+Download pre-built binaries from [Releases](https://github.com/visioncortex/vtracer/releases).
+
+or
+
+Install from source (Rust toolchain needed):
+
 ```
 cargo install vtracer
 ```
