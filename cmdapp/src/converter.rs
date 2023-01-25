@@ -13,7 +13,7 @@ const NUM_UNUSED_COLOR_ITERATIONS: usize = 6;
 const KEYING_THRESHOLD: f32 = 0.2;
 
 /// Convert an image file into svg file
-pub fn convert_image_to_svg(config: Config) -> Result<(), String> {
+pub fn convert_image_to_svg(config: Config) -> Result<String, String> {
     let config = config.into_converter_config();
     match config.color_mode {
         ColorMode::Color => color_image_to_svg(config),
@@ -81,7 +81,7 @@ fn should_key_image(img: &ColorImage) -> bool {
     false
 }
 
-fn color_image_to_svg(config: ConverterConfig) -> Result<(), String> {
+fn color_image_to_svg(config: ConverterConfig) -> Result<String, String> {
     let (mut img, width, height);
     match read_image(config.input_path) {
         Ok(values) => {
@@ -169,7 +169,7 @@ fn color_image_to_svg(config: ConverterConfig) -> Result<(), String> {
     write_svg(svg, config.output_path)
 }
 
-fn binary_image_to_svg(config: ConverterConfig) -> Result<(), String> {
+fn binary_image_to_svg(config: ConverterConfig) -> Result<String, String> {
 
     let (img, width, height);
     match read_image(config.input_path) {
@@ -215,14 +215,17 @@ fn read_image(input_path: PathBuf) -> Result<(ColorImage, usize, usize), String>
     Ok((img, width, height))
 }
 
-fn write_svg(svg: SvgFile, output_path: PathBuf) -> Result<(), String> {
-    let out_file = File::create(output_path);
-    let mut out_file = match out_file {
-        Ok(file) => file,
-        Err(_) => return Err(String::from("Cannot create output file.")),
-    };
+fn write_svg(svg: SvgFile, output_path: PathBuf) -> Result<String, String> {
+    if output_path == PathBuf::from("-") {
+        Ok(svg.to_string())
+    } else {
+        let out_file = File::create(output_path);
+        let mut out_file = match out_file {
+            Ok(file) => file,
+            Err(_) => return Err(String::from("Cannot create output file.")),
+        };
 
-    write!(&mut out_file, "{}", svg).expect("failed to write file.");
-
-    Ok(())
+        write!(&mut out_file, "{}", svg).expect("failed to write file.");
+        Ok(String::from("Conversion successful."))
+    }
 }
