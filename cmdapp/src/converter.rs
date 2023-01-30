@@ -203,10 +203,17 @@ fn binary_image_to_svg(config: ConverterConfig) -> Result<(), String> {
 }
 
 fn read_image(input_path: PathBuf) -> Result<(ColorImage, usize, usize), String> {
-    let img = image::open(input_path);
-    let img = match img {
+    let img = match image::io::Reader::open(input_path) {
+        Ok(file) => file,
+        Err(e) => return Err(e.to_string()),
+    };
+    let img = match img.with_guessed_format() {
+        Ok(file) => file,
+        Err(e) => return Err(e.to_string()),
+    };
+    let img = match img.decode() {
         Ok(file) => file.to_rgba8(),
-        Err(_) => return Err(String::from("No image file found at specified input path")),
+        Err(e) => return Err(e.to_string()),
     };
 
     let (width, height) = (img.width() as usize, img.height() as usize);
@@ -226,3 +233,4 @@ fn write_svg(svg: SvgFile, output_path: PathBuf) -> Result<(), String> {
 
     Ok(())
 }
+
