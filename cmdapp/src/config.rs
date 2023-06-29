@@ -240,8 +240,8 @@ impl Config {
         if let Some(value) = matches.value_of("filter_speckle") {
             if value.trim().parse::<usize>().is_ok() { // is numeric
                 let value = value.trim().parse::<usize>().unwrap();
-                if value < 1 || value > 16 {
-                    panic!("Out of Range Error: Filter speckle is invalid at {}. It must be within [1,16].", value);
+                if value > 16 {
+                    panic!("Out of Range Error: Filter speckle is invalid at {}. It must be within [0,16].", value);
                 }
                 config.filter_speckle = value;
             } else {
