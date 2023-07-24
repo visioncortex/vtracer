@@ -99,9 +99,6 @@ VTracer is used by the following products (feel free to add yours to the list):
 <table>
   <tbody>
     <tr>
-      <td><a href="https://filestar.com"><img src="docs/images/filestar-logo.svg" width="250"/></a>
-      <br>Do anything to any file
-      </td>
       <td><a href="https://logo.aliyun.com/logo#/name"><img src="docs/images/aliyun-logo.png" width="250"/></a>
       <br>Smart logo design
       </td>
