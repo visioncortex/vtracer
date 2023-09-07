@@ -1,6 +1,7 @@
 <div align="center">
 
-  <img src="docs/images/visioncortex-banner.png">
+  <img src="https://github.com/visioncortex/vtracer/raw/master/docs/images/visioncortex-banner.png">
+  
   <h1>VTracer</h1>
 
   <p>
@@ -80,18 +81,3 @@ VTracer and its [core library](//github.com/visioncortex/visioncortex) is implem
 ## Rust Library
 
 The (Rust) library can be found on [crates.io/vtracer](//crates.io/crates/vtracer) and [crates.io/vtracer-webapp](//crates.io/crates/vtracer-webapp).
-
-## In the wild
-
-VTracer is used by the following products (feel free to add yours to the list):
-
-<table>
-  <tbody>
-    <tr>
-      <td><a href="https://logo.aliyun.com/logo#/name"><img src="docs/images/aliyun-logo.png" width="250"/></a>
-      <br>Smart logo design
-      </td>
-      <td></td>
-    </tr>
-  </tbody>
-</table>

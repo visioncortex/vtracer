@@ -1,9 +1,9 @@
 [project]
 name = "vtracer"
-version = "0.6.1"
+version = "0.6.3"
 description = "Python bindings for the Rust Vtracer raster-to-vector library"
 authors = [ { name = "Chris Tsang",  email = "tyt2y7@gmail.com" } ]
-readme = "../README_PY.md"
+readme = "vtracer/README_PY.md"
 requires-python = ">=3.7"
 license = "MIT"
 classifiers = [
