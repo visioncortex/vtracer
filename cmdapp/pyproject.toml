@@ -1,8 +1,9 @@
-[tool.poetry]
+[project]
 name = "vtracer"
-version = "0.1.0"
+version = "0.6.1"
 description = "Python bindings for the Rust Vtracer raster-to-vector library"
-authors = ["Chris Tsang <tyt2y7@gmail.com>"]
+authors = [ { name = "Chris Tsang",  email = "tyt2y7@gmail.com" } ]
+readme = "../README_PY.md"
 requires-python = ">=3.7"
 license = "MIT"
 classifiers = [
@@ -11,10 +12,10 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
 
-[tool.poetry.dependencies]
+[dependencies]
 python = "^3.7"
 
-[tool.poetry.dev-dependencies]
+[dev-dependencies]
 maturin = "^1.2"
 
 [build-system]
@@ -24,4 +25,4 @@ build-backend = "maturin"
 [tool.maturin]
 features = ["pyo3/extension-module"]
 compatibility = "linux"
-sdist-include = ["LICENSE", "Readme.md"]
+sdist-include = ["../LICENSE", "../README_PY.md"]
