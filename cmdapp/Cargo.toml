@@ -1,8 +1,8 @@
 [package]
 name = "vtracer"
-version = "0.5.0"
+version = "0.6.0"
 authors = ["Chris Tsang <tyt2y7@gmail.com>"]
-edition = "2018"
+edition = "2021"
 description = "A cmd app to convert images into vector graphics."
 license = "MIT OR Apache-2.0"
 homepage = "http://www.visioncortex.org/vtracer"
@@ -15,3 +15,13 @@ clap = "2.33.3"
 image = "0.23.10"
 visioncortex = { version = "0.8.0" }
 fastrand = "1.8"
+pyo3 = "0.19.0"
+
+[lib]
+name = "vtracer"
+crate-type = ["cdylib"]
+path = "src/lib.rs"
+
+[[bin]]
+name = "vtracer"
+path = "src/main.rs"
