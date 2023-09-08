@@ -1,28 +1,23 @@
-Version 0.4.0 (2021-07-23)
-==========================
+# Version 0.6.0 (2023-09-08)
 
-- SVG path string numeric precision
+-   Python bindings
 
+# Version 0.4.0 (2021-07-23)
 
-Version 0.3.0 (2021-01-24)
-==========================
+-   SVG path string numeric precision
 
-- Added cutout mode
+# Version 0.3.0 (2021-01-24)
 
+-   Added cutout mode
 
-Version 0.2.0 (2020-11-15)
-==========================
+# Version 0.2.0 (2020-11-15)
 
-- Use relative & closed paths
+-   Use relative & closed paths
 
+# Version 0.1.1 (2020-11-01)
 
-Version 0.1.1 (2020-11-01)
-==========================
+-   SVG namespace
 
-- SVG namespace
+# Version 0.1.0 (2020-10-31)
 
-
-Version 0.1.0 (2020-10-31)
-==========================
-
-- Initial release
+-   Initial release
