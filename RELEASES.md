@@ -2,6 +2,10 @@
 
 -   Python bindings
 
+# Version 0.5.0 (2022-10-09)
+
+-   Handle transparent png images
+
 # Version 0.4.0 (2021-07-23)
 
 -   SVG path string numeric precision
