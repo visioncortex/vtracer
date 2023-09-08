@@ -2,10 +2,10 @@
 
   <img src="https://github.com/visioncortex/vtracer/raw/master/docs/images/visioncortex-banner.png">
   
-  <h1>VTracer</h1>
+  <h1>VTracer: Python Binding</h1>
 
   <p>
-    <strong>Raster to Vector Graphics Converter built on top of visioncortex: Python Binding</strong>
+    <strong>Raster to Vector Graphics Converter built on top of visioncortex</strong>
   </p>
 
   <h3>
@@ -69,14 +69,6 @@ vtracer.convert_image_to_svg_py(inp,
                                 )
 
 ```
-
-## Web App
-
-VTracer and its [core library](//github.com/visioncortex/visioncortex) is implemented in [Rust](//www.rust-lang.org/). It provides us a solid foundation to develop robust and efficient algorithms and easily bring it to interactive applications. The webapp is a perfect showcase of the capability of the Rust + wasm platform.
-
-![screenshot](docs/images/screenshot-01.png)
-
-![screenshot](docs/images/screenshot-02.png)
 
 ## Rust Library
 
