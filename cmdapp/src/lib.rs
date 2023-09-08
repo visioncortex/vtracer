@@ -11,7 +11,10 @@
 mod config;
 mod converter;
 mod svg;
+mod python;
 
 pub use config::*;
 pub use converter::*;
 pub use svg::*;
+#[cfg(feature = "python-binding")]
+pub use python::*;
