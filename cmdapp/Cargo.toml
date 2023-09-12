@@ -1,6 +1,6 @@
 [package]
 name = "vtracer"
-version = "0.6.5"
+version = "0.6.6"
 authors = ["Chris Tsang <chris.2y3@outlook.com>"]
 edition = "2021"
 description = "A cmd app to convert images into vector graphics."

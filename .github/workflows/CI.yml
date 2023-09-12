@@ -20,8 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        target: [x86_64, x86, armv7, s390x, ppc64le]
-        # 'aarch64' not included, because PyPI didn't like 'linux_aarch64' as a platform: 
+        target: [x86_64, x86, aarch64, armv7, s390x, ppc64le]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
@@ -116,3 +115,4 @@ jobs:
         with:
           command: upload
           args: --non-interactive --skip-existing *
+          manylinux: auto
