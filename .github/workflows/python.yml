@@ -30,7 +30,7 @@ jobs:
   #       uses: PyO3/maturin-action@v1
   #       with:
   #         target: ${{ matrix.target }}
-  #         args: -m cmdapp/Cargo.toml --release --lib --features=python-binding --out dist --find-interpreter
+  #         args: -m cmdapp/Cargo.toml --release --features=python-binding --out dist --find-interpreter
   #         sccache: 'true'
   #         manylinux: auto
   #     - name: Upload wheels
@@ -54,7 +54,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: -m cmdapp/Cargo.toml --release --lib --features=python-binding --out dist --find-interpreter
+          args: -m cmdapp/Cargo.toml --release --features=python-binding --out dist --find-interpreter
           sccache: 'true'
       - name: Upload wheels
         uses: actions/upload-artifact@v3
@@ -76,7 +76,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: -m cmdapp/Cargo.toml --release --lib --features=python-binding --out dist --find-interpreter
+          args: -m cmdapp/Cargo.toml --release --features=python-binding --out dist --find-interpreter
           sccache: 'true'
       - name: Upload wheels
         uses: actions/upload-artifact@v3
@@ -108,7 +108,7 @@ jobs:
       # IMPORTANT: this permission is mandatory for trusted publishing
       id-token: write
     if: "startsWith(github.ref, 'refs/tags/')"
-    needs: [windows, macos, sdist]
+    needs: [windows, macos, sdist] # linux
     steps:
       - uses: actions/download-artifact@v3
         with:
