@@ -1,0 +1,28 @@
+[project]
+name = "vtracer"
+version = "0.7.0"
+description = "Python bindings for the Rust Vtracer raster-to-vector library"
+authors = [ { name = "Chris Tsang",  email = "chris.2y3@outlook.com" } ]
+readme = "vtracer/README.md"
+requires-python = ">=3.7"
+license = "MIT"
+classifiers = [
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+]
+
+[dependencies]
+python = "^3.7"
+
+[dev-dependencies]
+maturin = "^1.2"
+
+[build-system]
+requires = ["maturin>=1.2,<2.0"]
+build-backend = "maturin"
+
+[tool.maturin]
+features = ["pyo3/extension-module"]
+compatibility = "manylinux2014"
+sdist-include = ["LICENSE-MIT", "vtracer/README.md"]

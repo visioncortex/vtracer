@@ -1,8 +1,8 @@
 [package]
 name = "vtracer-webapp"
 version = "0.4.0"
-authors = ["Chris Tsang <tyt2y7@gmail.com>"]
-edition = "2018"
+authors = ["Chris Tsang <chris.2y3@outlook.com>"]
+edition = "2021"
 description = "A web app to convert images into vector graphics."
 license = "MIT OR Apache-2.0"
 homepage = "http://www.visioncortex.org/vtracer"
