@@ -108,7 +108,7 @@ jobs:
       # IMPORTANT: this permission is mandatory for trusted publishing
       id-token: write
     if: "startsWith(github.ref, 'refs/tags/')"
-    needs: [windows, macos, sdist] # linux
+    needs: [windows, macos, sdist, linux] 
     steps:
       - uses: actions/download-artifact@v3
         with:
