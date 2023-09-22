@@ -16,28 +16,28 @@ permissions:
   contents: read
 
 jobs:
-  # linux:
-  #   runs-on: ubuntu-latest
-  #   strategy:
-  #     matrix:
-  #       target: [x86_64, x86, aarch64, armv7, s390x, ppc64le]
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - uses: actions/setup-python@v4
-  #       with:
-  #         python-version: '3.10'
-  #     - name: Build wheels
-  #       uses: PyO3/maturin-action@v1
-  #       with:
-  #         target: ${{ matrix.target }}
-  #         args: -m cmdapp/Cargo.toml --release --features=python-binding --out dist --find-interpreter
-  #         sccache: 'true'
-  #         manylinux: auto
-  #     - name: Upload wheels
-  #       uses: actions/upload-artifact@v3
-  #       with:
-  #         name: wheels
-  #         path: dist
+  linux:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [x86_64, x86, aarch64, armv7, s390x, ppc64le]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          args: -m cmdapp/Cargo.toml --release --out dist --find-interpreter
+          sccache: 'true'
+          manylinux: auto
+      - name: Upload wheels
+        uses: actions/upload-artifact@v3
+        with:
+          name: wheels
+          path: dist
 
   windows:
     runs-on: windows-latest
@@ -54,7 +54,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: -m cmdapp/Cargo.toml --release --features=python-binding --out dist --find-interpreter
+          args: -m cmdapp/Cargo.toml --release --out dist --find-interpreter
           sccache: 'true'
       - name: Upload wheels
         uses: actions/upload-artifact@v3
@@ -76,7 +76,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: -m cmdapp/Cargo.toml --release --features=python-binding --out dist --find-interpreter
+          args: -m cmdapp/Cargo.toml --release --out dist --find-interpreter
           sccache: 'true'
       - name: Upload wheels
         uses: actions/upload-artifact@v3
@@ -108,7 +108,7 @@ jobs:
       # IMPORTANT: this permission is mandatory for trusted publishing
       id-token: write
     if: "startsWith(github.ref, 'refs/tags/')"
-    needs: [windows, macos, sdist] # linux
+    needs: [windows, macos, sdist, linux] 
     steps:
       - uses: actions/download-artifact@v3
         with:
