@@ -1,6 +1,6 @@
 <div align="center">
 
-  <img src="docs/images/visioncortex-banner.png">
+  <img src="https://raw.githubusercontent.com/visioncortex/vtracer/master/docs/images/visioncortex-banner.png">
   <h1>VTracer</h1>
 
   <p>
@@ -29,14 +29,6 @@ Comparing to Adobe Illustrator's [Image Trace](https://helpx.adobe.com/illustrat
 VTracer is originally designed for processing high resolution scans of historic blueprints up to gigapixels. At the same time, VTracer can also handle low resolution pixel art, simulating `image-rendering: pixelated` for retro game artworks.
 
 A technical description of the algorithm is on [visioncortex.org/vtracer-docs](https://www.visioncortex.org/vtracer-docs).
-
-## Web App
-
-VTracer and its [core library](//github.com/visioncortex/visioncortex) is implemented in [Rust](//www.rust-lang.org/). It provides us a solid foundation to develop robust and efficient algorithms and easily bring it to interactive applications. The webapp is a perfect showcase of the capability of the Rust + wasm platform.
-
-![screenshot](docs/images/screenshot-01.png)
-
-![screenshot](docs/images/screenshot-02.png)
 
 ## Cmd App
 
@@ -102,30 +94,3 @@ Since `0.6`, [`vtracer`](https://pypi.org/project/vtracer/) is also packaged as 
 ```sh
 pip install vtracer
 ```
-
-## In the wild
-
-VTracer is used by the following projects (feel free to add yours!):
-
-<table>
-  <tbody>
-    <tr>
-      <td><a href="https://logo.aliyun.com/logo#/name"><img src="docs/images/aliyun-logo.png" width="250"/></a>
-      <br>Smart logo design
-      </td>
-      <td></td>
-    </tr>
-  </tbody>
-</table>
-
-## What's next?
-
-There are several things in my mind:
-
-1. Pencil tracing. Instead of tracing shapes as closed paths, may be we can attempt to skeletonize the shapes as open paths. The output would be clean, fixed width strokes.
-
-2. Perfect cut-out mode. Right now in cut-out mode, the shapes do not share perfect boundaries, but have seams.
-
-3. Image cleaning. Right now the tracer works best on losslessly compressed pngs. If an image suffered from jpeg noises, it could impact the tracing quality. We might be able to develop a pre-filtering pass that denoises the input.
-
-If you are interested in working on them or willing to sponsor its development, feel free to get in touch.
