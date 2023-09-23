@@ -128,7 +128,7 @@ At my teenage, two open source projects in the vector graphics space inspired me
 
 Many years later, in 2020, I was developing a video processing engine. And it became evident that it requires way more investment to be commercially viable. So before abandoning the project, I wanted to publish *something* as open-source for posterity. At that time, I already developed a prototype vector graphics tracer. It can convert high-resolution scans of hand-drawn blueprints into vectors. But it can only process black and white images, and can only output polygons, not splines.
 
-The plan was to fully develop the vectorizer: to handle color images and output splines. I recruited a very talented intern, [Sanford](@shpun817), to work on VTracer. I grafted the frontend of the video processing engine - the ["The Clustering Algorithm"](https://www.visioncortex.org/impression-docs#the-clustering-algorithm) as the pre-processor.
+The plan was to fully develop the vectorizer: to handle color images and output splines. I recruited a very talented intern, [@shpun817](https://github.com/shpun817), to work on VTracer. I grafted the frontend of the video processing engine - the ["The Clustering Algorithm"](https://www.visioncortex.org/impression-docs#the-clustering-algorithm) as the pre-processor.
 
 Three months later, we published the first version on Reddit. Out of my surprise, the response of such an underwhelming project was overwhelming.
 
@@ -138,7 +138,7 @@ There are several things in my mind:
 
 1. Pencil tracing. Instead of tracing shapes as closed paths, may be we can attempt to skeletonize the shapes as open paths. The output would be clean, fixed width strokes.
 
-2. Perfect cut-out mode. Right now in cut-out mode, the shapes do not share perfect boundaries, but have seams.
+2. Perfect cut-out mode. Right now in cut-out mode, the shapes do not share boundaries perfectly, but have seams.
 
 3. Image cleaning. Right now the tracer works best on losslessly compressed pngs. If an image suffered from jpeg noises, it could impact the tracing quality. We might be able to develop a pre-filtering pass that denoises the input.
 
