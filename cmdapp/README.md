@@ -33,7 +33,7 @@ A technical description of the algorithm is on [visioncortex.org/vtracer-docs](h
 ## Cmd App
 
 ```sh
-visioncortex VTracer 0.4.0
+visioncortex VTracer 0.6.0
 A cmd app to convert images into vector graphics.
 
 USAGE:

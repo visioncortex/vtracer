@@ -41,7 +41,7 @@ VTracer and its [core library](//github.com/visioncortex/visioncortex) is implem
 ## Cmd App
 
 ```sh
-visioncortex VTracer 0.4.0
+visioncortex VTracer 0.6.0
 A cmd app to convert images into vector graphics.
 
 USAGE:
