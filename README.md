@@ -122,7 +122,7 @@ VTracer is used by the following projects (feel free to add yours!):
 
 > The following content is an excerpt from my [unpublished](https://github.com/sponsors/tyt2y3) [memoir](https://github.com/visioncortex/memoir).
 
-### How / when did VTracer come about?
+### How / when / where did VTracer come about?
 
 At my teenage, two open source projects in the vector graphics space inspired me the most: Potrace and Anti-Grain Geometry (AGG).
 
