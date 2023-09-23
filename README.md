@@ -22,7 +22,7 @@
 
 visioncortex VTracer is an open source software to convert raster images (like jpg & png) into vector graphics (svg). It can vectorize graphics and photographs and trace the curves to output compact vector files.
 
-Comparing to [Potrace](http://potrace.sourceforge.net/) which only accept binarized inputs (Black & White pixmap), VTracer has an image processing pipeline which can handle colored high resolution scans.
+Comparing to [Potrace](http://potrace.sourceforge.net/) which only accept binarized inputs (Black & White pixmap), VTracer has an image processing pipeline which can handle colored high resolution scans. tl;dr: Potrace uses a `O(n^2)` fitting algorithm, whereas `vtracer` is entirely `O(n)`.
 
 Comparing to Adobe Illustrator's [Image Trace](https://helpx.adobe.com/illustrator/using/image-trace.html), VTracer's output is much more compact (less shapes) as we adopt a stacking strategy and avoid producing shapes with holes.
 
@@ -117,6 +117,20 @@ VTracer is used by the following projects (feel free to add yours!):
     </tr>
   </tbody>
 </table>
+
+## Anecdotes
+
+> The following content is an excerpt from my [unpublished](https://github.com/sponsors/tyt2y3) [memoir](https://github.com/visioncortex/memoir).
+
+### How / when did VTracer come about?
+
+At my teenage, two open source projects in the vector graphics space inspired me the most: Potrace and Anti-Grain Geometry (AGG).
+
+Many years later, in 2020, I was developing a video processing engine. And it became evident that it requires way more investment to be commercially viable. So before abandoning the project, I wanted to publish *something* as open-source for posterity. At that time, I already developed a prototype vector graphics tracer. It can convert high-resolution scans of hand-drawn blueprints into vectors. But it can only process black and white images, and can only output polygons, not splines.
+
+The plan was to fully develop the vectorizer: to handle color images and output splines. I recruited a very talented intern, [Sanford](@shpun817), to work on VTracer. I grafted the frontend of the video processing engine - the ["The Clustering Algorithm"](https://www.visioncortex.org/impression-docs#the-clustering-algorithm) as the pre-processor.
+
+Three months later, we published the first version on Reddit. Out of my surprise, the response of such an underwhelming project was overwhelming.
 
 ## What's next?
 
