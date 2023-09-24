@@ -136,10 +136,12 @@ Three months later, we published the first version on Reddit. Out of my surprise
 
 There are several things in my mind:
 
-1. Pencil tracing. Instead of tracing shapes as closed paths, may be we can attempt to skeletonize the shapes as open paths. The output would be clean, fixed width strokes.
+1. Path simplification. Implement a post-process filter to the output paths to further reduce the number of splines.
 
 2. Perfect cut-out mode. Right now in cut-out mode, the shapes do not share boundaries perfectly, but have seams.
 
-3. Image cleaning. Right now the tracer works best on losslessly compressed pngs. If an image suffered from jpeg noises, it could impact the tracing quality. We might be able to develop a pre-filtering pass that denoises the input.
+3. Pencil tracing. Instead of tracing shapes as closed paths, may be we can attempt to skeletonize the shapes as open paths. The output would be clean, fixed width strokes.
+
+4. Image cleaning. Right now the tracer works best on losslessly compressed pngs. If an image suffered from jpeg noises, it could impact the tracing quality. We might be able to develop a pre-filtering pass that denoises the input.
 
 If you are interested in working on them or willing to sponsor its development, feel free to get in touch.
