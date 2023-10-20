@@ -1,5 +1,4 @@
 use std::str::FromStr;
-use std::path::PathBuf;
 use visioncortex::PathSimplifyMode;
 
 pub enum Preset {
@@ -20,8 +19,6 @@ pub enum Hierarchical {
 
 /// Converter config
 pub struct Config {
-    pub input_path: PathBuf,
-    pub output_path: PathBuf,
     pub color_mode: ColorMode,
     pub hierarchical: Hierarchical,
     pub filter_speckle: usize,
@@ -52,8 +49,6 @@ pub(crate) struct ConverterConfig {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            input_path: PathBuf::default(),
-            output_path: PathBuf::default(),
             color_mode: ColorMode::Color,
             hierarchical: Hierarchical::Stacked,
             mode: PathSimplifyMode::Spline,
@@ -107,13 +102,9 @@ impl FromStr for Preset {
 }
 
 impl Config {
-    pub fn from_preset(preset: Preset, input_path: &str, output_path: &str) -> Self {
-        let input_path = PathBuf::from(input_path);
-        let output_path = PathBuf::from(output_path);
+    pub fn from_preset(preset: Preset) -> Self {
         match preset {
             Preset::Bw => Self {
-                input_path,
-                output_path,
                 color_mode: ColorMode::Binary,
                 hierarchical: Hierarchical::Stacked,
                 filter_speckle: 4,
@@ -127,8 +118,6 @@ impl Config {
                 path_precision: Some(8),
             },
             Preset::Poster => Self {
-                input_path,
-                output_path,
                 color_mode: ColorMode::Color,
                 hierarchical: Hierarchical::Stacked,
                 filter_speckle: 4,
@@ -142,8 +131,6 @@ impl Config {
                 path_precision: Some(8),
             },
             Preset::Photo => Self {
-                input_path,
-                output_path,
                 color_mode: ColorMode::Color,
                 hierarchical: Hierarchical::Stacked,
                 filter_speckle: 10,

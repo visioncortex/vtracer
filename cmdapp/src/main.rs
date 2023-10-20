@@ -17,7 +17,7 @@ fn path_simplify_mode_from_str(s: &str) -> PathSimplifyMode {
     }
 }
 
-pub fn config_from_args() -> Config {
+pub fn config_from_args() -> (PathBuf, PathBuf, Config) {
     let app = App::new("visioncortex VTracer ".to_owned() + env!("CARGO_PKG_VERSION"))
         .about("A cmd app to convert images into vector graphics.");
 
@@ -107,12 +107,12 @@ pub fn config_from_args() -> Config {
     let input_path = matches.value_of("input").expect("Input path is required, please specify it by --input or -i.");
     let output_path = matches.value_of("output").expect("Output path is required, please specify it by --output or -o.");
 
-    if let Some(value) = matches.value_of("preset") {
-        config = Config::from_preset(Preset::from_str(value).unwrap(), input_path, output_path);
-    }
+    let input_path = PathBuf::from(input_path);
+    let output_path = PathBuf::from(output_path);
 
-    config.input_path = PathBuf::from(input_path);
-    config.output_path = PathBuf::from(output_path);
+    if let Some(value) = matches.value_of("preset") {
+        config = Config::from_preset(Preset::from_str(value).unwrap());
+    }
 
     if let Some(value) = matches.value_of("color_mode") {
         config.color_mode = ColorMode::from_str(if value.trim() == "bw" || value.trim() == "BW" {"binary"} else {"color"}).unwrap()
@@ -216,12 +216,12 @@ pub fn config_from_args() -> Config {
         }
     }
 
-    config
+    (input_path, output_path, config)
 }
 
 fn main() {
-    let config = config_from_args();
-    let result = converter::convert_image_to_svg(config);
+    let (input_path, output_path, config) = config_from_args();
+    let result = converter::convert_image_to_svg(&input_path, &output_path, config);
     match result {
         Ok(()) => {
             println!("Conversion successful.");

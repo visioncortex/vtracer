@@ -13,15 +13,14 @@ const NUM_UNUSED_COLOR_ITERATIONS: usize = 6;
 const KEYING_THRESHOLD: f32 = 0.2;
 
 /// Convert an image file into svg file
-pub fn convert_image_to_svg(config: Config) -> Result<(), String> {
-    let img = read_image(&config.input_path)?;
-    let output_path = config.output_path.clone();
+pub fn convert_image_to_svg(input_path: &Path, output_path: &Path, config: Config) -> Result<(), String> {
+    let img = read_image(input_path)?;
     let config = config.into_converter_config();
     let svg = match config.color_mode {
         ColorMode::Color => color_image_to_svg(img, config)?,
         ColorMode::Binary => binary_image_to_svg(img, config)?,
     };
-    write_svg(svg, &output_path)
+    write_svg(svg, output_path)
 }
 
 fn color_exists_in_image(img: &ColorImage, color: Color) -> bool {

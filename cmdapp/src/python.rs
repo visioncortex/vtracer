@@ -53,8 +53,6 @@ fn convert_image_to_svg_py(
     let max_iterations = max_iterations.unwrap_or(10);
 
     let config = Config {
-        input_path,
-        output_path,
         color_mode,
         hierarchical,
         filter_speckle,
@@ -69,7 +67,7 @@ fn convert_image_to_svg_py(
         ..Default::default()
     };
 
-    convert_image_to_svg(config).unwrap();
+    convert_image_to_svg(&input_path, &output_path, config).unwrap();
     Ok(())
 }
 
