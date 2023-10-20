@@ -12,14 +12,19 @@ const NUM_UNUSED_COLOR_ITERATIONS: usize = 6;
 /// the entire image will be keyed.
 const KEYING_THRESHOLD: f32 = 0.2;
 
+/// Convert an in-memory image into an in-memory SVG
+pub fn convert(img: ColorImage, config: Config) -> Result<SvgFile, String> {
+    let config = config.into_converter_config();
+    match config.color_mode {
+        ColorMode::Color => color_image_to_svg(img, config),
+        ColorMode::Binary => binary_image_to_svg(img, config),
+    }
+}
+
 /// Convert an image file into svg file
 pub fn convert_image_to_svg(input_path: &Path, output_path: &Path, config: Config) -> Result<(), String> {
     let img = read_image(input_path)?;
-    let config = config.into_converter_config();
-    let svg = match config.color_mode {
-        ColorMode::Color => color_image_to_svg(img, config)?,
-        ColorMode::Binary => binary_image_to_svg(img, config)?,
-    };
+    let svg = convert(img, config)?;
     write_svg(svg, output_path)
 }
 
