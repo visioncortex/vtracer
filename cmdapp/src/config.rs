@@ -37,8 +37,6 @@ pub struct Config {
 }
 
 pub(crate) struct ConverterConfig {
-    pub input_path: PathBuf,
-    pub output_path: PathBuf,
     pub color_mode: ColorMode,
     pub hierarchical: Hierarchical,
     pub filter_speckle_area: usize,
@@ -375,8 +373,6 @@ impl Config {
 
     pub(crate) fn into_converter_config(self) -> ConverterConfig {
         ConverterConfig {
-            input_path: self.input_path,
-            output_path: self.output_path,
             color_mode: self.color_mode,
             hierarchical: self.hierarchical,
             filter_speckle_area: self.filter_speckle * self.filter_speckle,
