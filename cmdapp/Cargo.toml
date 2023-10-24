@@ -22,4 +22,4 @@ python-binding = ["pyo3"]
 
 [lib]
 name = "vtracer"
-crate-type = ["cdylib"]
+crate-type = ["rlib", "cdylib"]
