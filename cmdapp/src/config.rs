@@ -4,7 +4,7 @@ use visioncortex::PathSimplifyMode;
 pub enum Preset {
     Bw,
     Poster,
-    Photo
+    Photo,
 }
 
 pub enum ColorMode {
@@ -142,7 +142,7 @@ impl Config {
                 max_iterations: 10,
                 splice_threshold: 45,
                 path_precision: Some(8),
-            }
+            },
         }
     }
 
