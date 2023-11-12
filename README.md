@@ -12,7 +12,7 @@
     <span> | </span>
     <a href="https://www.visioncortex.org/vtracer/">Demo</a>
     <span> | </span>
-    <a href="https://github.com/visioncortex/vtracer/releases/latest">Download</a>
+    <a href="https://github.com/visioncortex/vtracer/releases/tag/0.6.0">Download</a>
   </h3>
 
   <sub>Built with 🦀 by <a href="https://www.visioncortex.org/">The Vision Cortex Research Group</a></sub>
@@ -73,7 +73,7 @@ OPTIONS:
 
 ### Install
 
-You can download pre-built binaries from [Releases](https://github.com/visioncortex/vtracer/releases).
+You can download pre-built binaries from [Releases](https://github.com/visioncortex/vtracer/releases/tag/0.6.0).
 
 You can also install the program from source from [crates.io/vtracer](https://crates.io/crates/vtracer):
 
