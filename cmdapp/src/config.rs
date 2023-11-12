@@ -59,7 +59,7 @@ impl Default for Config {
             length_threshold: 4.0,
             splice_threshold: 45,
             max_iterations: 10,
-            path_precision: Some(8),
+            path_precision: Some(2),
         }
     }
 }
@@ -115,7 +115,7 @@ impl Config {
                 length_threshold: 4.0,
                 max_iterations: 10,
                 splice_threshold: 45,
-                path_precision: Some(8),
+                path_precision: Some(2),
             },
             Preset::Poster => Self {
                 color_mode: ColorMode::Color,
@@ -128,7 +128,7 @@ impl Config {
                 length_threshold: 4.0,
                 max_iterations: 10,
                 splice_threshold: 45,
-                path_precision: Some(8),
+                path_precision: Some(2),
             },
             Preset::Photo => Self {
                 color_mode: ColorMode::Color,
@@ -141,7 +141,7 @@ impl Config {
                 length_threshold: 4.0,
                 max_iterations: 10,
                 splice_threshold: 45,
-                path_precision: Some(8),
+                path_precision: Some(2),
             },
         }
     }
