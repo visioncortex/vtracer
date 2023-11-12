@@ -19,3 +19,4 @@ pub use converter::*;
 pub use svg::*;
 #[cfg(feature = "python-binding")]
 pub use python::*;
+pub use visioncortex::ColorImage;
