@@ -13,7 +13,7 @@ keywords = ["svg", "computer-graphics"]
 [dependencies]
 clap = "2.33.3"
 image = "0.23.10"
-visioncortex = { version = "0.8.1" }
+visioncortex = { version = "0.8.4" }
 fastrand = "1.8"
 pyo3 = { version = "0.19.0", optional = true }
 
