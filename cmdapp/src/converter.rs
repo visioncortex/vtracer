@@ -5,7 +5,9 @@ use super::config::{ColorMode, Config, ConverterConfig, Hierarchical};
 use super::svg::SvgFile;
 use fastrand::Rng;
 use visioncortex::color_clusters::{KeyingAction, Runner, RunnerConfig, HIERARCHICAL_MAX};
-use visioncortex::{approximate_circle_with_spline, Color, ColorImage, ColorName, CompoundPath};
+use visioncortex::{
+    approximate_circle_with_spline, Color, ColorImage, ColorName, CompoundPath, PathSimplifyMode,
+};
 
 const NUM_UNUSED_COLOR_ITERATIONS: usize = 6;
 /// The fraction of pixels in the top/bottom rows of the image that need to be transparent before
@@ -169,7 +171,8 @@ fn color_image_to_svg(mut img: ColorImage, config: ConverterConfig) -> Result<Sv
     let mut svg = SvgFile::new(width, height, config.path_precision);
     for &cluster_index in view.clusters_output.iter().rev() {
         let cluster = view.get_cluster(cluster_index);
-        let paths = if cluster.rect.width() < SMALL_CIRCLE
+        let paths = if matches!(config.mode, PathSimplifyMode::Spline)
+            && cluster.rect.width() < SMALL_CIRCLE
             && cluster.rect.height() < SMALL_CIRCLE
             && cluster.to_shape(&view).is_circle()
         {
