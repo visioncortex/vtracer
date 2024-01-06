@@ -68,7 +68,7 @@ pub fn config_from_args() -> (PathBuf, PathBuf, Config) {
             .long("filter_speckle")
             .short("f")
             .takes_value(true)
-            .help("Discard patches smaller than X px in size"),
+            .help("Discard patches smaller than X px in size. Accepts integer values within the range [0, 16](Default: 4)"),
     );
 
     let app = app.arg(
@@ -76,7 +76,7 @@ pub fn config_from_args() -> (PathBuf, PathBuf, Config) {
             .long("color_precision")
             .short("p")
             .takes_value(true)
-            .help("Number of significant bits to use in an RGB channel"),
+            .help("Number of significant bits to use in an RGB channel. Accepts integer values within the range [1, 8](Default: 6)"),
     );
 
     let app = app.arg(
@@ -84,7 +84,7 @@ pub fn config_from_args() -> (PathBuf, PathBuf, Config) {
             .long("gradient_step")
             .short("g")
             .takes_value(true)
-            .help("Color difference between gradient layers"),
+            .help("Color difference between gradient layers. Accepts integer values within the range [0, 255]"),
     );
 
     let app = app.arg(
@@ -92,21 +92,21 @@ pub fn config_from_args() -> (PathBuf, PathBuf, Config) {
             .long("corner_threshold")
             .short("c")
             .takes_value(true)
-            .help("Minimum momentary angle (degree) to be considered a corner"),
+            .help("Minimum momentary angle (degree) to be considered a corner. Accepts integer values within the range [0, 180](Default: 60)"),
     );
 
     let app = app.arg(Arg::with_name("segment_length")
         .long("segment_length")
         .short("l")
         .takes_value(true)
-        .help("Perform iterative subdivide smooth until all segments are shorter than this length"));
+        .help("Perform iterative subdivide smooth until all segments are shorter than this length. Accepts values within the range [3.5, 10](Default: 4.0)"));
 
     let app = app.arg(
         Arg::with_name("splice_threshold")
             .long("splice_threshold")
             .short("s")
             .takes_value(true)
-            .help("Minimum angle displacement (degree) to splice a spline"),
+            .help("Minimum angle displacement (degree) to splice a spline. Accepts integer values within the range [0, 180](Default: 45)"),
     );
 
     let app = app.arg(
