@@ -84,7 +84,7 @@ pub fn config_from_args() -> (PathBuf, PathBuf, Config) {
             .long("gradient_step")
             .short("g")
             .takes_value(true)
-            .help("Color difference between gradient layers. Accepts integer values within the range [0, 255]"),
+            .help("Color difference between gradient layers. Accepts integer values within the range [0, 255](Default: 16)"),
     );
 
     let app = app.arg(
