@@ -5,16 +5,12 @@ use super::config::{ColorMode, Config, ConverterConfig, Hierarchical};
 use super::svg::SvgFile;
 use fastrand::Rng;
 use visioncortex::color_clusters::{KeyingAction, Runner, RunnerConfig, HIERARCHICAL_MAX};
-use visioncortex::{
-    approximate_circle_with_spline, Color, ColorImage, ColorName, CompoundPath, PathSimplifyMode,
-};
+use visioncortex::{Color, ColorImage, ColorName};
 
 const NUM_UNUSED_COLOR_ITERATIONS: usize = 6;
 /// The fraction of pixels in the top/bottom rows of the image that need to be transparent before
 /// the entire image will be keyed.
 const KEYING_THRESHOLD: f32 = 0.2;
-
-const SMALL_CIRCLE: i32 = 12;
 
 /// Convert an in-memory image into an in-memory SVG
 pub fn convert(img: ColorImage, config: Config) -> Result<SvgFile, String> {
@@ -171,28 +167,15 @@ fn color_image_to_svg(mut img: ColorImage, config: ConverterConfig) -> Result<Sv
     let mut svg = SvgFile::new(width, height, config.path_precision);
     for &cluster_index in view.clusters_output.iter().rev() {
         let cluster = view.get_cluster(cluster_index);
-        let paths = if matches!(config.mode, PathSimplifyMode::Spline)
-            && cluster.rect.width() < SMALL_CIRCLE
-            && cluster.rect.height() < SMALL_CIRCLE
-            && cluster.to_shape(&view).is_circle()
-        {
-            let mut paths = CompoundPath::new();
-            paths.add_spline(approximate_circle_with_spline(
-                cluster.rect.left_top(),
-                cluster.rect.width(),
-            ));
-            paths
-        } else {
-            cluster.to_compound_path(
-                &view,
-                false,
-                config.mode,
-                config.corner_threshold,
-                config.length_threshold,
-                config.max_iterations,
-                config.splice_threshold,
-            )
-        };
+        let paths = cluster.to_compound_path(
+            &view,
+            false,
+            config.mode,
+            config.corner_threshold,
+            config.length_threshold,
+            config.max_iterations,
+            config.splice_threshold,
+        );
         svg.add_path(paths, cluster.residue_color());
     }
 
