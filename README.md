@@ -120,7 +120,7 @@ VTracer is used by the following projects (feel free to add yours!):
 
 ## Anecdotes
 
-> The following content is an excerpt from my [unpublished](https://github.com/sponsors/tyt2y3) [memoir](https://github.com/visioncortex/memoir).
+> The following content is an excerpt from my [unpublished memoir](https://github.com/visioncortex/memoir).
 
 ### How / when / where did VTracer come about?
 
