@@ -44,9 +44,9 @@ fn convert_image_to_svg_py(
 }
 
 #[pyfunction]
-fn convert_py(
+fn convert_raw_image_to_svg(
     img_bytes: Vec<u8>,
-    img_format: Option<&str>,      // Format of the image. If not provided, the image format will be guessed based on its contents. 
+    img_format: Option<&str>,      // Format of the image (e.g. 'jpg', 'png'... A full list of supported formats can be found [here](https://docs.rs/image/latest/image/enum.ImageFormat.html)). If not provided, the image format will be guessed based on its contents. 
     colormode: Option<&str>,       // "color" or "binary"
     hierarchical: Option<&str>,    // "stacked" or "cutout"
     mode: Option<&str>,            // "polygon", "spline", "none"
@@ -161,6 +161,6 @@ fn construct_config(
 #[pymodule]
 fn vtracer(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(convert_image_to_svg_py, m)?)?;
-    m.add_function(wrap_pyfunction!(convert_py, m)?)?;
+    m.add_function(wrap_pyfunction!(convert_raw_image_to_svg, m)?)?;
     Ok(())
 }

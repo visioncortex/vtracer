@@ -1,1 +1,1 @@
-from .vtracer import convert_image_to_svg_py, convert_py
+from .vtracer import convert_image_to_svg_py, convert_raw_image_to_svg

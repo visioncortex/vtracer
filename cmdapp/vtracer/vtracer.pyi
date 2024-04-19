@@ -16,9 +16,8 @@ def convert_image_to_svg_py(image_path: str,
                         ) -> None:
     ...
 
-def convert_py(
-                            img_bytes: bytes,
-                            img_format: Optional[str] = None,       # Format of the image. If not provided, the image format will be guessed based on its contents. 
+def convert_raw_image_to_svg(img_bytes: bytes,
+                            img_format: Optional[str] = None,       # Format of the image (e.g. 'jpg', 'png'... A full list of supported formats can be found [here](https://docs.rs/image/latest/image/enum.ImageFormat.html)). If not provided, the image format will be guessed based on its contents. 
                             colormode: Optional[str] = None,        # ["color"] or "binary"
                             hierarchical: Optional[str] = None,     # ["stacked"] or "cutout"
                             mode: Optional[str] = None,             # ["spline"], "polygon", "none"
