@@ -28,7 +28,7 @@ Comparing to Adobe Illustrator's [Image Trace](https://helpx.adobe.com/illustrat
 
 VTracer is originally designed for processing high resolution scans of historic blueprints up to gigapixels. At the same time, VTracer can also handle low resolution pixel art, simulating `image-rendering: pixelated` for retro game artworks.
 
-A technical description of the algorithm is on [visioncortex.org/vtracer-docs](https://www.visioncortex.org/vtracer-docs).
+Technical descriptions of the [tracing algorithm](https://www.visioncortex.org/vtracer-docs) and [clustering algorithm](https://www.visioncortex.org/impression-docs).
 
 ## Web App
 
