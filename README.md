@@ -71,7 +71,7 @@ OPTIONS:
     -s, --splice_threshold <splice_threshold>    Minimum angle displacement (degree) to splice a spline
 ```
 
-### Downloads
+## Downloads
 
 You can download pre-built binaries from [Releases](https://github.com/visioncortex/vtracer/releases).
 
@@ -89,7 +89,7 @@ cargo install vtracer
 ./vtracer --input input.jpg --output output.svg
 ```
 
-## Rust Library
+### Rust Library
 
 You can install [`vtracer`](https://crates.io/crates/vtracer) as a Rust library.
 
@@ -97,7 +97,7 @@ You can install [`vtracer`](https://crates.io/crates/vtracer) as a Rust library.
 cargo add vtracer
 ```
 
-## Python Library
+### Python Library
 
 Since `0.6`, [`vtracer`](https://pypi.org/project/vtracer/) is also packaged as Python native extensions, thanks to the awesome [pyo3](https://github.com/PyO3/pyo3) project.
 
