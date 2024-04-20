@@ -10,9 +10,9 @@
   <h3>
     <a href="https://www.visioncortex.org/vtracer-docs">Article</a>
     <span> | </span>
-    <a href="https://www.visioncortex.org/vtracer/">Demo</a>
+    <a href="https://www.visioncortex.org/vtracer/">Web App</a>
     <span> | </span>
-    <a href="https://github.com/visioncortex/vtracer/releases/tag/0.6.0">Download</a>
+    <a href="https://github.com/visioncortex/vtracer/releases">Download</a>
   </h3>
 
   <sub>Built with 🦀 by <a href="https://www.visioncortex.org/">The Vision Cortex Research Group</a></sub>
@@ -71,15 +71,17 @@ OPTIONS:
     -s, --splice_threshold <splice_threshold>    Minimum angle displacement (degree) to splice a spline
 ```
 
-### Install
+### Downloads
 
-You can download pre-built binaries from [Releases](https://github.com/visioncortex/vtracer/releases/tag/0.6.0).
+You can download pre-built binaries from [Releases](https://github.com/visioncortex/vtracer/releases).
 
 You can also install the program from source from [crates.io/vtracer](https://crates.io/crates/vtracer):
 
 ```sh
 cargo install vtracer
 ```
+
+> You are strongly advised to not download from any other third-party sources 
 
 ### Usage
 
@@ -105,7 +107,7 @@ pip install vtracer
 
 ## In the wild
 
-VTracer is used by the following projects (feel free to add yours!):
+VTracer is used by the following products (open a PR to add yours):
 
 <table>
   <tbody>
@@ -118,11 +120,17 @@ VTracer is used by the following projects (feel free to add yours!):
   </tbody>
 </table>
 
-## Anecdotes
+## Citations
+
+VTracer has since been cited in a few academic papers. Please kindly let us know if you have cited our work:
+
++ [Framework to Vectorize Digital Artworks for Physical Fabrication based on Geometric Stylization Techniques](https://www.researchgate.net/publication/374448489_Framework_to_Vectorize_Digital_Artworks_for_Physical_Fabrication_based_on_Geometric_Stylization_Techniques)
++ [Image Vectorization: a Review](https://arxiv.org/pdf/2306.06441.pdf)
++ [StarVector: Generating Scalable Vector Graphics Code from Images](https://arxiv.org/abs/2312.11556)
+
+## How did VTracer come about?
 
 > The following content is an excerpt from my [unpublished memoir](https://github.com/visioncortex/memoir).
-
-### How / when / where did VTracer come about?
 
 At my teenage, two open source projects in the vector graphics space inspired me the most: Potrace and Anti-Grain Geometry (AGG).
 
