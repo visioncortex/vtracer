@@ -46,18 +46,18 @@ fn convert_image_to_svg_py(
 #[pyfunction]
 fn convert_raw_image_to_svg(
     img_bytes: Vec<u8>,
-    img_format: Option<&str>,      // Format of the image (e.g. 'jpg', 'png'... A full list of supported formats can be found [here](https://docs.rs/image/latest/image/enum.ImageFormat.html)). If not provided, the image format will be guessed based on its contents. 
-    colormode: Option<&str>,       // "color" or "binary"
-    hierarchical: Option<&str>,    // "stacked" or "cutout"
-    mode: Option<&str>,            // "polygon", "spline", "none"
+    img_format: Option<&str>, // Format of the image (e.g. 'jpg', 'png'... A full list of supported formats can be found [here](https://docs.rs/image/latest/image/enum.ImageFormat.html)). If not provided, the image format will be guessed based on its contents.
+    colormode: Option<&str>,  // "color" or "binary"
+    hierarchical: Option<&str>, // "stacked" or "cutout"
+    mode: Option<&str>,       // "polygon", "spline", "none"
     filter_speckle: Option<usize>, // default: 4
-    color_precision: Option<i32>,  // default: 6
+    color_precision: Option<i32>, // default: 6
     layer_difference: Option<i32>, // default: 16
     corner_threshold: Option<i32>, // default: 60
     length_threshold: Option<f64>, // in [3.5, 10] default: 4.0
     max_iterations: Option<usize>, // default: 10
     splice_threshold: Option<i32>, // default: 45
-    path_precision: Option<u32>,   // default: 8
+    path_precision: Option<u32>, // default: 8
 ) -> PyResult<String> {
     let config = construct_config(
         colormode,
@@ -94,8 +94,63 @@ fn convert_raw_image_to_svg(
         width,
         height,
     };
-    let svg = convert(img, config)
-        .map_err(|_| PyException::new_err("Failed to convert the image. "))?;
+    let svg =
+        convert(img, config).map_err(|_| PyException::new_err("Failed to convert the image. "))?;
+    Ok(format!("{}", svg))
+}
+
+#[pyfunction]
+fn convert_pixels_to_svg(
+    rgba_pixels: Vec<(u8, u8, u8, u8)>,
+    size: (usize, usize),
+    colormode: Option<&str>,       // "color" or "binary"
+    hierarchical: Option<&str>,    // "stacked" or "cutout"
+    mode: Option<&str>,            // "polygon", "spline", "none"
+    filter_speckle: Option<usize>, // default: 4
+    color_precision: Option<i32>,  // default: 6
+    layer_difference: Option<i32>, // default: 16
+    corner_threshold: Option<i32>, // default: 60
+    length_threshold: Option<f64>, // in [3.5, 10] default: 4.0
+    max_iterations: Option<usize>, // default: 10
+    splice_threshold: Option<i32>, // default: 45
+    path_precision: Option<u32>,   // default: 8
+) -> PyResult<String> {
+    let expected_pixel_count = size.0 * size.1;
+    if rgba_pixels.len() != expected_pixel_count {
+        return Err(PyException::new_err(format!(
+            "Length of rgba_pixels does not match given image size. Expected {} ({} * {}), got {}. ",
+            expected_pixel_count,
+            size.0,
+            size.1,
+            rgba_pixels.len()
+        )));
+    }
+    let config = construct_config(
+        colormode,
+        hierarchical,
+        mode,
+        filter_speckle,
+        color_precision,
+        layer_difference,
+        corner_threshold,
+        length_threshold,
+        max_iterations,
+        splice_threshold,
+        path_precision,
+    );
+    let mut flat_pixels: Vec<u8> = vec![];
+    for (r, g, b, a) in rgba_pixels {
+        flat_pixels.push(r);
+        flat_pixels.push(g);
+        flat_pixels.push(b);
+        flat_pixels.push(a);
+    }
+    let mut img = ColorImage::new();
+    img.pixels = flat_pixels;
+    (img.width, img.height) = size;
+
+    let svg =
+        convert(img, config).map_err(|_| PyException::new_err("Failed to convert the image. "))?;
     Ok(format!("{}", svg))
 }
 
@@ -162,5 +217,6 @@ fn construct_config(
 fn vtracer(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(convert_image_to_svg_py, m)?)?;
     m.add_function(wrap_pyfunction!(convert_raw_image_to_svg, m)?)?;
+    m.add_function(wrap_pyfunction!(convert_pixels_to_svg, m)?)?;
     Ok(())
 }
