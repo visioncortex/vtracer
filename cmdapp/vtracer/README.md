@@ -54,7 +54,7 @@ vtracer.convert_image_to_svg_py(inp, out, colormode='binary')
 
 # Convert from raw image bytes
 input_img_bytes: bytes = get_bytes() # e.g. reading bytes from a file or a HTTP request body
-svg_str: str = vtracer.convert_raw_image_to_svg(f.read(), img_format = 'jpg')
+svg_str: str = vtracer.convert_raw_image_to_svg(input_img_bytes, img_format = 'jpg')
 
 # Convert from RGBA image pixels
 from PIL import Image
