@@ -1,6 +1,6 @@
 [project]
 name = "vtracer"
-version = "0.6.10"
+version = "0.6.11"
 description = "Python bindings for the Rust Vtracer raster-to-vector library"
 authors = [ { name = "Chris Tsang",  email = "chris.2y3@outlook.com" } ]
 readme = "vtracer/README.md"
