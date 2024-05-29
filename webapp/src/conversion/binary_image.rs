@@ -77,7 +77,7 @@ impl BinaryImageConverter {
                     self.params.max_iterations,
                     self.params.splice_threshold
                 );
-                let color = Color::color(&ColorName::White);
+                let color = Color::color(&ColorName::Black);
                 self.svg.prepend_path(
                     &paths,
                     &color,

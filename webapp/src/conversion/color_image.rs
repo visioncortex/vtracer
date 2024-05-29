@@ -1,12 +1,14 @@
 use wasm_bindgen::prelude::*;
-use visioncortex::PathSimplifyMode;
-use visioncortex::color_clusters::{IncrementalBuilder, Clusters, Runner, RunnerConfig, HIERARCHICAL_MAX};
+use visioncortex::{Color, ColorImage, PathSimplifyMode};
+use visioncortex::color_clusters::{Clusters, Runner, RunnerConfig, HIERARCHICAL_MAX, IncrementalBuilder, KeyingAction};
 
 use crate::canvas::*;
 use crate::svg::*;
 
 use serde::Deserialize;
 use super::util;
+
+const KEYING_THRESHOLD: f32 = 0.2;
 
 #[derive(Debug, Deserialize)]
 pub struct ColorImageConverterParams {
@@ -67,7 +69,26 @@ impl ColorImageConverter {
     pub fn init(&mut self) {
         let width = self.canvas.width() as u32;
         let height = self.canvas.height() as u32;
-        let image = self.canvas.get_image_data_as_color_image(0, 0, width, height);
+        let mut image = self.canvas.get_image_data_as_color_image(0, 0, width, height);
+
+        let key_color = if Self::should_key_image(&image) {
+            if let Ok(key_color) = Self::find_unused_color_in_image(&image) {
+                for y in 0..height as usize {
+                    for x in 0..width as usize {
+                        if image.get_pixel(x, y).a == 0 {
+                            image.set_pixel(x, y, &key_color);
+                        }
+                    }
+                }
+                key_color
+            } else {
+                Color::default()
+            }
+        } else {
+            // The default color is all zeroes, which is treated by visioncortex as a special value meaning no keying will be applied.
+            Color::default()
+        };
+
         let runner = Runner::new(RunnerConfig {
             diagonal: self.params.layer_difference == 0,
             hierarchical: HIERARCHICAL_MAX,
@@ -78,6 +99,12 @@ impl ColorImageConverter {
             is_same_color_b: 1,
             deepen_diff: self.params.layer_difference,
             hollow_neighbours: 1,
+            key_color,
+            keying_action: if self.params.hierarchical == "cutout" {
+                KeyingAction::Keep
+            } else {
+                KeyingAction::Discard
+            },
         }, image);
         self.stage = Stage::Clustering(runner.start());
     }
@@ -108,6 +135,8 @@ impl ColorImageConverter {
                                 is_same_color_b: 1,
                                 deepen_diff: 0,
                                 hollow_neighbours: 0,
+                                key_color: Default::default(),
+                                keying_action: KeyingAction::Discard,
                             }, image);
                             self.stage = Stage::Reclustering(runner.start());
                         },
@@ -167,4 +196,56 @@ impl ColorImageConverter {
         }) as i32
     }
 
+    fn color_exists_in_image(img: &ColorImage, color: Color) -> bool {
+        for y in 0..img.height {
+            for x in 0..img.width {
+                let pixel_color = img.get_pixel(x, y);
+                if pixel_color.r == color.r && pixel_color.g == color.g && pixel_color.b == color.b {
+                    return true
+                }
+            }
+        }
+        false
+    }
+    
+    fn find_unused_color_in_image(img: &ColorImage) -> Result<Color, String> {
+        let special_colors = IntoIterator::into_iter([
+            Color::new(255, 0,   0),
+            Color::new(0,   255, 0),
+            Color::new(0,   0,   255),
+            Color::new(255, 255, 0),
+            Color::new(0,   255, 255),
+            Color::new(255, 0,   255),
+            Color::new(128, 128, 128),
+        ]);
+        for color in special_colors {
+            if !Self::color_exists_in_image(img, color) {
+                return Ok(color);
+            }
+        }
+        Err(String::from("unable to find unused color in image to use as key"))
+    }
+    
+    fn should_key_image(img: &ColorImage) -> bool {
+        if img.width == 0 || img.height == 0 {
+            return false;
+        }
+    
+        // Check for transparency at several scanlines
+        let threshold = ((img.width * 2) as f32 * KEYING_THRESHOLD) as usize;
+        let mut num_transparent_boundary_pixels = 0;
+        let y_positions = [0, img.height / 4, img.height / 2, 3 * img.height / 4, img.height - 1];
+        for y in y_positions {
+            for x in 0..img.width {
+                if img.get_pixel(x, y).a == 0 {
+                    num_transparent_boundary_pixels += 1;
+                }
+                if num_transparent_boundary_pixels >= threshold {
+                    return true;
+                }
+            }
+        }
+    
+        false
+    }
 }
