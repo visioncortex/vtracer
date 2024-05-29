@@ -35,7 +35,11 @@ document.addEventListener('paste', function (e) {
 
 // Download as SVG
 document.getElementById('export').addEventListener('click', function (e) {
-    const blob = new Blob([new XMLSerializer().serializeToString(svg)], {type: 'octet/stream'}),
+    const blob = new Blob([
+        `<?xml version="1.0" encoding="UTF-8"?>\n`,
+        `<!-- Generator: visioncortex VTracer -->\n`,
+        new XMLSerializer().serializeToString(svg)
+    ], {type: 'octet/stream'}),
     url = window.URL.createObjectURL(blob);
 
     this.href = url;
@@ -444,7 +448,7 @@ class ConverterRunner {
         this.converter.init();
         this.stopped = false;
         if (clustering_mode == 'binary') {
-            svg.style.background = '#000';
+            svg.style.background = '#fff';
             canvas.style.display = 'none';
         } else {
             svg.style.background = '';

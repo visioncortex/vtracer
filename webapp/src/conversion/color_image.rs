@@ -1,6 +1,6 @@
 use wasm_bindgen::prelude::*;
 use visioncortex::PathSimplifyMode;
-use visioncortex::color_clusters::{IncrementalBuilder, Clusters, Runner, RunnerConfig, HIERARCHICAL_MAX};
+use visioncortex::color_clusters::{Clusters, Runner, RunnerConfig, HIERARCHICAL_MAX, IncrementalBuilder, KeyingAction};
 
 use crate::canvas::*;
 use crate::svg::*;
@@ -78,6 +78,8 @@ impl ColorImageConverter {
             is_same_color_b: 1,
             deepen_diff: self.params.layer_difference,
             hollow_neighbours: 1,
+            key_color: Default::default(),
+            keying_action: KeyingAction::Discard,
         }, image);
         self.stage = Stage::Clustering(runner.start());
     }
@@ -108,6 +110,8 @@ impl ColorImageConverter {
                                 is_same_color_b: 1,
                                 deepen_diff: 0,
                                 hollow_neighbours: 0,
+                                key_color: Default::default(),
+                                keying_action: KeyingAction::Discard,
                             }, image);
                             self.stage = Stage::Reclustering(runner.start());
                         },
