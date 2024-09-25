@@ -1,6 +1,7 @@
 use std::fmt;
 use visioncortex::{Color, CompoundPath, PointF64};
 
+#[derive(Clone, Debug)]
 pub struct SvgFile {
     pub paths: Vec<SvgPath>,
     pub width: usize,
@@ -8,6 +9,7 @@ pub struct SvgFile {
     pub path_precision: Option<u32>,
 }
 
+#[derive(Clone, Debug)]
 pub struct SvgPath {
     pub path: CompoundPath,
     pub color: Color,
