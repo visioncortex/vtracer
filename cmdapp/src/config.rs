@@ -1,23 +1,27 @@
 use std::str::FromStr;
 use visioncortex::PathSimplifyMode;
 
+#[derive(Clone, Debug)]
 pub enum Preset {
     Bw,
     Poster,
     Photo,
 }
 
+#[derive(Clone, Debug)]
 pub enum ColorMode {
     Color,
     Binary,
 }
 
+#[derive(Clone, Debug)]
 pub enum Hierarchical {
     Stacked,
     Cutout,
 }
 
 /// Converter config
+#[derive(Clone, Debug)]
 pub struct Config {
     pub color_mode: ColorMode,
     pub hierarchical: Hierarchical,
@@ -32,6 +36,7 @@ pub struct Config {
     pub path_precision: Option<u32>,
 }
 
+#[derive(Clone, Debug)]
 pub(crate) struct ConverterConfig {
     pub color_mode: ColorMode,
     pub hierarchical: Hierarchical,
