@@ -122,7 +122,7 @@ VTracer is used by the following products (open a PR to add yours):
 
 ## Citations
 
-VTracer has since been cited by a few academic papers in computer vision research. Please kindly let us know if you have cited our work:
+VTracer has since been cited by a few academic papers in computer graphics / vision research. Please kindly let us know if you have cited our work:
 
 + SKILL 2023 [Framework to Vectorize Digital Artworks for Physical Fabrication based on Geometric Stylization Techniques](https://www.researchgate.net/publication/374448489_Framework_to_Vectorize_Digital_Artworks_for_Physical_Fabrication_based_on_Geometric_Stylization_Techniques)
 + arXiv 2023 [Image Vectorization: a Review](https://arxiv.org/abs/2306.06441)
