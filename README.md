@@ -122,11 +122,13 @@ VTracer is used by the following products (open a PR to add yours):
 
 ## Citations
 
-VTracer has since been cited in a few academic papers. Please kindly let us know if you have cited our work:
+VTracer has since been cited by a few academic papers in computer vision research. Please kindly let us know if you have cited our work:
 
-+ [Framework to Vectorize Digital Artworks for Physical Fabrication based on Geometric Stylization Techniques](https://www.researchgate.net/publication/374448489_Framework_to_Vectorize_Digital_Artworks_for_Physical_Fabrication_based_on_Geometric_Stylization_Techniques)
-+ [Image Vectorization: a Review](https://arxiv.org/pdf/2306.06441.pdf)
-+ [StarVector: Generating Scalable Vector Graphics Code from Images](https://arxiv.org/abs/2312.11556)
++ SKILL 2023 [Framework to Vectorize Digital Artworks for Physical Fabrication based on Geometric Stylization Techniques](https://www.researchgate.net/publication/374448489_Framework_to_Vectorize_Digital_Artworks_for_Physical_Fabrication_based_on_Geometric_Stylization_Techniques)
++ arXiv 2023 [Image Vectorization: a Review](https://arxiv.org/abs/2306.06441)
++ arXiv 2023 [StarVector: Generating Scalable Vector Graphics Code from Images](https://arxiv.org/abs/2312.11556)
++ arXiv 2024 [Text-Based Reasoning About Vector Graphics](https://arxiv.org/abs/2404.06479)
++ arXiv 2024 [Delving into LLMs' visual understanding ability using SVG to bridge image and text](https://openreview.net/pdf?id=pwlm6Po61I)
 
 ## How did VTracer come about?
 
