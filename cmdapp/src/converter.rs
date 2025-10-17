@@ -53,7 +53,7 @@ fn find_unused_color_in_image(img: &ColorImage) -> Result<Color, String> {
         Color::new(0, 255, 255),
         Color::new(255, 0, 255),
     ]);
-    let rng = Rng::new();
+    let mut rng = Rng::new();
     let random_colors =
         (0..NUM_UNUSED_COLOR_ITERATIONS).map(|_| Color::new(rng.u8(..), rng.u8(..), rng.u8(..)));
     for color in special_colors.chain(random_colors) {
