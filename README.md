@@ -115,7 +115,8 @@ VTracer is used by the following products (open a PR to add yours):
       <td><a href="https://logo.aliyun.com/logo#/name"><img src="docs/images/aliyun-logo.png" width="250"/></a>
       <br>Smart logo design
       </td>
-      <td></td>
+      <td><a href="https://easycolor.art"><img src="docs/images/easycolor-logo.png" width="250"/></a>
+      <br>Coloring page generate</td>
     </tr>
   </tbody>
 </table>
