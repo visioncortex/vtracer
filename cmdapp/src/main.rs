@@ -2,7 +2,7 @@ mod config;
 mod converter;
 mod svg;
 
-use clap::{App, Arg};
+use clap::{Arg, Command};
 use config::{ColorMode, Config, Hierarchical, Preset};
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -18,38 +18,35 @@ fn path_simplify_mode_from_str(s: &str) -> PathSimplifyMode {
 }
 
 pub fn config_from_args() -> (PathBuf, PathBuf, Config) {
-    let app = App::new("visioncortex VTracer ".to_owned() + env!("CARGO_PKG_VERSION"))
+    let app = Command::new("vtracer")
+        .version(env!("CARGO_PKG_VERSION"))
         .about("A cmd app to convert images into vector graphics.");
 
     let app = app.arg(
-        Arg::with_name("input")
+        Arg::new("input")
             .long("input")
-            .short("i")
-            .takes_value(true)
+            .short('i')
             .help("Path to input raster image")
             .required(true),
     );
 
     let app = app.arg(
-        Arg::with_name("output")
+        Arg::new("output")
             .long("output")
-            .short("o")
-            .takes_value(true)
+            .short('o')
             .help("Path to output vector graphics")
             .required(true),
     );
 
     let app = app.arg(
-        Arg::with_name("color_mode")
+        Arg::new("color_mode")
             .long("colormode")
-            .takes_value(true)
             .help("True color image `color` (default) or Binary image `bw`"),
     );
 
     let app = app.arg(
-        Arg::with_name("hierarchical")
+        Arg::new("hierarchical")
             .long("hierarchical")
-            .takes_value(true)
             .help(
                 "Hierarchical clustering `stacked` (default) or non-stacked `cutout`. \
             Only applies to color mode. ",
@@ -57,70 +54,61 @@ pub fn config_from_args() -> (PathBuf, PathBuf, Config) {
     );
 
     let app = app.arg(
-        Arg::with_name("preset")
+        Arg::new("preset")
             .long("preset")
-            .takes_value(true)
             .help("Use one of the preset configs `bw`, `poster`, `photo`"),
     );
 
     let app = app.arg(
-        Arg::with_name("filter_speckle")
+        Arg::new("filter_speckle")
             .long("filter_speckle")
-            .short("f")
-            .takes_value(true)
+            .short('f')
             .help("Discard patches smaller than X px in size"),
     );
 
     let app = app.arg(
-        Arg::with_name("color_precision")
+        Arg::new("color_precision")
             .long("color_precision")
-            .short("p")
-            .takes_value(true)
+            .short('p')
             .help("Number of significant bits to use in an RGB channel"),
     );
 
     let app = app.arg(
-        Arg::with_name("gradient_step")
+        Arg::new("gradient_step")
             .long("gradient_step")
-            .short("g")
-            .takes_value(true)
+            .short('g')
             .help("Color difference between gradient layers"),
     );
 
     let app = app.arg(
-        Arg::with_name("corner_threshold")
+        Arg::new("corner_threshold")
             .long("corner_threshold")
-            .short("c")
-            .takes_value(true)
+            .short('c')
             .help("Minimum momentary angle (degree) to be considered a corner"),
     );
 
-    let app = app.arg(Arg::with_name("segment_length")
+    let app = app.arg(Arg::new("segment_length")
         .long("segment_length")
-        .short("l")
-        .takes_value(true)
+        .short('l')
         .help("Perform iterative subdivide smooth until all segments are shorter than this length"));
 
     let app = app.arg(
-        Arg::with_name("splice_threshold")
+        Arg::new("splice_threshold")
             .long("splice_threshold")
-            .short("s")
-            .takes_value(true)
+            .short('s')
             .help("Minimum angle displacement (degree) to splice a spline"),
     );
 
     let app = app.arg(
-        Arg::with_name("mode")
+        Arg::new("mode")
             .long("mode")
-            .short("m")
-            .takes_value(true)
+            .short('m')
             .help("Curver fitting mode `pixel`, `polygon`, `spline`"),
     );
 
     let app = app.arg(
-        Arg::with_name("path_precision")
+        Arg::new("path_precision")
             .long("path_precision")
-            .takes_value(true)
             .help("Number of decimal places to use in path string"),
     );
 
@@ -129,20 +117,20 @@ pub fn config_from_args() -> (PathBuf, PathBuf, Config) {
 
     let mut config = Config::default();
     let input_path = matches
-        .value_of("input")
+        .get_one::<String>("input")
         .expect("Input path is required, please specify it by --input or -i.");
     let output_path = matches
-        .value_of("output")
+        .get_one::<String>("output")
         .expect("Output path is required, please specify it by --output or -o.");
 
     let input_path = PathBuf::from(input_path);
     let output_path = PathBuf::from(output_path);
 
-    if let Some(value) = matches.value_of("preset") {
+    if let Some(value) = matches.get_one::<String>("preset") {
         config = Config::from_preset(Preset::from_str(value).unwrap());
     }
 
-    if let Some(value) = matches.value_of("color_mode") {
+    if let Some(value) = matches.get_one::<String>("color_mode") {
         config.color_mode = ColorMode::from_str(if value.trim() == "bw" || value.trim() == "BW" {
             "binary"
         } else {
@@ -151,11 +139,11 @@ pub fn config_from_args() -> (PathBuf, PathBuf, Config) {
         .unwrap()
     }
 
-    if let Some(value) = matches.value_of("hierarchical") {
+    if let Some(value) = matches.get_one::<String>("hierarchical") {
         config.hierarchical = Hierarchical::from_str(value).unwrap()
     }
 
-    if let Some(value) = matches.value_of("mode") {
+    if let Some(value) = matches.get_one::<String>("mode") {
         let value = value.trim();
         config.mode = path_simplify_mode_from_str(if value == "pixel" {
             "none"
@@ -168,7 +156,7 @@ pub fn config_from_args() -> (PathBuf, PathBuf, Config) {
         });
     }
 
-    if let Some(value) = matches.value_of("filter_speckle") {
+    if let Some(value) = matches.get_one::<String>("filter_speckle") {
         if value.trim().parse::<usize>().is_ok() {
             // is numeric
             let value = value.trim().parse::<usize>().unwrap();
@@ -184,7 +172,7 @@ pub fn config_from_args() -> (PathBuf, PathBuf, Config) {
         }
     }
 
-    if let Some(value) = matches.value_of("color_precision") {
+    if let Some(value) = matches.get_one::<String>("color_precision") {
         if value.trim().parse::<i32>().is_ok() {
             // is numeric
             let value = value.trim().parse::<i32>().unwrap();
@@ -200,7 +188,7 @@ pub fn config_from_args() -> (PathBuf, PathBuf, Config) {
         }
     }
 
-    if let Some(value) = matches.value_of("gradient_step") {
+    if let Some(value) = matches.get_one::<String>("gradient_step") {
         if value.trim().parse::<i32>().is_ok() {
             // is numeric
             let value = value.trim().parse::<i32>().unwrap();
@@ -213,7 +201,7 @@ pub fn config_from_args() -> (PathBuf, PathBuf, Config) {
         }
     }
 
-    if let Some(value) = matches.value_of("corner_threshold") {
+    if let Some(value) = matches.get_one::<String>("corner_threshold") {
         if value.trim().parse::<i32>().is_ok() {
             // is numeric
             let value = value.trim().parse::<i32>().unwrap();
@@ -226,7 +214,7 @@ pub fn config_from_args() -> (PathBuf, PathBuf, Config) {
         }
     }
 
-    if let Some(value) = matches.value_of("segment_length") {
+    if let Some(value) = matches.get_one::<String>("segment_length") {
         if value.trim().parse::<f64>().is_ok() {
             // is numeric
             let value = value.trim().parse::<f64>().unwrap();
@@ -239,7 +227,7 @@ pub fn config_from_args() -> (PathBuf, PathBuf, Config) {
         }
     }
 
-    if let Some(value) = matches.value_of("splice_threshold") {
+    if let Some(value) = matches.get_one::<String>("splice_threshold") {
         if value.trim().parse::<i32>().is_ok() {
             // is numeric
             let value = value.trim().parse::<i32>().unwrap();
@@ -252,7 +240,7 @@ pub fn config_from_args() -> (PathBuf, PathBuf, Config) {
         }
     }
 
-    if let Some(value) = matches.value_of("path_precision") {
+    if let Some(value) = matches.get_one::<String>("path_precision") {
         if value.trim().parse::<u32>().is_ok() {
             // is numeric
             let value = value.trim().parse::<u32>().ok();
