@@ -5,10 +5,9 @@ members = [
     "crates/vtracer-cli",
 ]
 
-# The pre-1.0 crates are kept in the tree for git history but are no longer
-# part of the build. They are replaced by the crates/ workspace above.
+# The pre-1.0 webapp is kept in the tree for now but is no longer part of the
+# build. It is superseded by the crates/ workspace above.
 exclude = [
-    "cmdapp",
     "webapp",
 ]
 
