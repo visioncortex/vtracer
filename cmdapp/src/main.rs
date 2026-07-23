@@ -26,8 +26,8 @@ pub fn config_from_args() -> (PathBuf, PathBuf, Config) {
             .long("input")
             .short("i")
             .takes_value(true)
+			.required_unless("posinput")
             .help("Path to input raster image")
-            .required(true),
     );
 
     let app = app.arg(
@@ -35,9 +35,20 @@ pub fn config_from_args() -> (PathBuf, PathBuf, Config) {
             .long("output")
             .short("o")
             .takes_value(true)
+			.required_unless("posoutput")
             .help("Path to output vector graphics")
-            .required(true),
     );
+
+	let app = app.arg(
+		Arg::with_name("posinput")
+		.index(1)
+		.required_unless("input")
+	);
+	let app = app.arg(
+		Arg::with_name("posoutput")
+		.index(2)
+		.required_unless("output")
+	);
 
     let app = app.arg(
         Arg::with_name("color_mode")
@@ -130,9 +141,11 @@ pub fn config_from_args() -> (PathBuf, PathBuf, Config) {
     let mut config = Config::default();
     let input_path = matches
         .value_of("input")
+		.or_else(|| matches.value_of("posinput"))
         .expect("Input path is required, please specify it by --input or -i.");
     let output_path = matches
         .value_of("output")
+		.or_else(|| matches.value_of("posoutput"))
         .expect("Output path is required, please specify it by --output or -o.");
 
     let input_path = PathBuf::from(input_path);
