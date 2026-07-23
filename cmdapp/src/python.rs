@@ -7,6 +7,7 @@ use visioncortex::PathSimplifyMode;
 
 /// Python binding
 #[pyfunction]
+#[pyo3(signature = (image_path, out_path, colormode=None, hierarchical=None, mode=None, filter_speckle=None, color_precision=None, layer_difference=None, corner_threshold=None, length_threshold=None, max_iterations=None, splice_threshold=None, path_precision=None))]
 fn convert_image_to_svg_py(
     image_path: &str,
     out_path: &str,
@@ -44,6 +45,7 @@ fn convert_image_to_svg_py(
 }
 
 #[pyfunction]
+#[pyo3(signature = (img_bytes, img_format=None, colormode=None, hierarchical=None, mode=None, filter_speckle=None, color_precision=None, layer_difference=None, corner_threshold=None, length_threshold=None, max_iterations=None, splice_threshold=None, path_precision=None))]
 fn convert_raw_image_to_svg(
     img_bytes: Vec<u8>,
     img_format: Option<&str>, // Format of the image (e.g. 'jpg', 'png'... A full list of supported formats can be found [here](https://docs.rs/image/latest/image/enum.ImageFormat.html)). If not provided, the image format will be guessed based on its contents.
@@ -100,6 +102,7 @@ fn convert_raw_image_to_svg(
 }
 
 #[pyfunction]
+#[pyo3(signature = (rgba_pixels, size, colormode=None, hierarchical=None, mode=None, filter_speckle=None, color_precision=None, layer_difference=None, corner_threshold=None, length_threshold=None, max_iterations=None, splice_threshold=None, path_precision=None))]
 fn convert_pixels_to_svg(
     rgba_pixels: Vec<(u8, u8, u8, u8)>,
     size: (usize, usize),
@@ -214,7 +217,7 @@ fn construct_config(
 
 /// A Python module implemented in Rust.
 #[pymodule]
-fn vtracer(_py: Python, m: &PyModule) -> PyResult<()> {
+fn vtracer(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(convert_image_to_svg_py, m)?)?;
     m.add_function(wrap_pyfunction!(convert_raw_image_to_svg, m)?)?;
     m.add_function(wrap_pyfunction!(convert_pixels_to_svg, m)?)?;
