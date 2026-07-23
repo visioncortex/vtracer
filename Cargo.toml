@@ -1,7 +1,28 @@
 [workspace]
 
 members = [
+    "crates/vtracer",
+    "crates/vtracer-cli",
+]
+
+# The pre-1.0 crates are kept in the tree for git history but are no longer
+# part of the build. They are replaced by the crates/ workspace above.
+exclude = [
     "cmdapp",
     "webapp",
 ]
+
 resolver = "2"
+
+[workspace.package]
+version = "1.0.0-alpha.1"
+authors = ["Chris Tsang <chris.2y3@outlook.com>"]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+homepage = "http://www.visioncortex.org/vtracer"
+repository = "https://github.com/visioncortex/vtracer/"
+
+[workspace.dependencies]
+# visioncortex 0.9.0 is currently unreleased; developed against the local
+# checkout. Releases will pin a published 0.9.x.
+visioncortex = { version = "0.9", path = "../visioncortex" }

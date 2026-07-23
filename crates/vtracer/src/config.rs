@@ -1,0 +1,264 @@
+//! High-level configuration and presets that assemble a [`Pipeline`].
+
+use std::str::FromStr;
+
+use visioncortex::Color;
+
+use crate::colorfit::{AutoQuantize, ColorFitter, FixedPalette, Identity, MergeAdjacent};
+use crate::compose::Compositing;
+use crate::error::Error;
+use crate::fitter::{CurveFitter, FitParams, PixelFitter, PolygonFitter, SplineFitter};
+use crate::frontend::{BinaryFrontend, ColorClusterFrontend, Frontend};
+use crate::optimize::{OptimizerPass, QuantizePass, SimplifyPass};
+use crate::pipeline::Pipeline;
+use crate::svg::SvgWriter;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ColorMode {
+    Color,
+    Binary,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Hierarchical {
+    Stacked,
+    /// True mosaic cutout — not yet implemented (separate milestone).
+    Cutout,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FitMode {
+    Pixel,
+    Polygon,
+    Spline,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Preset {
+    Bw,
+    Poster,
+    Photo,
+}
+
+/// High-level converter configuration. [`Config::build`] turns this into a
+/// concrete [`Pipeline`].
+#[derive(Debug, Clone)]
+pub struct Config {
+    pub color_mode: ColorMode,
+    pub hierarchical: Hierarchical,
+    /// Speckle filter given as a side length; the area threshold is its square.
+    pub filter_speckle: usize,
+    /// Significant bits per RGB channel (1..=8).
+    pub color_precision: i32,
+    /// Color difference between gradient layers.
+    pub layer_difference: i32,
+    pub mode: FitMode,
+    /// Corner threshold in degrees.
+    pub corner_threshold: i32,
+    /// Segment length threshold in pixels.
+    pub length_threshold: f64,
+    pub max_iterations: usize,
+    /// Splice threshold in degrees.
+    pub splice_threshold: i32,
+    /// Coordinate precision (decimal places) for output.
+    pub path_precision: Option<u32>,
+    /// Fixed palette (empty = none). Takes priority over `max_colors`.
+    pub palette: Vec<Color>,
+    /// Auto-quantize target color count (None = off).
+    pub max_colors: Option<usize>,
+    /// Optimization level: 0 = off, 1 = quantize+simplify, 2 = + shorthands/grouping.
+    pub optimize: u8,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            color_mode: ColorMode::Color,
+            hierarchical: Hierarchical::Stacked,
+            filter_speckle: 4,
+            color_precision: 6,
+            layer_difference: 16,
+            mode: FitMode::Spline,
+            corner_threshold: 60,
+            length_threshold: 4.0,
+            max_iterations: 10,
+            splice_threshold: 45,
+            path_precision: Some(2),
+            palette: Vec::new(),
+            max_colors: None,
+            optimize: 1,
+        }
+    }
+}
+
+impl Config {
+    pub fn from_preset(preset: Preset) -> Self {
+        match preset {
+            Preset::Bw => Self {
+                color_mode: ColorMode::Binary,
+                ..Self::default()
+            },
+            Preset::Poster => Self {
+                color_mode: ColorMode::Color,
+                color_precision: 8,
+                ..Self::default()
+            },
+            Preset::Photo => Self {
+                color_mode: ColorMode::Color,
+                filter_speckle: 10,
+                color_precision: 8,
+                layer_difference: 48,
+                corner_threshold: 180,
+                ..Self::default()
+            },
+        }
+    }
+
+    fn fit_params(&self) -> FitParams {
+        FitParams {
+            corner_threshold: deg2rad(self.corner_threshold),
+            length_threshold: self.length_threshold,
+            max_iterations: self.max_iterations,
+            splice_threshold: deg2rad(self.splice_threshold),
+        }
+    }
+
+    fn frontend(&self) -> Box<dyn Frontend> {
+        let filter_speckle_area = self.filter_speckle * self.filter_speckle;
+        match self.color_mode {
+            ColorMode::Color => Box::new(ColorClusterFrontend {
+                filter_speckle_area,
+                color_precision_loss: 8 - self.color_precision,
+                layer_difference: self.layer_difference,
+            }),
+            ColorMode::Binary => Box::new(BinaryFrontend {
+                filter_speckle_area,
+                threshold: 128,
+                diagonal: false,
+            }),
+        }
+    }
+
+    fn color_fitters(&self) -> Vec<Box<dyn ColorFitter>> {
+        if !self.palette.is_empty() {
+            vec![
+                Box::new(FixedPalette::new(self.palette.clone())),
+                Box::new(MergeAdjacent),
+            ]
+        } else if let Some(max_colors) = self.max_colors {
+            vec![Box::new(AutoQuantize { max_colors }), Box::new(MergeAdjacent)]
+        } else {
+            vec![Box::new(Identity)]
+        }
+    }
+
+    fn fitter(&self) -> Box<dyn CurveFitter> {
+        match self.mode {
+            FitMode::Pixel => Box::new(PixelFitter),
+            FitMode::Polygon => Box::new(PolygonFitter),
+            FitMode::Spline => Box::new(SplineFitter::new(self.fit_params())),
+        }
+    }
+
+    fn optimizers(&self) -> Vec<Box<dyn OptimizerPass>> {
+        if self.optimize == 0 {
+            return Vec::new();
+        }
+        let precision = self.path_precision.unwrap_or(2);
+        vec![
+            Box::new(QuantizePass::new(precision)),
+            Box::new(SimplifyPass),
+        ]
+    }
+
+    fn writer(&self) -> SvgWriter {
+        match self.optimize {
+            0 => SvgWriter {
+                relative: false,
+                shorthands: false,
+                precision: self.path_precision,
+            },
+            1 => SvgWriter {
+                relative: true,
+                shorthands: false,
+                precision: self.path_precision,
+            },
+            _ => SvgWriter {
+                relative: true,
+                shorthands: true,
+                precision: self.path_precision,
+            },
+        }
+    }
+
+    /// Assemble a concrete pipeline from this configuration.
+    pub fn build(&self) -> Result<Pipeline, Error> {
+        let compositing = match self.hierarchical {
+            Hierarchical::Stacked => Compositing::Stacked,
+            Hierarchical::Cutout => {
+                return Err(Error::Unsupported(
+                    "the mosaic (cutout) compositor is not yet implemented".into(),
+                ))
+            }
+        };
+
+        Ok(Pipeline {
+            frontend: self.frontend(),
+            color_fitters: self.color_fitters(),
+            fitter: self.fitter(),
+            compositing,
+            optimizers: self.optimizers(),
+            writer: self.writer(),
+        })
+    }
+}
+
+fn deg2rad(deg: i32) -> f64 {
+    deg as f64 / 180.0 * std::f64::consts::PI
+}
+
+impl FromStr for ColorMode {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "color" => Ok(Self::Color),
+            "binary" | "bw" | "BW" => Ok(Self::Binary),
+            _ => Err(format!("unknown color mode {s}")),
+        }
+    }
+}
+
+impl FromStr for Hierarchical {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "stacked" => Ok(Self::Stacked),
+            "cutout" => Ok(Self::Cutout),
+            _ => Err(format!("unknown hierarchical mode {s}")),
+        }
+    }
+}
+
+impl FromStr for FitMode {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "pixel" | "none" => Ok(Self::Pixel),
+            "polygon" => Ok(Self::Polygon),
+            "spline" => Ok(Self::Spline),
+            _ => Err(format!("unknown fit mode {s}")),
+        }
+    }
+}
+
+impl FromStr for Preset {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "bw" => Ok(Self::Bw),
+            "poster" => Ok(Self::Poster),
+            "photo" => Ok(Self::Photo),
+            _ => Err(format!("unknown preset {s}")),
+        }
+    }
+}

@@ -1,0 +1,18 @@
+[package]
+name = "vtracer"
+description = "A vectorization framework that converts raster images into vector graphics: pluggable frontends, curve fitters, color fitting, and output optimization."
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+categories = ["graphics", "computer-vision"]
+keywords = ["svg", "vectorization", "computer-graphics"]
+
+[lib]
+name = "vtracer"
+path = "src/lib.rs"
+
+[dependencies]
+visioncortex.workspace = true
