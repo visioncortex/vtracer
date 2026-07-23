@@ -172,8 +172,8 @@ pub fn config_from_args() -> (PathBuf, PathBuf, Config) {
         if value.trim().parse::<usize>().is_ok() {
             // is numeric
             let value = value.trim().parse::<usize>().unwrap();
-            if value > 16 {
-                panic!("Out of Range Error: Filter speckle is invalid at {}. It must be within [0,16].", value);
+            if value > 128 {
+                panic!("Out of Range Error: Filter speckle is invalid at {}. It must be within [0,128].", value);
             }
             config.filter_speckle = value;
         } else {
