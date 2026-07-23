@@ -78,11 +78,12 @@ fn optimize_levels_shrink_or_match() {
 }
 
 #[test]
-fn cutout_is_reported_unsupported() {
+fn mosaic_cutout_produces_svg() {
+    let img = two_band_image(32);
     let config = Config {
         hierarchical: Hierarchical::Cutout,
         ..Config::default()
     };
-    let err = config.build().err().expect("cutout should be unsupported");
-    assert!(err.to_string().contains("mosaic"));
+    let svg = config.build().unwrap().to_svg(&img).unwrap();
+    assert_valid_svg(&svg);
 }

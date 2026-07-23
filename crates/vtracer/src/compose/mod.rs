@@ -7,12 +7,24 @@
 
 use crate::fitter::CurveFitter;
 use crate::ir::{Segmentation, Shape, VectorDoc};
+use crate::mosaic::{compose_mosaic, MosaicOptions, SegmentFitter};
 
-/// Which compositing strategy the pipeline uses.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Which compositing strategy the pipeline uses. Each variant owns its fitter.
 pub enum Compositing {
     /// Independent per-region closed outlines, stacked bottom-to-top.
-    Stacked,
+    Stacked(Box<dyn CurveFitter>),
+    /// Seam-free gapless tessellation via a shared boundary graph.
+    Mosaic(Box<dyn SegmentFitter>, MosaicOptions),
+}
+
+impl Compositing {
+    /// Run the selected compositor over a segmentation.
+    pub fn compose(&self, seg: &Segmentation) -> VectorDoc {
+        match self {
+            Compositing::Stacked(fitter) => compose_stacked(seg, fitter.as_ref()),
+            Compositing::Mosaic(fitter, opts) => compose_mosaic(seg, fitter.as_ref(), opts),
+        }
+    }
 }
 
 /// Trace every layer's closed outline and stack the shapes in paint order.

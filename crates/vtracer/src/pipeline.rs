@@ -3,9 +3,8 @@
 use visioncortex::ColorImage;
 
 use crate::colorfit::ColorFitter;
-use crate::compose::{compose_stacked, Compositing};
+use crate::compose::Compositing;
 use crate::error::Error;
-use crate::fitter::CurveFitter;
 use crate::frontend::Frontend;
 use crate::ir::VectorDoc;
 use crate::optimize::OptimizerPass;
@@ -16,7 +15,6 @@ use crate::svg::SvgWriter;
 pub struct Pipeline {
     pub frontend: Box<dyn Frontend>,
     pub color_fitters: Vec<Box<dyn ColorFitter>>,
-    pub fitter: Box<dyn CurveFitter>,
     pub compositing: Compositing,
     pub optimizers: Vec<Box<dyn OptimizerPass>>,
     pub writer: SvgWriter,
@@ -31,9 +29,7 @@ impl Pipeline {
             fitter.fit(&mut seg);
         }
 
-        let mut doc = match self.compositing {
-            Compositing::Stacked => compose_stacked(&seg, self.fitter.as_ref()),
-        };
+        let mut doc = self.compositing.compose(&seg);
 
         for pass in &self.optimizers {
             pass.run(&mut doc);

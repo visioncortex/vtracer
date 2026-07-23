@@ -9,6 +9,7 @@ use crate::compose::Compositing;
 use crate::error::Error;
 use crate::fitter::{CurveFitter, FitParams, PixelFitter, PolygonFitter, SplineFitter};
 use crate::frontend::{BinaryFrontend, ColorClusterFrontend, Frontend};
+use crate::mosaic::{MosaicOptions, PixelSegmentFitter, PolygonSegmentFitter, SegmentFitter};
 use crate::optimize::{OptimizerPass, QuantizePass, SimplifyPass};
 use crate::pipeline::Pipeline;
 use crate::svg::SvgWriter;
@@ -160,6 +161,16 @@ impl Config {
         }
     }
 
+    fn segment_fitter(&self) -> Box<dyn SegmentFitter> {
+        match self.mode {
+            FitMode::Pixel => Box::new(PixelSegmentFitter),
+            FitMode::Polygon => Box::new(PolygonSegmentFitter::default()),
+            // The spline segment fitter is not implemented yet; mosaic falls
+            // back to the polygon (crack-midline) fitter for now.
+            FitMode::Spline => Box::new(PolygonSegmentFitter::default()),
+        }
+    }
+
     fn optimizers(&self) -> Vec<Box<dyn OptimizerPass>> {
         if self.optimize == 0 {
             return Vec::new();
@@ -194,18 +205,15 @@ impl Config {
     /// Assemble a concrete pipeline from this configuration.
     pub fn build(&self) -> Result<Pipeline, Error> {
         let compositing = match self.hierarchical {
-            Hierarchical::Stacked => Compositing::Stacked,
+            Hierarchical::Stacked => Compositing::Stacked(self.fitter()),
             Hierarchical::Cutout => {
-                return Err(Error::Unsupported(
-                    "the mosaic (cutout) compositor is not yet implemented".into(),
-                ))
+                Compositing::Mosaic(self.segment_fitter(), MosaicOptions::default())
             }
         };
 
         Ok(Pipeline {
             frontend: self.frontend(),
             color_fitters: self.color_fitters(),
-            fitter: self.fitter(),
             compositing,
             optimizers: self.optimizers(),
             writer: self.writer(),

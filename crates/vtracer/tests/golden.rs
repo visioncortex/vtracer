@@ -15,7 +15,7 @@
 
 use std::path::PathBuf;
 
-use vtracer::{Color, ColorImage, ColorMode, Config, FitMode};
+use vtracer::{Color, ColorImage, ColorMode, Config, FitMode, Hierarchical};
 
 // --- synthetic image builders ------------------------------------------------
 
@@ -173,6 +173,26 @@ fn cases() -> Vec<(&'static str, ColorImage, Config)> {
             "disc_opt2",
             disc(),
             Config {
+                optimize: 2,
+                ..base()
+            },
+        ),
+        // Mosaic (seam-free tessellation): exact pixel and polygon fitters.
+        (
+            "disc_mosaic_pixel",
+            disc(),
+            Config {
+                hierarchical: Hierarchical::Cutout,
+                mode: FitMode::Pixel,
+                ..base()
+            },
+        ),
+        (
+            "checker_mosaic_polygon",
+            checker(),
+            Config {
+                hierarchical: Hierarchical::Cutout,
+                mode: FitMode::Polygon,
                 optimize: 2,
                 ..base()
             },
