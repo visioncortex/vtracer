@@ -9,6 +9,8 @@ members = [
 # build. It is superseded by the crates/ workspace above.
 exclude = [
     "webapp",
+    # pyo3 extension-module cdylib; built with maturin, not the core workspace.
+    "crates/vtracer-py",
 ]
 
 resolver = "2"

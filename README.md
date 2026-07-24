@@ -124,11 +124,27 @@ cargo add vtracer
 
 ### Python Library
 
-Since `0.6`, [`vtracer`](https://pypi.org/project/vtracer/) is also packaged as Python native extensions, thanks to the awesome [pyo3](https://github.com/PyO3/pyo3) project.
+[`vtracer`](https://pypi.org/project/vtracer/) is also packaged as a Python native extension (built with [pyo3](https://github.com/PyO3/pyo3) + [maturin](https://www.maturin.rs), from the `crates/vtracer-py` crate).
 
 ```sh
 pip install vtracer
 ```
+
+```python
+import vtracer
+
+# one-liners
+vtracer.convert_file("in.png", "out.svg")
+svg = vtracer.convert_bytes(open("in.png", "rb").read())
+
+# rich, reusable config + presets
+cfg = vtracer.Config(mode="polygon", hierarchical="cutout")
+cfg.palette = ["#1b1b1b", "#e0c088", "#5a7d3c"]
+svg = cfg.convert_bytes(data)
+vtracer.Config.poster().convert_file("photo.jpg", "poster.svg")
+```
+
+See [`crates/vtracer-py`](crates/vtracer-py/README.md) for the full API.
 
 ## Citations
 
