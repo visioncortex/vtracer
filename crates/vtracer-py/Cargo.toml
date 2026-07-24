@@ -19,5 +19,8 @@ crate-type = ["cdylib"]
 
 [dependencies]
 vtracer = { version = "1.0.0-alpha.1", path = "../vtracer" }
-image = "0.25"
+# Decode-only: trimmed to real input formats (drops the AV1 encoder + OpenEXR).
+image = { version = "0.25", default-features = false, features = [
+    "png", "jpeg", "gif", "bmp", "webp", "tiff", "ico", "pnm", "tga", "qoi",
+] }
 pyo3 = { version = "0.26", features = ["extension-module", "abi3-py38"] }
