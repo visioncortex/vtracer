@@ -19,8 +19,8 @@ vtracer = { version = "1.0.0-alpha.1", path = "../crates/vtracer" }
 wasm-bindgen = "0.2"
 serde = { version = "1", features = ["derive"] }
 serde-wasm-bindgen = "0.6"
-# Pure-Rust decoders that compile to wasm32-unknown-unknown.
-image = { version = "0.25", default-features = false, features = ["png", "jpeg", "gif", "bmp"] }
+# Pure-Rust decoders that compile to wasm32-unknown-unknown (webp via image-webp).
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "gif", "bmp", "webp"] }
 
 [profile.release]
 opt-level = "s"
