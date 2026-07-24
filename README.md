@@ -15,7 +15,25 @@
     <a href="https://github.com/visioncortex/vtracer/releases">Download</a>
   </h3>
 
+  <p>
+    <a href="https://crates.io/crates/vtracer"><img src="https://img.shields.io/crates/v/vtracer.svg?label=crates.io%20%7C%20vtracer" alt="Rust library on crates.io"></a>
+    <a href="https://crates.io/crates/vtracer-cli"><img src="https://img.shields.io/crates/v/vtracer-cli.svg?label=CLI%20%7C%20vtracer-cli" alt="CLI on crates.io"></a>
+    <a href="https://pypi.org/project/vtracer/"><img src="https://img.shields.io/pypi/v/vtracer.svg?label=PyPI%20%7C%20vtracer" alt="Python package on PyPI"></a>
+    <a href="https://www.npmjs.com/package/@visioncortex/vtracer"><img src="https://img.shields.io/npm/v/@visioncortex/vtracer.svg?label=npm%20%7C%20%40visioncortex%2Fvtracer" alt="Node package on npm"></a>
+  </p>
+
 </div>
+
+## Packages
+
+VTracer 1.0 is a vectorization **framework** (pluggable frontends, curve fitters, color fitting, and output optimization) shipped across four surfaces from this repository:
+
+| Package | Registry | Source | Use |
+| --- | --- | --- | --- |
+| `vtracer-cli` | [crates.io](https://crates.io/crates/vtracer-cli) | [`crates/vtracer-cli`](crates/vtracer-cli) | Command-line tool (`vtracer` binary) |
+| `vtracer` | [crates.io](https://crates.io/crates/vtracer) | [`crates/vtracer`](crates/vtracer) | Rust library / the framework core |
+| `vtracer` | [PyPI](https://pypi.org/project/vtracer/) | [`crates/vtracer-py`](crates/vtracer-py) | Python native extension (pyo3 + maturin) |
+| `@visioncortex/vtracer` | [npm](https://www.npmjs.com/package/@visioncortex/vtracer) | [`nodejs`](nodejs) | Node.js WebAssembly build, no native dependency |
 
 ## Introduction
 
@@ -148,7 +166,7 @@ See [`crates/vtracer-py`](crates/vtracer-py/README.md) for the full API.
 
 ### Node.js Library
 
-[`@visioncortex/vtracer`](https://www.npmjs.com/package/@visioncortex/vtracer) is available for Node as a WebAssembly build (from the [`nodejs`](nodejs/README.md) package) — image decoding and vectorization both run in wasm, so there is **no native dependency**.
+[`@visioncortex/vtracer`](https://www.npmjs.com/package/@visioncortex/vtracer) is available for Node as a WebAssembly build (from the [`nodejs`](nodejs/README.md) package) — image decoding and vectorization both run in wasm, so there is **no native dependency**. Decodes PNG, JPEG, GIF, BMP, and WebP; for other formats, decode yourself and pass raw RGBA to `convertPixels`.
 
 ```sh
 npm install @visioncortex/vtracer
