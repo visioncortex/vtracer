@@ -11,6 +11,8 @@ exclude = [
     "webapp",
     # pyo3 extension-module cdylib; built with maturin, not the core workspace.
     "crates/vtracer-py",
+    # wasm-bindgen cdylib; built with wasm-pack as the Node package's core.
+    "nodejs",
 ]
 
 resolver = "2"

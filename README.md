@@ -146,6 +146,22 @@ vtracer.Config.poster().convert_file("photo.jpg", "poster.svg")
 
 See [`crates/vtracer-py`](crates/vtracer-py/README.md) for the full API.
 
+### Node.js Library
+
+[`vtracer`](https://www.npmjs.com/package/vtracer) is available for Node as a WebAssembly build (from the [`nodejs`](nodejs/README.md) package) — image decoding and vectorization both run in wasm, so there is **no native dependency**.
+
+```sh
+npm install vtracer
+```
+
+```js
+const vtracer = require('vtracer');
+
+await vtracer.convertFile('in.png', 'out.svg', { mode: 'polygon' });
+const svg = vtracer.convertBuffer(buffer, { preset: 'poster' });
+const svg2 = vtracer.convertPixels(rgba, width, height, { colorMode: 'bw' });
+```
+
 ## Citations
 
 VTracer has since been cited by a few academic papers in computer graphics / vision research. Please kindly let us know if you have cited our work:
