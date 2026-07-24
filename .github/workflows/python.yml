@@ -2,11 +2,13 @@
 #    maturin generate-ci github -m crates/vtracer-py/Cargo.toml
 name: Python
 
+# Wheel builds are heavy (full platform matrix), so they run only on release
+# tags and on-demand — not on every push/PR. Rust/wasm/Node CI (rust.yml) still
+# gates ordinary commits.
 on:
   push:
     tags:
       - '*'
-  pull_request:
   workflow_dispatch:
 
 permissions:
