@@ -8,13 +8,13 @@ just `npm install`.
 ## Install
 
 ```sh
-npm install vtracer
+npm install @visioncortex/vtracer
 ```
 
 ## Usage
 
 ```js
-const vtracer = require('vtracer');
+const vtracer = require('@visioncortex/vtracer');
 
 // file in, file out
 await vtracer.convertFile('in.png', 'out.svg');
