@@ -39,11 +39,13 @@ pub mod ir;
 pub mod mosaic;
 pub mod optimize;
 pub mod pipeline;
+pub mod progress;
 pub mod svg;
 
 pub use config::{ColorMode, Config, FitMode, Hierarchical, Preset};
 pub use error::Error;
 pub use pipeline::Pipeline;
+pub use progress::{CancelToken, Phase, Progress};
 
 // Re-export the visioncortex value types callers need at the boundary.
 pub use visioncortex::{Color, ColorImage, PointF64, PointI32};

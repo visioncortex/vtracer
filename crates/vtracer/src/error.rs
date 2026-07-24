@@ -9,6 +9,8 @@ pub enum Error {
     NoKeyColor,
     /// A requested feature is recognized but not yet implemented.
     Unsupported(String),
+    /// The run was aborted via a [`crate::progress::CancelToken`].
+    Cancelled,
     /// Any other failure, carrying a human-readable message.
     Other(String),
 }
@@ -21,6 +23,7 @@ impl fmt::Display for Error {
                 write!(f, "unable to find an unused color in image to use as key")
             }
             Error::Unsupported(what) => write!(f, "unsupported: {what}"),
+            Error::Cancelled => write!(f, "conversion cancelled"),
             Error::Other(msg) => write!(f, "{msg}"),
         }
     }
