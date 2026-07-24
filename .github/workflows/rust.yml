@@ -21,26 +21,14 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
 
-# NOTE: the workspace depends on visioncortex 0.9.0 via a local path
-# (`../visioncortex`). Until 0.9.0 is published to crates.io, CI checks out the
-# visioncortex repo next to this one so the path resolves. This requires the
-# 0.9.x changes to be present on visioncortex's default branch.
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          path: vtracer
-      - uses: actions/checkout@v4
-        with:
-          repository: visioncortex/visioncortex
-          path: visioncortex
       - name: Build
-        working-directory: vtracer
         run: cargo build --workspace --verbose
       - name: Test
-        working-directory: vtracer
         run: cargo test --workspace --verbose
 
   wasm:
@@ -48,15 +36,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          path: vtracer
-      - uses: actions/checkout@v4
-        with:
-          repository: visioncortex/visioncortex
-          path: visioncortex
       - run: rustup target add wasm32-unknown-unknown
       - name: Build core for wasm32
-        working-directory: vtracer
         run: cargo build --target wasm32-unknown-unknown -p vtracer
 
   nodejs:
@@ -64,19 +45,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          path: vtracer
-      - uses: actions/checkout@v4
-        with:
-          repository: visioncortex/visioncortex
-          path: visioncortex
       - uses: actions/setup-node@v4
         with:
           node-version: 20
       - name: Install wasm-pack
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
       - name: Build & test
-        working-directory: vtracer/nodejs
+        working-directory: nodejs
         run: |
           wasm-pack build --target nodejs --out-dir pkg
           node test.js

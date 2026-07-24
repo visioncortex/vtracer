@@ -1,11 +1,5 @@
 # Python wheels for crates/vtracer-py (maturin). Regenerate the skeleton with:
 #    maturin generate-ci github -m crates/vtracer-py/Cargo.toml
-#
-# PREREQUISITE: the framework depends on visioncortex 0.9.0. maturin's Linux
-# builds run in manylinux containers where the local `../visioncortex` path is
-# not visible, so this workflow only succeeds once visioncortex 0.9.0 is
-# published to crates.io and the workspace uses the registry version (not the
-# local path).
 name: Python
 
 on:
