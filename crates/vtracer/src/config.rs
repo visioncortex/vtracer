@@ -8,7 +8,7 @@ use crate::colorfit::{AutoQuantize, ColorFitter, FixedPalette, Identity, MergeAd
 use crate::compose::Compositing;
 use crate::error::Error;
 use crate::fitter::{CurveFitter, FitParams, PixelFitter, PolygonFitter, SplineFitter};
-use crate::frontend::{BinaryFrontend, ColorClusterFrontend, Frontend};
+use crate::frontend::{BinaryFrontend, ColorClusterFrontend, Frontend, Threshold};
 use crate::mosaic::{
     PixelSegmentFitter, PolygonSegmentFitter, SegmentFitter, SplineSegmentFitter,
 };
@@ -71,6 +71,16 @@ pub struct Config {
     pub max_colors: Option<usize>,
     /// Optimization level: 0 = off, 1 = quantize+simplify, 2 = + shorthands/grouping.
     pub optimize: u8,
+    /// Binary-mode fixed threshold (0..=255): foreground when grayscale
+    /// intensity is below this. Ignored when `binary_adaptive` is set.
+    pub binary_threshold: u8,
+    /// Binary mode: use Bradley–Roth adaptive thresholding instead of the fixed
+    /// cutoff (better for uneven lighting).
+    pub binary_adaptive: bool,
+    /// Adaptive window side length in pixels; 0 = auto (~1/8 of the shorter side).
+    pub binary_adaptive_window: u32,
+    /// Adaptive sensitivity `t`: percent below the local mean (default 15).
+    pub binary_adaptive_t: f64,
 }
 
 impl Default for Config {
@@ -90,6 +100,10 @@ impl Default for Config {
             palette: Vec::new(),
             max_colors: None,
             optimize: 1,
+            binary_threshold: 128,
+            binary_adaptive: false,
+            binary_adaptive_window: 0,
+            binary_adaptive_t: 15.0,
         }
     }
 }
@@ -134,11 +148,21 @@ impl Config {
                 color_precision_loss: 8 - self.color_precision,
                 layer_difference: self.layer_difference,
             }),
-            ColorMode::Binary => Box::new(BinaryFrontend {
-                filter_speckle_area,
-                threshold: 128,
-                diagonal: false,
-            }),
+            ColorMode::Binary => {
+                let threshold = if self.binary_adaptive {
+                    Threshold::Adaptive {
+                        window: self.binary_adaptive_window,
+                        t: self.binary_adaptive_t,
+                    }
+                } else {
+                    Threshold::Fixed(self.binary_threshold)
+                };
+                Box::new(BinaryFrontend {
+                    filter_speckle_area,
+                    threshold,
+                    diagonal: false,
+                })
+            }
         }
     }
 

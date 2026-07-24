@@ -90,6 +90,22 @@ struct Args {
     /// Optimization level: 0 = off, 1 = quantize+simplify, 2 = + shorthands/grouping.
     #[arg(long, value_parser = clap::value_parser!(u8).range(0..=2))]
     optimize: Option<u8>,
+
+    /// Binary mode: fixed threshold (0..=255); foreground when intensity is below it.
+    #[arg(long, value_parser = clap::value_parser!(u8))]
+    threshold: Option<u8>,
+
+    /// Binary mode: use Bradley–Roth adaptive thresholding (handles uneven lighting).
+    #[arg(long)]
+    adaptive: bool,
+
+    /// Adaptive window side length in px (0 = auto). Implies --adaptive.
+    #[arg(long)]
+    adaptive_window: Option<u32>,
+
+    /// Adaptive sensitivity: percent below the local mean (default 15). Implies --adaptive.
+    #[arg(long)]
+    adaptive_t: Option<f64>,
 }
 
 fn parse_segment_length(s: &str) -> Result<f64, String> {
@@ -167,6 +183,21 @@ fn build_config(args: &Args) -> Result<Config, String> {
     }
     if let Some(v) = args.max_colors {
         config.max_colors = Some(v);
+    }
+
+    // Binary thresholding: --adaptive (or either adaptive tuning flag) selects
+    // Bradley–Roth; otherwise --threshold tunes the fixed cutoff.
+    if let Some(v) = args.threshold {
+        config.binary_threshold = v;
+    }
+    if args.adaptive || args.adaptive_window.is_some() || args.adaptive_t.is_some() {
+        config.binary_adaptive = true;
+    }
+    if let Some(v) = args.adaptive_window {
+        config.binary_adaptive_window = v;
+    }
+    if let Some(v) = args.adaptive_t {
+        config.binary_adaptive_t = v;
     }
 
     // Palette: inline flag wins over file; both parse to a color list.

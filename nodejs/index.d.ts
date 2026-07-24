@@ -19,6 +19,14 @@ export interface Options {
   maxColors?: number;
   /** 0 = off, 1 = quantize+simplify, 2 = + shorthands/grouping. */
   optimize?: number;
+  /** Binary mode (`colorMode: 'bw'`): fixed threshold 0..=255; foreground when intensity is below it. */
+  binaryThreshold?: number;
+  /** Binary mode: use Bradley–Roth adaptive thresholding (handles uneven lighting). */
+  adaptive?: boolean;
+  /** Adaptive window side length in px; 0 = auto (~1/8 of the shorter side). */
+  adaptiveWindow?: number;
+  /** Adaptive sensitivity: percent below the local mean (default 15). */
+  adaptiveT?: number;
 }
 
 /** Vectorize an encoded image (PNG/JPEG/GIF/BMP) buffer to an SVG string. */

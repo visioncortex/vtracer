@@ -29,6 +29,14 @@ struct Options {
     palette: Option<Vec<String>>,
     max_colors: Option<usize>,
     optimize: Option<u8>,
+    /// Binary-mode fixed threshold (0..=255).
+    binary_threshold: Option<u8>,
+    /// Binary mode: use Bradley–Roth adaptive thresholding.
+    adaptive: Option<bool>,
+    /// Adaptive window side length in px (0 = auto).
+    adaptive_window: Option<u32>,
+    /// Adaptive sensitivity: percent below the local mean (default 15).
+    adaptive_t: Option<f64>,
     /// One of "bw" | "poster" | "photo"; applied before the other fields.
     preset: Option<String>,
 }
@@ -104,6 +112,19 @@ fn config_from(options: JsValue) -> Result<Config, JsValue> {
     }
     if let Some(v) = opts.optimize {
         config.optimize = v;
+    }
+    if let Some(v) = opts.binary_threshold {
+        config.binary_threshold = v;
+    }
+    // Any adaptive tuning field (or `adaptive: true`) switches on Bradley–Roth.
+    if opts.adaptive == Some(true) || opts.adaptive_window.is_some() || opts.adaptive_t.is_some() {
+        config.binary_adaptive = true;
+    }
+    if let Some(v) = opts.adaptive_window {
+        config.binary_adaptive_window = v;
+    }
+    if let Some(v) = opts.adaptive_t {
+        config.binary_adaptive_t = v;
     }
     Ok(config)
 }

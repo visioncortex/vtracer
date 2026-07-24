@@ -44,6 +44,7 @@ pub mod svg;
 
 pub use config::{ColorMode, Config, FitMode, Hierarchical, Preset};
 pub use error::Error;
+pub use frontend::Threshold;
 pub use pipeline::Pipeline;
 pub use progress::{CancelToken, Phase, Progress};
 

@@ -141,6 +141,10 @@ impl PyConfig {
         palette = None,
         max_colors = None,
         optimize = 1,
+        binary_threshold = 128,
+        adaptive = false,
+        adaptive_window = 0,
+        adaptive_t = 15.0,
     ))]
     #[allow(clippy::too_many_arguments)]
     fn new(
@@ -158,6 +162,10 @@ impl PyConfig {
         palette: Option<Vec<String>>,
         max_colors: Option<usize>,
         optimize: u8,
+        binary_threshold: u8,
+        adaptive: bool,
+        adaptive_window: u32,
+        adaptive_t: f64,
     ) -> PyResult<Self> {
         let palette = match palette {
             Some(list) => list.iter().map(|s| parse_hex(s)).collect::<PyResult<_>>()?,
@@ -179,6 +187,10 @@ impl PyConfig {
                 palette,
                 max_colors,
                 optimize,
+                binary_threshold,
+                binary_adaptive: adaptive,
+                binary_adaptive_window: adaptive_window,
+                binary_adaptive_t: adaptive_t,
             },
         })
     }
@@ -331,6 +343,42 @@ impl PyConfig {
     #[setter]
     fn set_optimize(&mut self, v: u8) {
         self.inner.optimize = v;
+    }
+
+    #[getter]
+    fn binary_threshold(&self) -> u8 {
+        self.inner.binary_threshold
+    }
+    #[setter]
+    fn set_binary_threshold(&mut self, v: u8) {
+        self.inner.binary_threshold = v;
+    }
+
+    #[getter]
+    fn adaptive(&self) -> bool {
+        self.inner.binary_adaptive
+    }
+    #[setter]
+    fn set_adaptive(&mut self, v: bool) {
+        self.inner.binary_adaptive = v;
+    }
+
+    #[getter]
+    fn adaptive_window(&self) -> u32 {
+        self.inner.binary_adaptive_window
+    }
+    #[setter]
+    fn set_adaptive_window(&mut self, v: u32) {
+        self.inner.binary_adaptive_window = v;
+    }
+
+    #[getter]
+    fn adaptive_t(&self) -> f64 {
+        self.inner.binary_adaptive_t
+    }
+    #[setter]
+    fn set_adaptive_t(&mut self, v: f64) {
+        self.inner.binary_adaptive_t = v;
     }
 
     // --- conversion ---

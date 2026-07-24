@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## Unreleased
+
+### Added
+
+* Progress reporting and cancellation: `Pipeline::run_with_progress` with a `CancelToken` and a per-phase progress callback (for driving desktop UIs from a worker thread).
+* Binary thresholding methods: a tunable fixed threshold and Bradley–Roth adaptive thresholding (via visioncortex's summed-area table) for images with uneven lighting. Exposed on `Config` (`binary_threshold`, `binary_adaptive`, `binary_adaptive_window`, `binary_adaptive_t`), the CLI (`--threshold`, `--adaptive`, `--adaptive-window`, `--adaptive-t`), Python, and the Node package (`binaryThreshold`, `adaptive`, `adaptiveWindow`, `adaptiveT`).
+
 ## 1.0.0-alpha.1 - 2026-07-24
 
 Ground-up rewrite of VTracer into a **vectorization framework** with pluggable stages.

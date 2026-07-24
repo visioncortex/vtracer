@@ -12,7 +12,7 @@ mod binary;
 mod color_cluster;
 mod keying;
 
-pub use binary::BinaryFrontend;
+pub use binary::{BinaryFrontend, Threshold};
 pub use color_cluster::ColorClusterFrontend;
 
 use visioncortex::ColorImage;
