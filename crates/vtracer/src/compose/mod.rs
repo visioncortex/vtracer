@@ -1,20 +1,20 @@
 //! Compositing: turn a [`Segmentation`] into a [`VectorDoc`].
 //!
-//! Only **stacked** composition is implemented: each layer is traced
-//! independently into closed outlines and stacked in paint order (painter's
-//! algorithm). The **mosaic** compositor — gapless tessellation with shared
-//! boundary geometry — is a separate milestone and not built yet.
+//! * **Stacked** — each layer is traced independently into closed outlines and
+//!   stacked in paint order (painter's algorithm).
+//! * **Mosaic** — a seam-free gapless tessellation with shared boundary
+//!   geometry (see [`crate::mosaic`]).
 
 use crate::fitter::CurveFitter;
 use crate::ir::{Segmentation, Shape, VectorDoc};
-use crate::mosaic::{compose_mosaic, MosaicOptions, SegmentFitter};
+use crate::mosaic::{compose_mosaic, SegmentFitter};
 
 /// Which compositing strategy the pipeline uses. Each variant owns its fitter.
 pub enum Compositing {
     /// Independent per-region closed outlines, stacked bottom-to-top.
     Stacked(Box<dyn CurveFitter>),
     /// Seam-free gapless tessellation via a shared boundary graph.
-    Mosaic(Box<dyn SegmentFitter>, MosaicOptions),
+    Mosaic(Box<dyn SegmentFitter>),
 }
 
 impl Compositing {
@@ -22,7 +22,7 @@ impl Compositing {
     pub fn compose(&self, seg: &Segmentation) -> VectorDoc {
         match self {
             Compositing::Stacked(fitter) => compose_stacked(seg, fitter.as_ref()),
-            Compositing::Mosaic(fitter, opts) => compose_mosaic(seg, fitter.as_ref(), opts),
+            Compositing::Mosaic(fitter) => compose_mosaic(seg, fitter.as_ref()),
         }
     }
 }

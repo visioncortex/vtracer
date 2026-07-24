@@ -21,7 +21,7 @@ mod graph;
 
 pub use compose::compose_mosaic;
 pub use fit::{
-    FittedSegment, PixelSegmentFitter, PolygonSegmentFitter, SegmentFitter,
+    FittedSegment, PixelSegmentFitter, PolygonSegmentFitter, SegmentFitter, SplineSegmentFitter,
 };
 pub use graph::{BoundaryGraph, Node, Segment, SegRef};
 
@@ -32,16 +32,6 @@ pub type RegionId = u32;
 
 /// Sentinel label for pixels outside any region.
 pub const OUTSIDE: RegionId = u32::MAX;
-
-/// Options controlling mosaic fitting and output.
-#[derive(Debug, Clone, Copy, Default)]
-pub struct MosaicOptions {
-    /// Sample fitted segments and fall back to the DP polyline on any that
-    /// exceed the 0.5px deviation budget, restoring a hard no-crossing guarantee.
-    pub strict: bool,
-    /// Stroke each path in its own fill color to hide antialiasing hairlines.
-    pub seam_stroke: bool,
-}
 
 /// A flat partition of the canvas: one region id per pixel, plus the paint for
 /// each region. This is the sole input to the boundary-graph extractor.
@@ -274,6 +264,44 @@ mod tests {
             }
         }
         assert_pixel_roundtrip(&grid(4, 4, labels));
+    }
+
+    #[test]
+    fn spline_segments_pin_endpoints_to_lattice() {
+        use super::fit::{FittedGeom, SegmentFitter, SplineSegmentFitter};
+        // A shape with junctions so there are open (non-ring) segments.
+        let map = grid(4, 4, vec![
+            0, 0, 1, 1,
+            0, 0, 1, 1,
+            2, 2, 1, 1,
+            2, 2, 2, 2,
+        ]);
+        let graph = BoundaryGraph::extract(&map);
+        let fitter = SplineSegmentFitter::default();
+        let mut checked = 0;
+        for seg in &graph.segments {
+            if seg.is_ring() {
+                continue;
+            }
+            let fitted = fitter.fit_open(seg);
+            let start = PointF64 { x: seg.points[0].x as f64, y: seg.points[0].y as f64 };
+            let end = {
+                let p = seg.points[seg.points.len() - 1];
+                PointF64 { x: p.x as f64, y: p.y as f64 }
+            };
+            match fitted.geom {
+                FittedGeom::Beziers(b) => {
+                    assert_eq!(b.first().unwrap()[0], start, "start pinned to node");
+                    assert_eq!(b.last().unwrap()[3], end, "end pinned to node");
+                }
+                FittedGeom::Polyline(p) => {
+                    assert_eq!(*p.first().unwrap(), start);
+                    assert_eq!(*p.last().unwrap(), end);
+                }
+            }
+            checked += 1;
+        }
+        assert!(checked > 0, "expected some open segments");
     }
 
     #[test]

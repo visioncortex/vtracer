@@ -73,7 +73,12 @@ impl Frontend for ColorClusterFrontend {
         // paint order for the layer stack.
         for &cluster_index in view.clusters_output.iter().rev() {
             let cluster = view.get_cluster(cluster_index);
-            let image = cluster.to_image_with_hole(view.width, true);
+            // Solid cluster masks (no holes punched): stacked mode relies on
+            // paint-order overdraw for occlusion, matching 0.6.x. Punching
+            // holes here would leave the layer below exposed as hairline seams.
+            // The mosaic flatten is unaffected — a higher layer still wins per
+            // pixel — so a solid parent gives the same partition.
+            let image = cluster.to_image_with_hole(view.width, false);
             let mask = RegionMask::new(
                 image,
                 PointI32 {

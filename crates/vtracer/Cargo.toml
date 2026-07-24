@@ -16,3 +16,8 @@ path = "src/lib.rs"
 
 [dependencies]
 visioncortex.workspace = true
+
+[dev-dependencies]
+# Rasterize-and-diff equivalence tests (stacked vs mosaic). Test-only; not
+# compiled for wasm targets, so the library stays wasm-safe.
+resvg = "0.45"

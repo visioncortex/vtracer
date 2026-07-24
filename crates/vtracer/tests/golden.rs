@@ -197,6 +197,15 @@ fn cases() -> Vec<(&'static str, ColorImage, Config)> {
                 ..base()
             },
         ),
+        (
+            "disc_mosaic_spline",
+            disc(),
+            Config {
+                hierarchical: Hierarchical::Cutout,
+                mode: FitMode::Spline,
+                ..base()
+            },
+        ),
     ]
 }
 

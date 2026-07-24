@@ -131,6 +131,8 @@ struct Emitter {
     precision: Option<u32>,
     out: String,
     cur: PointF64,
+    /// Start of the current subpath; `cur` returns here after `Z`.
+    subpath_start: PointF64,
     started: bool,
     /// Absolute second control point of the previous cubic, for `S` detection.
     prev_cubic_c2: Option<PointF64>,
@@ -144,6 +146,7 @@ impl Emitter {
             precision,
             out: String::new(),
             cur: PointF64::default(),
+            subpath_start: PointF64::default(),
             started: false,
             prev_cubic_c2: None,
         }
@@ -161,6 +164,9 @@ impl Emitter {
                 PathCmd::CubicTo(c1, c2, e) => self.cubic_to(c1, c2, e),
                 PathCmd::Close => {
                     self.out.push('Z');
+                    // SVG resets the current point to the subpath's start after
+                    // Z; a following relative `m`/`l` is measured from there.
+                    self.cur = self.subpath_start;
                     self.prev_cubic_c2 = None;
                 }
             }
@@ -184,6 +190,7 @@ impl Emitter {
             self.out.push_str(&token);
         }
         self.cur = p;
+        self.subpath_start = p;
         self.prev_cubic_c2 = None;
     }
 
@@ -425,5 +432,151 @@ mod tests {
         assert!(!d.contains('l'));
         assert!(!d.contains('c'));
         assert!(d.contains('L'));
+    }
+
+    /// A shape with a hole (second subpath). Encoded absolute vs relative must
+    /// describe the *same* geometry — regression for the bug where the current
+    /// point was not reset to the subpath start after `Z`, so the relative `m`
+    /// of the hole was measured from the wrong origin.
+    fn holed_shape() -> Shape {
+        use visioncortex::PointF64;
+        let p = |x, y| PointF64 { x, y };
+        let outer = SubPath {
+            commands: vec![
+                PathCmd::MoveTo(p(0.0, 0.0)),
+                PathCmd::LineTo(p(30.0, 0.0)),
+                PathCmd::LineTo(p(30.0, 30.0)),
+                PathCmd::LineTo(p(0.0, 30.0)),
+                PathCmd::Close,
+            ],
+        };
+        let hole = SubPath {
+            commands: vec![
+                PathCmd::MoveTo(p(10.0, 10.0)),
+                PathCmd::LineTo(p(20.0, 10.0)),
+                PathCmd::LineTo(p(20.0, 20.0)),
+                PathCmd::LineTo(p(10.0, 20.0)),
+                PathCmd::Close,
+            ],
+        };
+        Shape {
+            paint: Paint::Solid(Color::new(0, 0, 0)),
+            path: MultiPath {
+                subpaths: vec![outer, hole],
+            },
+        }
+    }
+
+    /// Parse an SVG `d` (M/m/L/l/H/h/V/v/Z only) into absolute points.
+    fn parse_abs(d: &str) -> Vec<(f64, f64)> {
+        let mut toks = Vec::new();
+        let mut i = 0;
+        let b = d.as_bytes();
+        while i < b.len() {
+            let c = b[i] as char;
+            if c.is_ascii_alphabetic() {
+                toks.push(c.to_string());
+                i += 1;
+            } else if c == '-' || c == '.' || c.is_ascii_digit() {
+                let start = i;
+                i += 1;
+                while i < b.len() && {
+                    let d = b[i] as char;
+                    d.is_ascii_digit() || d == '.'
+                } {
+                    i += 1;
+                }
+                toks.push(d[start..i].to_string());
+            } else {
+                i += 1;
+            }
+        }
+        let mut out = Vec::new();
+        let (mut cx, mut cy, mut sx, mut sy) = (0.0, 0.0, 0.0, 0.0);
+        let mut j = 0;
+        let mut cmd = ' ';
+        let num = |j: &mut usize| -> f64 {
+            let v = toks[*j].parse().unwrap();
+            *j += 1;
+            v
+        };
+        while j < toks.len() {
+            if toks[j].chars().next().unwrap().is_ascii_alphabetic() {
+                cmd = toks[j].chars().next().unwrap();
+                j += 1;
+            }
+            let rel = cmd.is_ascii_lowercase();
+            match cmd.to_ascii_uppercase() {
+                'M' => {
+                    let (mut x, mut y) = (num(&mut j), num(&mut j));
+                    if rel {
+                        x += cx;
+                        y += cy;
+                    }
+                    cx = x;
+                    cy = y;
+                    sx = x;
+                    sy = y;
+                    out.push((cx, cy));
+                    cmd = if rel { 'l' } else { 'L' };
+                }
+                'L' => {
+                    let (mut x, mut y) = (num(&mut j), num(&mut j));
+                    if rel {
+                        x += cx;
+                        y += cy;
+                    }
+                    cx = x;
+                    cy = y;
+                    out.push((cx, cy));
+                }
+                'H' => {
+                    let mut x = num(&mut j);
+                    if rel {
+                        x += cx;
+                    }
+                    cx = x;
+                    out.push((cx, cy));
+                }
+                'V' => {
+                    let mut y = num(&mut j);
+                    if rel {
+                        y += cy;
+                    }
+                    cy = y;
+                    out.push((cx, cy));
+                }
+                'Z' => {
+                    cx = sx;
+                    cy = sy;
+                }
+                _ => unreachable!(),
+            }
+        }
+        out
+    }
+
+    #[test]
+    fn relative_and_absolute_encode_same_geometry() {
+        let shape = holed_shape();
+        let abs = SvgWriter {
+            relative: false,
+            shorthands: false,
+            precision: Some(2),
+        }
+        .encode_path(&shape);
+        for shorthands in [false, true] {
+            let rel = SvgWriter {
+                relative: true,
+                shorthands,
+                precision: Some(2),
+            }
+            .encode_path(&shape);
+            assert_eq!(
+                parse_abs(&abs),
+                parse_abs(&rel),
+                "relative (shorthands={shorthands}) geometry diverges from absolute:\n abs={abs}\n rel={rel}"
+            );
+        }
     }
 }

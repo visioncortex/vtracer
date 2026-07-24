@@ -12,14 +12,10 @@ use visioncortex::PointF64;
 use super::face::{assemble, Contour, Face};
 use super::fit::{FittedGeom, FittedSegment, SegmentFitter};
 use super::graph::BoundaryGraph;
-use super::{LabelMap, MosaicOptions, Segmentation};
+use super::{LabelMap, Segmentation};
 
 /// Run the full mosaic pipeline: flatten → boundary graph → faces → fit → compose.
-pub fn compose_mosaic(
-    seg: &Segmentation,
-    fitter: &dyn SegmentFitter,
-    _options: &MosaicOptions,
-) -> VectorDoc {
+pub fn compose_mosaic(seg: &Segmentation, fitter: &dyn SegmentFitter) -> VectorDoc {
     let map = LabelMap::from_segmentation(seg);
     let graph = BoundaryGraph::extract(&map);
     let faces = assemble(&graph, &map);

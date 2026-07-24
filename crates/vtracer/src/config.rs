@@ -9,7 +9,9 @@ use crate::compose::Compositing;
 use crate::error::Error;
 use crate::fitter::{CurveFitter, FitParams, PixelFitter, PolygonFitter, SplineFitter};
 use crate::frontend::{BinaryFrontend, ColorClusterFrontend, Frontend};
-use crate::mosaic::{MosaicOptions, PixelSegmentFitter, PolygonSegmentFitter, SegmentFitter};
+use crate::mosaic::{
+    PixelSegmentFitter, PolygonSegmentFitter, SegmentFitter, SplineSegmentFitter,
+};
 use crate::optimize::{OptimizerPass, QuantizePass, SimplifyPass};
 use crate::pipeline::Pipeline;
 use crate::svg::SvgWriter;
@@ -165,9 +167,13 @@ impl Config {
         match self.mode {
             FitMode::Pixel => Box::new(PixelSegmentFitter),
             FitMode::Polygon => Box::new(PolygonSegmentFitter::default()),
-            // The spline segment fitter is not implemented yet; mosaic falls
-            // back to the polygon (crack-midline) fitter for now.
-            FitMode::Spline => Box::new(PolygonSegmentFitter::default()),
+            FitMode::Spline => Box::new(SplineSegmentFitter {
+                corner_threshold: deg2rad(self.corner_threshold),
+                length_threshold: self.length_threshold,
+                max_iterations: self.max_iterations,
+                splice_threshold: deg2rad(self.splice_threshold),
+                ..SplineSegmentFitter::default()
+            }),
         }
     }
 
@@ -206,9 +212,7 @@ impl Config {
     pub fn build(&self) -> Result<Pipeline, Error> {
         let compositing = match self.hierarchical {
             Hierarchical::Stacked => Compositing::Stacked(self.fitter()),
-            Hierarchical::Cutout => {
-                Compositing::Mosaic(self.segment_fitter(), MosaicOptions::default())
-            }
+            Hierarchical::Cutout => Compositing::Mosaic(self.segment_fitter()),
         };
 
         Ok(Pipeline {
