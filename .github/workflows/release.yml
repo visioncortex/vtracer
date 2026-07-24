@@ -1,5 +1,10 @@
 name: Release
 
+# Builds the `vtracer` CLI binary (crates/vtracer-cli) for each target.
+# PREREQUISITE: the workspace depends on visioncortex 0.9.0; this succeeds once
+# 0.9.0 is published to crates.io and the workspace uses the registry version
+# instead of the local `../visioncortex` path.
+
 on:
   release:
     types: [published]
