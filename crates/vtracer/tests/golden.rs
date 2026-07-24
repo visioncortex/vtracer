@@ -1,11 +1,14 @@
-//! Golden-snapshot tests that lock in the exact SVG output of the pipeline.
+//! Golden-snapshot tests over synthetic images, exercising every stage —
+//! hierarchical clustering, all three fitters, color fitting, the optimizer
+//! passes, and the writer.
 //!
-//! Fixtures use synthetic, in-code images rather than the JPEG samples on
-//! purpose: JPEG decoding is image-crate-version dependent (verified against
-//! the retired 0.6.x cmdapp), so JPEG goldens would be fragile. Synthetic
-//! images are fully deterministic and still exercise every stage — hierarchical
-//! clustering, all three fitters, color fitting, the optimizer passes, and the
-//! writer's encoding choices.
+//! Goldens are compared by **rendering** both the stored SVG and the freshly
+//! produced SVG and diffing pixels, not by byte-equality. The spline fitter's
+//! cubic fit is floating-point, and f64 results differ by a few ULPs across
+//! architectures (arm64 vs x86_64); after rounding, a coordinate can flip and
+//! change the SVG bytes without any real geometry change. A visual diff is
+//! encoding-agnostic and tolerant of that sub-pixel noise while still catching
+//! genuine regressions.
 //!
 //! Regenerate goldens after an intentional behavior change with:
 //!
@@ -15,6 +18,7 @@
 
 use std::path::PathBuf;
 
+use resvg::{tiny_skia, usvg};
 use vtracer::{Color, ColorImage, ColorMode, Config, FitMode, Hierarchical};
 
 // --- synthetic image builders ------------------------------------------------
@@ -238,8 +242,11 @@ fn golden_snapshots() {
         }
 
         match std::fs::read_to_string(&path) {
-            Ok(expected) if expected == svg => {}
-            Ok(_) => mismatches.push(format!("{name}: output differs from golden")),
+            Ok(expected) => {
+                if let Some(diff) = render_diff(&expected, &svg) {
+                    mismatches.push(format!("{name}: {diff}"));
+                }
+            }
             Err(_) => mismatches.push(format!(
                 "{name}: missing golden ({}); run with VTRACER_BLESS=1",
                 path.display()
@@ -252,4 +259,40 @@ fn golden_snapshots() {
         "golden mismatches:\n{}",
         mismatches.join("\n")
     );
+}
+
+/// Render an SVG string to an RGBA pixmap at its intrinsic size.
+fn render(svg: &str) -> (u32, u32, Vec<u8>) {
+    let tree = usvg::Tree::from_str(svg, &usvg::Options::default()).expect("parse golden svg");
+    let size = tree.size();
+    let (w, h) = (size.width().ceil() as u32, size.height().ceil() as u32);
+    let mut pixmap = tiny_skia::Pixmap::new(w.max(1), h.max(1)).expect("alloc pixmap");
+    resvg::render(&tree, tiny_skia::Transform::identity(), &mut pixmap.as_mut());
+    (w, h, pixmap.data().to_vec())
+}
+
+/// Compare two SVGs by rendering. Returns `Some(reason)` if they differ beyond
+/// a small tolerance (which absorbs cross-architecture sub-pixel float noise),
+/// or `None` if visually equivalent.
+fn render_diff(expected: &str, actual: &str) -> Option<String> {
+    let (ew, eh, a) = render(expected);
+    let (aw, ah, b) = render(actual);
+    if (ew, eh) != (aw, ah) {
+        return Some(format!("size {ew}x{eh} vs {aw}x{ah}"));
+    }
+    // A pixel "differs" only on a clear color change, not antialiasing wobble.
+    const CHANNEL: u8 = 40;
+    let total = (ew * eh) as usize;
+    let differing = (0..total)
+        .filter(|&p| (0..3).any(|c| a[p * 4 + c].abs_diff(b[p * 4 + c]) > CHANNEL))
+        .count();
+    // Allow a tiny fraction for boundary pixels that flip under sub-pixel shifts.
+    let allowed = (total / 200).max(8); // 0.5%, min 8px
+    if differing > allowed {
+        Some(format!(
+            "{differing}/{total} pixels differ (> {allowed} allowed) — real change, re-bless if intended"
+        ))
+    } else {
+        None
+    }
 }
