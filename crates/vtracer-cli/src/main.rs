@@ -39,8 +39,8 @@ struct Args {
     #[arg(short, long)]
     mode: Option<FitMode>,
 
-    /// Discard patches smaller than X px in size (0..=16).
-    #[arg(short = 'f', long, value_parser = clap::value_parser!(i64).range(0..=16))]
+    /// Discard patches smaller than X px in size (0..=128).
+    #[arg(short = 'f', long, value_parser = clap::value_parser!(i64).range(0..=128))]
     filter_speckle: Option<i64>,
 
     /// Significant bits per RGB channel (1..=8).
