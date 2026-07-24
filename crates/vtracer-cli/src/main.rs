@@ -15,13 +15,21 @@ use vtracer::{ColorMode, Config, FitMode, Hierarchical, Preset};
 #[derive(Parser, Debug)]
 #[command(name = "vtracer", version, about, rename_all = "kebab-case")]
 struct Args {
+    /// Input raster image (positional; or use --input).
+    #[arg(value_name = "INPUT")]
+    input_pos: Option<PathBuf>,
+
+    /// Output SVG (positional; or use --output).
+    #[arg(value_name = "OUTPUT")]
+    output_pos: Option<PathBuf>,
+
     /// Path to the input raster image.
-    #[arg(short, long)]
-    input: PathBuf,
+    #[arg(short = 'i', long = "input", value_name = "INPUT")]
+    input: Option<PathBuf>,
 
     /// Path to the output SVG.
-    #[arg(short, long)]
-    output: PathBuf,
+    #[arg(short = 'o', long = "output", value_name = "OUTPUT")]
+    output: Option<PathBuf>,
 
     /// Start from a preset: bw, poster, photo.
     #[arg(long)]
@@ -187,11 +195,25 @@ fn read_image(path: &std::path::Path) -> Result<ColorImage, String> {
 
 fn run() -> Result<(), String> {
     let args = Args::parse();
+
+    // Accept input/output as positionals (`vtracer in.png out.svg`) or as
+    // named flags; an explicit flag takes precedence over the positional.
+    let input = args
+        .input
+        .as_ref()
+        .or(args.input_pos.as_ref())
+        .ok_or("no input path given (positional or --input)")?;
+    let output = args
+        .output
+        .as_ref()
+        .or(args.output_pos.as_ref())
+        .ok_or("no output path given (positional or --output)")?;
+
     let config = build_config(&args)?;
     let pipeline = config.build().map_err(|e| e.to_string())?;
-    let img = read_image(&args.input)?;
+    let img = read_image(input)?;
     let svg = pipeline.to_svg(&img).map_err(|e| e.to_string())?;
-    std::fs::write(&args.output, svg).map_err(|e| format!("cannot write output file: {e}"))?;
+    std::fs::write(output, svg).map_err(|e| format!("cannot write output file: {e}"))?;
     Ok(())
 }
 
