@@ -1,6 +1,9 @@
 use wasm_bindgen::prelude::*;
 use visioncortex::{Color, ColorImage, PathSimplifyMode};
-use visioncortex::color_clusters::{Clusters, Runner, RunnerConfig, HIERARCHICAL_MAX, IncrementalBuilder, KeyingAction};
+use visioncortex::color_clusters::{
+    Cluster, Clusters, ClustersView, IncrementalBuilder, KeyingAction, NeighbourInfo, Runner,
+    RunnerConfig, HIERARCHICAL_MAX,
+};
 
 use crate::canvas::*;
 use crate::svg::*;
@@ -38,9 +41,39 @@ pub struct ColorImageConverter {
 
 pub enum Stage {
     New,
-    Clustering(IncrementalBuilder),
-    Reclustering(IncrementalBuilder),
+    Clustering(Box<dyn ClusterBuilder>),
+    Reclustering(Box<dyn ClusterBuilder>),
     Vectorize(Clusters),
+}
+
+/// visioncortex 0.9 parameterises `IncrementalBuilder` over its four closures,
+/// and `Runner::start()` returns them as anonymous `impl Fn` types, so the
+/// builder can no longer be named in a field. The stage machine only ever steps
+/// it, so erase the closures behind a trait object.
+pub trait ClusterBuilder {
+    fn tick(&mut self) -> bool;
+    fn progress(&self) -> u32;
+    fn result(&mut self) -> Clusters;
+}
+
+impl<C, D, P, H> ClusterBuilder for IncrementalBuilder<C, D, P, H>
+where
+    C: Fn(Color, Color) -> bool,
+    D: Fn(Color, Color) -> i32,
+    P: Fn(&ClustersView, &Cluster, &[NeighbourInfo]) -> bool,
+    H: Fn(&ClustersView, &Cluster, &[NeighbourInfo]) -> bool,
+{
+    fn tick(&mut self) -> bool {
+        IncrementalBuilder::tick(self)
+    }
+
+    fn progress(&self) -> u32 {
+        IncrementalBuilder::progress(self)
+    }
+
+    fn result(&mut self) -> Clusters {
+        IncrementalBuilder::result(self)
+    }
 }
 
 impl ColorImageConverter {
@@ -106,7 +139,7 @@ impl ColorImageConverter {
                 KeyingAction::Discard
             },
         }, image);
-        self.stage = Stage::Clustering(runner.start());
+        self.stage = Stage::Clustering(Box::new(runner.start()));
     }
 
     pub fn tick(&mut self) -> bool {
@@ -138,7 +171,7 @@ impl ColorImageConverter {
                                 key_color: Default::default(),
                                 keying_action: KeyingAction::Discard,
                             }, image);
-                            self.stage = Stage::Reclustering(runner.start());
+                            self.stage = Stage::Reclustering(Box::new(runner.start()));
                         },
                         _ => panic!("unknown hierarchical `{}`", self.params.hierarchical)
                     }

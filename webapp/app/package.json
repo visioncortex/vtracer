@@ -7,7 +7,7 @@
   "private": true,
   "main": "index.js",
   "scripts": {
-    "start": "webpack-dev-server",
+    "start": "webpack serve",
     "build": "webpack"
   },
   "keywords": [
@@ -16,10 +16,10 @@
   ],
   "dependencies": {
     "vtracer": "file:../pkg",
-    "webpack": "^4.41.5"
+    "webpack": "^5.101.0"
   },
   "devDependencies": {
-    "webpack-cli": "^3.3.11",
-    "webpack-dev-server": "^3.10.1"
+    "webpack-cli": "^6.0.1",
+    "webpack-dev-server": "^5.2.2"
   }
 }
