@@ -40,14 +40,16 @@ pub mod mosaic;
 pub mod optimize;
 pub mod pipeline;
 pub mod progress;
+pub mod session;
 pub mod svg;
 
-pub use config::{ColorMode, Config, FitMode, Hierarchical, Preset};
+pub use config::{ColorMode, Config, FitMode, Hierarchical, Preset, SegmentKey};
 pub use error::Error;
 pub use frontend::Threshold;
 pub use ir::{Segmentation, VectorDoc};
 pub use pipeline::Pipeline;
 pub use progress::{CancelToken, Phase, Progress};
+pub use session::Session;
 
 // Re-export the visioncortex value types callers need at the boundary.
 pub use visioncortex::{Color, ColorImage, PointF64, PointI32};

@@ -43,6 +43,22 @@ pub enum Preset {
     Photo,
 }
 
+/// The clustering-relevant projection of a [`Config`]. Two configs with equal
+/// keys produce the same [`Segmentation`](crate::Segmentation), so a cached one
+/// stays valid — this is what [`Session`](crate::Session) compares to decide
+/// whether to re-segment. Kept in sync with [`Config::frontend`] in one place.
+#[derive(Debug, Clone, PartialEq)]
+pub struct SegmentKey {
+    color_mode: ColorMode,
+    color_precision: i32,
+    layer_difference: i32,
+    filter_speckle: usize,
+    binary_threshold: u8,
+    binary_adaptive: bool,
+    binary_adaptive_window: u32,
+    binary_adaptive_t: f64,
+}
+
 /// High-level converter configuration. [`Config::build`] turns this into a
 /// concrete [`Pipeline`].
 #[derive(Debug, Clone)]
@@ -233,6 +249,24 @@ impl Config {
                 shorthands: true,
                 precision: self.path_precision,
             },
+        }
+    }
+
+    /// The clustering-relevant subset of this config. Changing any field it
+    /// captures (color mode, color precision, layer difference, speckle, or the
+    /// binary threshold settings) requires re-segmenting; changing anything else
+    /// — fit mode, curve params, compositing, palette, optimization — reuses a
+    /// cached segmentation. See [`Session`](crate::Session).
+    pub fn segment_key(&self) -> SegmentKey {
+        SegmentKey {
+            color_mode: self.color_mode,
+            color_precision: self.color_precision,
+            layer_difference: self.layer_difference,
+            filter_speckle: self.filter_speckle,
+            binary_threshold: self.binary_threshold,
+            binary_adaptive: self.binary_adaptive,
+            binary_adaptive_window: self.binary_adaptive_window,
+            binary_adaptive_t: self.binary_adaptive_t,
         }
     }
 
