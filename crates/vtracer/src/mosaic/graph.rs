@@ -325,20 +325,33 @@ impl BoundaryGraph {
     }
 }
 
+/// Pixel flanking the left of the directed edge leaving `(x,y)` in `d`. May be
+/// out of bounds, in which case it is [`OUTSIDE`] as far as the map is concerned.
+pub(super) fn left_pixel_coord(x: i32, y: i32, d: u8) -> (i32, i32) {
+    match d {
+        N => (x - 1, y - 1),
+        E => (x, y - 1),
+        S => (x, y),
+        W => (x - 1, y),
+        _ => (x, y),
+    }
+}
+
+/// Unit direction of a single lattice step.
+pub(super) fn dir_from_delta(dx: i32, dy: i32) -> u8 {
+    DVEC.iter()
+        .position(|&v| v == (dx, dy))
+        .expect("consecutive lattice points differ by one unit step") as u8
+}
+
 /// Left region flanking the directed edge leaving `(x,y)` in `d` — used by the
 /// face-assembly successor rule against a [`LabelMap`].
 pub(super) fn left_pixel_at(map: &LabelMap, x: i32, y: i32, d: u8) -> RegionId {
-    let nw = map.label(x - 1, y - 1);
-    let ne = map.label(x, y - 1);
-    let sw = map.label(x - 1, y);
-    let se = map.label(x, y);
-    match d {
-        N => nw,
-        E => ne,
-        S => se,
-        W => sw,
-        _ => OUTSIDE,
+    if !matches!(d, N | E | S | W) {
+        return OUTSIDE;
     }
+    let (px, py) = left_pixel_coord(x, y, d);
+    map.label(px, py)
 }
 
 // Direction constants and edge-present test needed by face assembly.

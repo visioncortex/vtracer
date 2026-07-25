@@ -235,6 +235,49 @@ mod tests {
     }
 
     #[test]
+    fn disjoint_patches_of_one_region_get_separate_faces() {
+        // Region 0 appears as two islands, separated by a column of region 1.
+        // Each island must get its own face, so they cannot share a path.
+        #[rustfmt::skip]
+        let map = grid(3, 2, vec![
+            0, 1, 0,
+            0, 1, 0,
+        ]);
+        let graph = BoundaryGraph::extract(&map);
+        let faces = assemble(&graph, &map);
+
+        assert_eq!(
+            faces.iter().filter(|f| f.region == 0).count(),
+            2,
+            "each island of region 0 gets its own face"
+        );
+        assert_eq!(faces.len(), 3, "two islands of region 0, plus region 1");
+        assert_pixel_roundtrip(&map);
+    }
+
+    #[test]
+    fn diagonal_lobes_share_one_face() {
+        // A B / B A — region 0's lobes meet only at the center corner, which the
+        // successor rule pinches into a single contour. They must stay in one
+        // face: splitting them could separate a hole contour from the ring that
+        // encloses it, and a lone hole ring fills solid under `nonzero`.
+        #[rustfmt::skip]
+        let map = grid(2, 2, vec![
+            0, 1,
+            1, 0,
+        ]);
+        let graph = BoundaryGraph::extract(&map);
+        let faces = assemble(&graph, &map);
+
+        assert_eq!(
+            faces.iter().filter(|f| f.region == 0).count(),
+            1,
+            "diagonally touching lobes stay in one face"
+        );
+        assert_pixel_roundtrip(&map);
+    }
+
+    #[test]
     fn nested_rings() {
         // Concentric squares: 0 outer, 1 middle, 2 center.
         let l = |x: i32, y: i32| -> RegionId {
