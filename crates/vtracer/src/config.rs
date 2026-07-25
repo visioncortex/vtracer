@@ -141,12 +141,11 @@ impl Config {
     }
 
     fn frontend(&self) -> Box<dyn Frontend> {
-        let filter_speckle_area = self.filter_speckle * self.filter_speckle;
         match self.color_mode {
             ColorMode::Color => Box::new(ColorClusterFrontend {
-                filter_speckle_area,
                 color_precision_loss: 8 - self.color_precision,
                 layer_difference: self.layer_difference,
+                good_min_area: self.speckle_area(),
             }),
             ColorMode::Binary => {
                 let threshold = if self.binary_adaptive {
@@ -158,12 +157,17 @@ impl Config {
                     Threshold::Fixed(self.binary_threshold)
                 };
                 Box::new(BinaryFrontend {
-                    filter_speckle_area,
                     threshold,
                     diagonal: false,
+                    min_area: self.speckle_area(),
                 })
             }
         }
+    }
+
+    /// Speckle filter area (px), applied in the `finish` phase.
+    fn speckle_area(&self) -> usize {
+        self.filter_speckle * self.filter_speckle
     }
 
     fn color_fitters(&self) -> Vec<Box<dyn ColorFitter>> {

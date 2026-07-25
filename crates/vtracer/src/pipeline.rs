@@ -55,9 +55,9 @@ impl Pipeline {
     /// Cache the result and feed it to [`finish`](Pipeline::finish) to
     /// re-render with different color-fitting, curve-fitting, or optimization
     /// parameters *without repaying the clustering cost* — the core of an
-    /// interactive tuning loop. Only re-run `segment` when a parameter that
-    /// affects clustering itself changes (color precision, layer difference,
-    /// speckle filter, binary threshold, the frontend choice).
+    /// interactive tuning loop. Re-run `segment` when a parameter that affects
+    /// clustering itself changes: filter speckle, color precision, layer
+    /// difference, binary threshold, or the frontend choice.
     pub fn segment(&self, img: &ColorImage) -> Result<Segmentation, Error> {
         self.segment_with_progress(img, &CancelToken::new(), &mut |_| {})
     }

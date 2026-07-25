@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 * Progress reporting and cancellation: `Pipeline::run_with_progress` with a `CancelToken` and a per-phase progress callback (for driving desktop UIs from a worker thread).
-* Two-phase conversion for interactive tuning: `Pipeline::segment` caches the expensive clustering result as a reusable `Segmentation`, and `Pipeline::finish` re-runs only the cheap color-fitting / curve-fitting / optimization stages — so tuning those parameters no longer repays the clustering cost. Both have `*_with_progress` variants.
+* Two-phase conversion for interactive tuning: `Pipeline::segment` caches the expensive clustering result as a reusable `Segmentation`, and `Pipeline::finish` re-runs only the cheap color-fitting / curve-fitting / optimization stages — so tuning those parameters no longer repays the clustering cost. (Speckle, color precision, and layer difference are clustering parameters and require a fresh `segment`.) Both have `*_with_progress` variants.
 * Binary thresholding methods: a tunable fixed threshold and Bradley–Roth adaptive thresholding (via visioncortex's summed-area table) for images with uneven lighting. Exposed on `Config` (`binary_threshold`, `binary_adaptive`, `binary_adaptive_window`, `binary_adaptive_t`), the CLI (`--threshold`, `--adaptive`, `--adaptive-window`, `--adaptive-t`), Python, and the Node package (`binaryThreshold`, `adaptive`, `adaptiveWindow`, `adaptiveT`).
 
 ## 1.0.0-alpha.1 - 2026-07-24

@@ -52,22 +52,25 @@ impl Default for Threshold {
 
 /// Binary (black/white) frontend: threshold the image then cluster the
 /// foreground. Every region is painted black.
+///
+/// Speckle removal drops clusters smaller than `min_area` px as the clusters
+/// are collected, matching the pre-1.0 binary path (`cluster.size() >= area`).
 #[derive(Debug, Clone)]
 pub struct BinaryFrontend {
-    /// Discard clusters smaller than this many pixels.
-    pub filter_speckle_area: usize,
     /// How foreground pixels are selected.
     pub threshold: Threshold,
     /// Whether to connect clusters diagonally.
     pub diagonal: bool,
+    /// Discard clusters smaller than this many pixels (0 = keep all).
+    pub min_area: usize,
 }
 
 impl Default for BinaryFrontend {
     fn default() -> Self {
         Self {
-            filter_speckle_area: 16,
             threshold: Threshold::default(),
             diagonal: false,
+            min_area: 0,
         }
     }
 }
@@ -137,19 +140,20 @@ impl Frontend for BinaryFrontend {
         let black = Color::new(0, 0, 0);
         for i in 0..clusters.len() {
             let cluster = clusters.get_cluster(i);
-            if cluster.size() >= self.filter_speckle_area {
-                let mask = RegionMask::new(
-                    cluster.to_binary_image(),
-                    PointI32 {
-                        x: cluster.rect.left,
-                        y: cluster.rect.top,
-                    },
-                );
-                seg.layers.push(Layer {
-                    paint: Paint::Solid(black),
-                    mask,
-                });
+            if cluster.size() < self.min_area {
+                continue;
             }
+            let mask = RegionMask::new(
+                cluster.to_binary_image(),
+                PointI32 {
+                    x: cluster.rect.left,
+                    y: cluster.rect.top,
+                },
+            );
+            seg.layers.push(Layer {
+                paint: Paint::Solid(black),
+                mask,
+            });
         }
 
         Ok(seg)

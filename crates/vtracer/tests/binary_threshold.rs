@@ -40,9 +40,9 @@ fn fixed_threshold_is_tunable() {
     });
 
     let front = |v: u8| BinaryFrontend {
-        filter_speckle_area: 1,
         threshold: Threshold::Fixed(v),
         diagonal: false,
+        min_area: 0,
     };
 
     let low = foreground_area(&front(100), &img); // catches only the 80 band
@@ -80,9 +80,9 @@ fn adaptive_beats_fixed_under_uneven_lighting() {
     });
 
     let base = BinaryFrontend {
-        filter_speckle_area: 4,
         threshold: Threshold::Fixed(128),
         diagonal: false,
+        min_area: 4,
     };
 
     // A global cutoff can't isolate both marks: 128 catches the dark-side mark

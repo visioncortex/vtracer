@@ -65,7 +65,8 @@ fn cached_segmentation_is_reusable() {
 
 /// The tuning workflow: segment once, then feed that segmentation to pipelines
 /// with different curve-fitting parameters. Same regions, different geometry —
-/// and no re-segmentation.
+/// and no re-segmentation. (Speckle, color precision, and layer difference are
+/// clustering parameters, so changing them requires a fresh `segment`.)
 #[test]
 fn tune_curve_fitting_on_cached_segmentation() {
     let img = blocks();

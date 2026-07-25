@@ -14,22 +14,31 @@ use super::keying::{apply_key, find_unused_color, should_key_image};
 use super::Frontend;
 
 /// Hierarchical color-clustering frontend — the classic VTracer color path.
+///
+/// Speckle removal happens *inside* clustering, via `good_min_area`: it is the
+/// clusterer's `deepen` gate (visioncortex `patch_good`), so it does far more
+/// than drop small regions — it decides whether a small/thin patch is absorbed
+/// into its neighbor (its color averaged in) or kept as its own layer. Forcing
+/// it to 0 disables the thread-like rejection and changes the whole hierarchy,
+/// so speckle must be a clustering parameter, not a downstream filter.
 #[derive(Debug, Clone)]
 pub struct ColorClusterFrontend {
-    /// Discard clusters smaller than this many pixels.
-    pub filter_speckle_area: usize,
     /// Bits of color precision dropped when comparing pixels (0 = full 8-bit).
     pub color_precision_loss: i32,
     /// Color difference between hierarchical gradient layers.
     pub layer_difference: i32,
+    /// Minimum area (px) for a patch to be a `deepen` candidate during
+    /// clustering; non-zero also enables visioncortex's thread-like rejection.
+    /// Below it, patches are absorbed into their nearest-color neighbor.
+    pub good_min_area: usize,
 }
 
 impl Default for ColorClusterFrontend {
     fn default() -> Self {
         Self {
-            filter_speckle_area: 16,
             color_precision_loss: 2,
             layer_difference: 16,
+            good_min_area: 0,
         }
     }
 }
@@ -62,7 +71,7 @@ impl ColorClusterFrontend {
             diagonal: self.layer_difference == 0,
             hierarchical: HIERARCHICAL_MAX,
             batch_size: 25600,
-            good_min_area: self.filter_speckle_area,
+            good_min_area: self.good_min_area,
             good_max_area: width * height,
             is_same_color_a: self.color_precision_loss,
             is_same_color_b: 1,
