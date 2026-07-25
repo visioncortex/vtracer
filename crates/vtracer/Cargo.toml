@@ -9,6 +9,7 @@ homepage.workspace = true
 repository.workspace = true
 categories = ["graphics", "computer-vision"]
 keywords = ["svg", "vectorization", "computer-graphics"]
+readme = "../../README.md"
 
 [lib]
 name = "vtracer"

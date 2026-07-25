@@ -16,10 +16,9 @@
   </h3>
 
   <p>
-    <a href="https://crates.io/crates/vtracer"><img src="https://img.shields.io/crates/v/vtracer.svg?label=crates.io%20%7C%20vtracer" alt="Rust library on crates.io"></a>
-    <a href="https://crates.io/crates/vtracer-cli"><img src="https://img.shields.io/crates/v/vtracer-cli.svg?label=CLI%20%7C%20vtracer-cli" alt="CLI on crates.io"></a>
-    <a href="https://pypi.org/project/vtracer/"><img src="https://img.shields.io/pypi/v/vtracer.svg?label=PyPI%20%7C%20vtracer" alt="Python package on PyPI"></a>
-    <a href="https://www.npmjs.com/package/@visioncortex/vtracer"><img src="https://img.shields.io/npm/v/@visioncortex/vtracer.svg?label=npm%20%7C%20%40visioncortex%2Fvtracer" alt="Node package on npm"></a>
+    <a href="https://crates.io/crates/vtracer"><img src="https://img.shields.io/crates/v/vtracer.svg?label=crates.io" alt="Rust library on crates.io"></a>
+    <a href="https://pypi.org/project/vtracer/"><img src="https://img.shields.io/pypi/v/vtracer.svg?label=PyPI" alt="Python package on PyPI"></a>
+    <a href="https://www.npmjs.com/package/@visioncortex/vtracer"><img src="https://img.shields.io/npm/v/@visioncortex/vtracer.svg?label=npm" alt="Node package on npm"></a>
   </p>
 
 </div>
@@ -50,6 +49,13 @@ Technical descriptions of the [tracing algorithm](https://www.visioncortex.org/v
 ## Desktop App (coming soon)
 
 ![screenshot](docs/images/desktop-app.png)
+
+VTracer App features:
+
++ Higher performance
++ Adaptive thresholding in B/W mode
++ Perfect cutout mode
++ Fixed color palette
 
 ## Cmd App
 
@@ -103,9 +109,6 @@ Options:
   tessellation with shared boundaries), replacing the old re-clustered cutout.
 - **`--palette` / `--palette-file`** — snap colors to a fixed palette
   (nearest in OKLab); **`--max-colors`** auto-quantizes the palette.
-- **`--optimize`** — output size passes (coordinate quantization, redundant-
-  point removal, relative/shorthand path encoding). Note: coordinate
-  precision is set separately by `--path-precision`, the bigger size lever.
 - **Binary thresholding** — a tunable fixed cutoff (`--threshold`) or
   **Bradley–Roth adaptive** thresholding (`--adaptive`, with `--adaptive-window`
   / `--adaptive-t`) for scans with uneven lighting.
@@ -114,7 +117,7 @@ Options:
 
 You can download pre-built binaries from [Releases](https://github.com/visioncortex/vtracer/releases).
 
-You can also install the program from source from [crates.io/vtracer](https://crates.io/crates/vtracer):
+You can also install the program from source:
 
 ```sh
 cargo install vtracer-cli
@@ -146,15 +149,44 @@ cargo install vtracer-cli
 You can install [`vtracer`](https://crates.io/crates/vtracer) as a Rust library.
 
 ```sh
-cargo add vtracer
+cargo add vtracer@1.0.0-alpha.1
 ```
+
+```rust
+use vtracer::{ColorImage, Config, FitMode, Hierarchical, Preset, Session};
+
+// Decode with whatever you like, then hand over pixels.
+let raw = image::open("in.png")?.to_rgba8();
+let (width, height) = (raw.width() as usize, raw.height() as usize);
+let img = ColorImage { pixels: raw.into_raw(), width, height };
+
+// one-liner
+let svg = Config::default().build()?.to_svg(&img)?;
+
+// presets + per-field config
+let mut cfg = Config::from_preset(Preset::Poster);
+cfg.mode = FitMode::Polygon;
+cfg.hierarchical = Hierarchical::Cutout;  // seam-free mosaic
+cfg.max_colors = Some(8);
+let svg = cfg.build()?.to_svg(&img)?;
+```
+
+Split the pipeline when you want the stages separately — `segment` caches, `finish` re-runs:
+
+```rust
+let pipeline = cfg.build()?;
+let seg = pipeline.segment(&img)?;        // the expensive part
+let doc = pipeline.finish(&seg)?;         // VectorDoc, ready to serialize
+```
+
+See [docs.rs/vtracer](https://docs.rs/vtracer/1.0.0-alpha.1/vtracer/) for the full API.
 
 ### Python Library
 
-[`vtracer`](https://pypi.org/project/vtracer/) is also packaged as a Python native extension (built with [pyo3](https://github.com/PyO3/pyo3) + [maturin](https://www.maturin.rs), from the `crates/vtracer-py` crate).
+[`vtracer`](https://pypi.org/project/vtracer/) is also packaged as a Python native extension.
 
 ```sh
-pip install vtracer
+pip install --pre vtracer
 ```
 
 ```python
@@ -182,7 +214,7 @@ See [`crates/vtracer-py`](crates/vtracer-py/README.md) for the full API.
 [`@visioncortex/vtracer`](https://www.npmjs.com/package/@visioncortex/vtracer) is available for Node as a WebAssembly build (from the [`nodejs`](nodejs/README.md) package) — image decoding and vectorization both run in wasm, so there is **no native dependency**. Decodes PNG, JPEG, GIF, BMP, and WebP; for other formats, decode yourself and pass raw RGBA to `convertPixels`.
 
 ```sh
-npm install @visioncortex/vtracer
+npm install @visioncortex/vtracer@1.0.0-alpha.1
 ```
 
 ```js
