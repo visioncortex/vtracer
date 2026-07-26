@@ -87,6 +87,140 @@ impl LabelMap {
         }
         self.labels[y as usize * self.width as usize + x as usize]
     }
+
+    /// Merge neighbouring regions whose colors are within `max_diff` of each
+    /// other (the metric is the clustering one: sum of per-channel absolute
+    /// differences, and clustering keeps neighbours together when
+    /// `diff <= deepen_diff`).
+    ///
+    /// The stacked hierarchy deliberately splits a gradient into layers one
+    /// `deepen_diff` apart — that's what makes stacking smooth. Flattened into
+    /// a mosaic, that layering degenerates into abutting faces with barely
+    /// distinguishable fills. This pass undoes it: agglomerative union-find
+    /// over the adjacency graph, most-similar pairs first, with each merged
+    /// region's color re-derived as the area-weighted mean so chains only
+    /// combine while they genuinely stay within `max_diff`.
+    pub fn merge_similar(&mut self, max_diff: i32) {
+        let n = self.paints.len();
+        if max_diff <= 0 || n < 2 {
+            return;
+        }
+
+        // Area and summed color per region, for weighted mean colors.
+        let mut area = vec![0u64; n];
+        for &l in &self.labels {
+            if l != OUTSIDE {
+                area[l as usize] += 1;
+            }
+        }
+        let mut sum: Vec<[u64; 3]> = (0..n)
+            .map(|i| {
+                let c = self.paints[i].color();
+                [
+                    c.r as u64 * area[i],
+                    c.g as u64 * area[i],
+                    c.b as u64 * area[i],
+                ]
+            })
+            .collect();
+
+        // Adjacency pairs (right/down scan covers 4-connectivity once).
+        let (w, h) = (self.width as i32, self.height as i32);
+        let mut pairs: Vec<(RegionId, RegionId)> = Vec::new();
+        let mut seen = std::collections::HashSet::new();
+        for y in 0..h {
+            for x in 0..w {
+                let a = self.label(x, y);
+                if a == OUTSIDE {
+                    continue;
+                }
+                for (nx, ny) in [(x + 1, y), (x, y + 1)] {
+                    let b = self.label(nx, ny);
+                    if b == OUTSIDE || b == a {
+                        continue;
+                    }
+                    let key = (a.min(b), a.max(b));
+                    if seen.insert(key) {
+                        pairs.push(key);
+                    }
+                }
+            }
+        }
+
+        let diff = |sa: &[u64; 3], aa: u64, sb: &[u64; 3], ab: u64| -> i32 {
+            let mut d = 0i64;
+            for k in 0..3 {
+                d += ((sa[k] / aa.max(1)) as i64 - (sb[k] / ab.max(1)) as i64).abs();
+            }
+            d as i32
+        };
+
+        // Most-similar pairs first, so gradient chains coalesce around their
+        // closest links; ties break on ids for determinism.
+        pairs.sort_by_key(|&(a, b)| {
+            (
+                diff(&sum[a as usize], area[a as usize], &sum[b as usize], area[b as usize]),
+                a,
+                b,
+            )
+        });
+
+        let mut parent: Vec<RegionId> = (0..n as RegionId).collect();
+        fn find(parent: &mut [RegionId], mut i: RegionId) -> RegionId {
+            while parent[i as usize] != i {
+                parent[i as usize] = parent[parent[i as usize] as usize];
+                i = parent[i as usize];
+            }
+            i
+        }
+
+        // Colors move as regions absorb one another, so re-sweep the candidate
+        // pairs until nothing merges. Each union is O(α); the sweep count is
+        // tiny in practice (colors only ever move toward each other's mean).
+        loop {
+            let mut changed = false;
+            for &(a, b) in &pairs {
+                let ra = find(&mut parent, a);
+                let rb = find(&mut parent, b);
+                if ra == rb {
+                    continue;
+                }
+                let (ia, ib) = (ra as usize, rb as usize);
+                if diff(&sum[ia], area[ia], &sum[ib], area[ib]) <= max_diff {
+                    parent[ib] = ra;
+                    for k in 0..3 {
+                        sum[ia][k] += sum[ib][k];
+                    }
+                    area[ia] += area[ib];
+                    changed = true;
+                }
+            }
+            if !changed {
+                break;
+            }
+        }
+
+        // Compact surviving roots into dense ids and rewrite labels + paints.
+        let mut remap: Vec<RegionId> = vec![OUTSIDE; n];
+        let mut paints: Vec<Paint> = Vec::new();
+        for l in &mut self.labels {
+            if *l == OUTSIDE {
+                continue;
+            }
+            let root = find(&mut parent, *l);
+            if remap[root as usize] == OUTSIDE {
+                remap[root as usize] = paints.len() as RegionId;
+                let (s, a) = (&sum[root as usize], area[root as usize].max(1));
+                paints.push(Paint::Solid(visioncortex::Color::new(
+                    (s[0] / a) as u8,
+                    (s[1] / a) as u8,
+                    (s[2] / a) as u8,
+                )));
+            }
+            *l = remap[root as usize];
+        }
+        self.paints = paints;
+    }
 }
 
 #[cfg(test)]
@@ -345,6 +479,112 @@ mod tests {
             checked += 1;
         }
         assert!(checked > 0, "expected some open segments");
+    }
+
+    /// Build a label map with explicit per-region gray levels.
+    fn gray_grid(width: u32, height: u32, labels: Vec<RegionId>, grays: &[u8]) -> LabelMap {
+        LabelMap {
+            width,
+            height,
+            labels,
+            paints: grays
+                .iter()
+                .map(|&g| Paint::Solid(Color::new(g, g, g)))
+                .collect(),
+        }
+    }
+
+    #[test]
+    fn merge_similar_rejoins_close_neighbours() {
+        // Three vertical strips: 100 | 106 | 220. Diff(0,1) = 18 ≤ 20 → merge;
+        // the merged mean (103) vs 220 stays far apart.
+        #[rustfmt::skip]
+        let mut map = gray_grid(3, 2, vec![
+            0, 1, 2,
+            0, 1, 2,
+        ], &[100, 106, 220]);
+        map.merge_similar(20);
+
+        assert_eq!(map.paints.len(), 2, "strips 0 and 1 merge; 2 survives");
+        assert_eq!(map.label(0, 0), map.label(1, 0));
+        assert_ne!(map.label(0, 0), map.label(2, 0));
+        // Area-weighted mean of two equal strips of 100 and 106.
+        assert_eq!(map.paints[map.label(0, 0) as usize].color().r, 103);
+        assert_pixel_roundtrip(&map);
+    }
+
+    #[test]
+    fn merge_similar_uses_running_means_not_original_colors() {
+        // Gradient chain 100 | 103 | 106 with threshold 9 (grays g apart diff
+        // by 3g across the three channels). The closest pair merges first
+        // (ties broken by id → strips 0,1 → mean 101); the merged region vs
+        // 106 is then 15 apart, over threshold — the chain must NOT collapse
+        // transitively into one region on the strength of the original colors.
+        #[rustfmt::skip]
+        let mut map = gray_grid(3, 1, vec![0, 1, 2], &[100, 103, 106]);
+        map.merge_similar(9);
+
+        assert_eq!(map.paints.len(), 2, "running mean stops the chain");
+        assert_eq!(map.label(0, 0), map.label(1, 0));
+        assert_ne!(map.label(1, 0), map.label(2, 0));
+    }
+
+    #[test]
+    fn merge_similar_ignores_outside_and_non_neighbours() {
+        // Two same-colored regions separated by OUTSIDE: not adjacent, so they
+        // must stay distinct faces (merging them would create a disjoint
+        // region, which face assembly handles, but the ids must stay honest to
+        // the partition).
+        #[rustfmt::skip]
+        let mut map = gray_grid(3, 1, vec![0, OUTSIDE, 1], &[100, 100]);
+        map.merge_similar(20);
+
+        assert_eq!(map.paints.len(), 2, "non-adjacent regions never merge");
+        assert_eq!(map.label(1, 0), OUTSIDE, "outside pixels are untouched");
+        assert_pixel_roundtrip(&map);
+    }
+
+    #[test]
+    fn merge_similar_zero_threshold_is_identity() {
+        let labels = vec![0, 1, 0, 1];
+        let mut map = gray_grid(2, 2, labels.clone(), &[100, 101]);
+        map.merge_similar(0);
+        assert_eq!(map.labels, labels);
+        assert_eq!(map.paints.len(), 2);
+    }
+
+    #[test]
+    fn compose_mosaic_merges_gradient_faces() {
+        use super::compose_mosaic;
+        use super::fit::PixelSegmentFitter;
+        use crate::ir::{Layer, RegionMask, Segmentation};
+        use visioncortex::BinaryImage;
+
+        // A 6x2 canvas of three 2px strips, one gradient step apart (diff 6),
+        // as bottom-to-top layers — exactly what a stacked gradient flattens
+        // into. With merging they are one face; without, three.
+        let mut seg = Segmentation::new(6, 2);
+        for (i, g) in [(0, 100u8), (1, 102), (2, 104)] {
+            let mut image = BinaryImage::new_w_h(2, 2);
+            for y in 0..2 {
+                for x in 0..2 {
+                    image.set_pixel(x, y, true);
+                }
+            }
+            seg.layers.push(Layer {
+                paint: Paint::Solid(Color::new(g, g, g)),
+                mask: RegionMask::new(
+                    image,
+                    visioncortex::PointI32 { x: i * 2, y: 0 },
+                ),
+            });
+        }
+
+        let unmerged = compose_mosaic(&seg, &PixelSegmentFitter, 0);
+        let merged = compose_mosaic(&seg, &PixelSegmentFitter, 16);
+        assert_eq!(unmerged.shapes.len(), 3);
+        assert_eq!(merged.shapes.len(), 1, "gradient strips coalesce into one face");
+        assert_eq!(merged.shapes[0].paint.color().r, 102, "area-weighted mean");
     }
 
     #[test]

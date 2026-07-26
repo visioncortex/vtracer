@@ -16,7 +16,13 @@ pub enum Compositing {
     /// Independent per-region closed outlines, stacked bottom-to-top.
     Stacked(Box<dyn CurveFitter>),
     /// Seam-free gapless tessellation via a shared boundary graph.
-    Mosaic(Box<dyn SegmentFitter>),
+    Mosaic {
+        fitter: Box<dyn SegmentFitter>,
+        /// Merge flattened neighbours whose colors are within this diff —
+        /// rejoins regions the stacked gradient layering had split. Usually
+        /// the clustering gradient step; `0` disables merging.
+        merge_diff: i32,
+    },
 }
 
 impl Compositing {
@@ -24,7 +30,9 @@ impl Compositing {
     pub fn compose(&self, seg: &Segmentation) -> VectorDoc {
         match self {
             Compositing::Stacked(fitter) => compose_stacked(seg, fitter.as_ref()),
-            Compositing::Mosaic(fitter) => compose_mosaic(seg, fitter.as_ref()),
+            Compositing::Mosaic { fitter, merge_diff } => {
+                compose_mosaic(seg, fitter.as_ref(), *merge_diff)
+            }
         }
     }
 
@@ -37,10 +45,10 @@ impl Compositing {
     pub fn compose_with(&self, seg: &Segmentation, ctx: &mut Ctx) -> Result<VectorDoc, Error> {
         match self {
             Compositing::Stacked(fitter) => compose_stacked_with(seg, fitter.as_ref(), ctx),
-            Compositing::Mosaic(fitter) => {
+            Compositing::Mosaic { fitter, merge_diff } => {
                 ctx.check()?;
                 ctx.report(Phase::Compose, 0.0);
-                let doc = compose_mosaic(seg, fitter.as_ref());
+                let doc = compose_mosaic(seg, fitter.as_ref(), *merge_diff);
                 ctx.check()?;
                 ctx.report(Phase::Compose, 1.0);
                 Ok(doc)

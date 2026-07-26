@@ -274,7 +274,13 @@ impl Config {
     pub fn build(&self) -> Result<Pipeline, Error> {
         let compositing = match self.hierarchical {
             Hierarchical::Stacked => Compositing::Stacked(self.fitter()),
-            Hierarchical::Cutout => Compositing::Mosaic(self.segment_fitter()),
+            Hierarchical::Cutout => Compositing::Mosaic {
+                fitter: self.segment_fitter(),
+                // Rejoin flattened neighbours the gradient layering split:
+                // clustering itself considers colors within one gradient step
+                // to be the same region (`deepen_diff`).
+                merge_diff: self.layer_difference,
+            },
         };
 
         Ok(Pipeline {

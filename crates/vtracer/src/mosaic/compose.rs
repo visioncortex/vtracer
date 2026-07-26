@@ -14,9 +14,16 @@ use super::fit::{FittedGeom, FittedSegment, SegmentFitter};
 use super::graph::BoundaryGraph;
 use super::{LabelMap, Segmentation};
 
-/// Run the full mosaic pipeline: flatten → boundary graph → faces → fit → compose.
-pub fn compose_mosaic(seg: &Segmentation, fitter: &dyn SegmentFitter) -> VectorDoc {
-    let map = LabelMap::from_segmentation(seg);
+/// Run the full mosaic pipeline: flatten → merge similar neighbours →
+/// boundary graph → faces → fit → compose.
+///
+/// `merge_diff` is the color-difference threshold for
+/// [`LabelMap::merge_similar`]; pass the clustering `deepen_diff`
+/// (gradient step) so the flattened mosaic rejoins what only the stacked
+/// gradient layering had split. `0` disables merging.
+pub fn compose_mosaic(seg: &Segmentation, fitter: &dyn SegmentFitter, merge_diff: i32) -> VectorDoc {
+    let mut map = LabelMap::from_segmentation(seg);
+    map.merge_similar(merge_diff);
     let graph = BoundaryGraph::extract(&map);
     let faces = assemble(&graph, &map);
 

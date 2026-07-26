@@ -9,9 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
-* Progress reporting and cancellation for driving a UI from a worker thread: `Pipeline::run_with_progress` with a `CancelToken` and a per-phase callback.
-* `Session`: interactive tuning that clusters an image once and re-renders per `Config` change, re-clustering only when a clustering parameter actually changes. Built on `Pipeline::segment`/`finish` (cache the segmentation, re-run just color/curve/optimize); `Config::segment_key` exposes what it compares.
 * Binary thresholding: a tunable fixed threshold and Bradley–Roth adaptive thresholding for uneven lighting — CLI `--threshold` / `--adaptive` (`--adaptive-window`, `--adaptive-t`), also on `Config`, Python, and Node.
+* Cutout mode merges neighbouring mosaic regions whose colors are within one gradient step — the flattened tessellation no longer keeps the near-identical faces that stacked gradient layering splits a smooth area into.
 
 ## 1.0.0-alpha.1 - 2026-07-24
 
