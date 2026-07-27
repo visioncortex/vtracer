@@ -16,5 +16,8 @@ module.exports = {
   devServer: {
     //host: "0.0.0.0",
     port: 8080,
+    // dev-server 5 defaults its static root to ./public, which would leave
+    // index.html unserved. `assets` symlinks to ../../docs/assets for samples.
+    static: { directory: __dirname },
   }
 };
