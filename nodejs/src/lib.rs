@@ -26,6 +26,8 @@ struct Options {
     length_threshold: Option<f64>,
     max_iterations: Option<usize>,
     splice_threshold: Option<i32>,
+    /// Curve simplification tolerance in px (omit = off).
+    simplify: Option<f64>,
     path_precision: Option<u32>,
     palette: Option<Vec<String>>,
     max_colors: Option<usize>,
@@ -103,6 +105,9 @@ fn config_from(options: JsValue) -> Result<Config, JsValue> {
     }
     if let Some(v) = opts.splice_threshold {
         config.splice_threshold = v;
+    }
+    if let Some(v) = opts.simplify {
+        config.simplify = Some(v);
     }
     if let Some(v) = opts.path_precision {
         config.path_precision = Some(v);

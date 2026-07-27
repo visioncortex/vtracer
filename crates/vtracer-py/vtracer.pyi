@@ -18,6 +18,7 @@ class Config:
         length_threshold: float = 4.0,
         max_iterations: int = 10,
         splice_threshold: int = 45,
+        simplify: Optional[float] = None,   # curve simplification tolerance in px (None = off)
         path_precision: int = 2,
         palette: Optional[list[str]] = None,   # e.g. ["#112233", "#445566"]
         max_colors: Optional[int] = None,      # auto-quantize target
@@ -46,6 +47,7 @@ class Config:
     length_threshold: float
     max_iterations: int
     splice_threshold: int
+    simplify: Optional[float]
     path_precision: Optional[int]
     palette: list[str]
     max_colors: Optional[int]

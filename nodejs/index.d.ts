@@ -13,6 +13,8 @@ export interface Options {
   lengthThreshold?: number;
   maxIterations?: number;
   spliceThreshold?: number;
+  /** Curve simplification tolerance in px (omit = off; try 1-2.5). */
+  simplify?: number;
   pathPrecision?: number;
   /** Fixed palette: `#rrggbb` strings. */
   palette?: string[];

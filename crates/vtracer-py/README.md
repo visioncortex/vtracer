@@ -51,10 +51,11 @@ properties, plus the presets `Config.bw()`, `Config.poster()`, `Config.photo()`:
 | `length_threshold` | `4.0` | px |
 | `max_iterations` | `10` | |
 | `splice_threshold` | `45` | degrees |
+| `simplify` | `None` | curve simplification tolerance in px (try 1–2.5) |
 | `path_precision` | `2` | output decimal places |
 | `palette` | `None` | list of `#rrggbb` strings |
 | `max_colors` | `None` | auto-quantize target |
-| `optimize` | `1` | `0` off, `1` quantize+simplify, `2` + shorthands |
+| `optimize` | `1` | `0` off, `1` quantize+cleanup, `2` + shorthands |
 | `binary_threshold` | `128` | bw: fixed cutoff, foreground below it |
 | `adaptive` | `False` | bw: Bradley–Roth adaptive thresholding |
 | `adaptive_window` | `0` | bw adaptive: window px (`0` = auto) |

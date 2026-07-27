@@ -12,10 +12,18 @@ let svg = vtracer.convertBuffer(data);
 assert(svg.includes('<svg') && svg.includes('<path'), 'default convertBuffer');
 console.log('convertBuffer default:', (svg.match(/<path/g) || []).length, 'paths');
 
-// options: bw preset -> all black
-svg = vtracer.convertBuffer(data, { colorMode: 'bw' });
+// options: bw clustering -> all black
+svg = vtracer.convertBuffer(data, { clustering: 'bw' });
 assert(svg.includes('fill="#000000"'), 'bw produces black');
 console.log('convertBuffer bw:', (svg.match(/<path/g) || []).length, 'paths');
+
+// curve simplification shrinks the output
+{
+  const plain = vtracer.convertBuffer(data);
+  const simplified = vtracer.convertBuffer(data, { simplify: 2 });
+  assert(simplified.length < plain.length, 'simplify shrinks output');
+  console.log('convertBuffer simplify:', plain.length, '->', simplified.length, 'bytes');
+}
 
 // options: mosaic + polygon + palette
 svg = vtracer.convertBuffer(data, { hierarchical: 'cutout', mode: 'polygon', palette: ['#000000', '#ffffff'], optimize: 2 });

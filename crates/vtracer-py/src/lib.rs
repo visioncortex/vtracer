@@ -140,6 +140,7 @@ impl PyConfig {
         length_threshold = 4.0,
         max_iterations = 10,
         splice_threshold = 45,
+        simplify = None,
         path_precision = 2,
         palette = None,
         max_colors = None,
@@ -162,6 +163,7 @@ impl PyConfig {
         length_threshold: f64,
         max_iterations: usize,
         splice_threshold: i32,
+        simplify: Option<f64>,
         path_precision: u32,
         palette: Option<Vec<String>>,
         max_colors: Option<usize>,
@@ -188,8 +190,7 @@ impl PyConfig {
                 length_threshold,
                 max_iterations,
                 splice_threshold,
-                // Curve simplification is not surfaced in the Python API yet.
-                simplify: None,
+                simplify,
                 path_precision: Some(path_precision),
                 palette,
                 max_colors,
@@ -329,6 +330,15 @@ impl PyConfig {
     #[setter]
     fn set_splice_threshold(&mut self, v: i32) {
         self.inner.splice_threshold = v;
+    }
+
+    #[getter]
+    fn simplify(&self) -> Option<f64> {
+        self.inner.simplify
+    }
+    #[setter]
+    fn set_simplify(&mut self, v: Option<f64>) {
+        self.inner.simplify = v;
     }
 
     #[getter]

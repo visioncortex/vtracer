@@ -37,11 +37,14 @@ const svg2 = vtracer.convertPixels(rgba, width, height, { clustering: 'bw' });
 ### `Options` (all optional, camelCase)
 
 `preset` (`"bw" | "poster" | "photo"`, applied first), `clustering`
-(`"color" | "bw"`), `hierarchical` (`"stacked" | "cutout"` for the seam-free
-mosaic), `mode` (`"pixel" | "polygon" | "spline"`), `filterSpeckle`,
-`colorPrecision`, `layerDifference`, `cornerThreshold`, `lengthThreshold`,
-`maxIterations`, `spliceThreshold`, `pathPrecision`, `palette` (list of
-`#rrggbb`), `maxColors`, `optimize` (`0 | 1 | 2`).
+(`"color-cluster" | "bw" | "watershed"`), `hierarchical` (`"stacked" | "cutout"`
+for the seam-free mosaic), `mode` (`"pixel" | "polygon" | "spline"`),
+`filterSpeckle`, `colorPrecision`, `layerDifference`, `cornerThreshold`,
+`lengthThreshold`, `maxIterations`, `spliceThreshold`, `simplify` (curve
+simplification tolerance in px, try 1–2.5), `pathPrecision`, `palette` (list of
+`#rrggbb`), `maxColors`, `optimize` (`0 | 1 | 2`), `binaryThreshold` /
+`adaptive` / `adaptiveWindow` / `adaptiveT` (binary mode), `watershedDetail`
+(0..=255).
 
 ## Build from source
 
