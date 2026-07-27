@@ -297,7 +297,8 @@ impl Config {
                 // clustering itself considers colors within one gradient step
                 // to be the same region (`deepen_diff`). The watershed
                 // hierarchy already decided every merge, so its partition
-                // passes to the mosaic untouched.
+                // keeps its shape — only identical-color neighbours (e.g.
+                // after a palette snap) still collapse into one face.
                 merge_diff: match self.clustering {
                     Clustering::Watershed => 0,
                     _ => self.layer_difference,

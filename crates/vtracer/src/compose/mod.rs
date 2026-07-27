@@ -20,7 +20,8 @@ pub enum Compositing {
         fitter: Box<dyn SegmentFitter>,
         /// Merge flattened neighbours whose colors are within this diff —
         /// rejoins regions the stacked gradient layering had split. Usually
-        /// the clustering gradient step; `0` disables merging.
+        /// the clustering gradient step; `0` still merges identical-color
+        /// neighbours, negative disables merging entirely.
         merge_diff: i32,
     },
 }

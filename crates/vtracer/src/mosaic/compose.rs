@@ -20,7 +20,8 @@ use super::{LabelMap, Segmentation};
 /// `merge_diff` is the color-difference threshold for
 /// [`LabelMap::merge_similar`]; pass the clustering `deepen_diff`
 /// (gradient step) so the flattened mosaic rejoins what only the stacked
-/// gradient layering had split. `0` disables merging.
+/// gradient layering had split. `0` still merges identical-color
+/// neighbours; negative disables merging entirely.
 pub fn compose_mosaic(seg: &Segmentation, fitter: &dyn SegmentFitter, merge_diff: i32) -> VectorDoc {
     let mut map = LabelMap::from_segmentation(seg);
     map.merge_similar(merge_diff);

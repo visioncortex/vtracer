@@ -100,9 +100,13 @@ impl LabelMap {
     /// over the adjacency graph, most-similar pairs first, with each merged
     /// region's color re-derived as the area-weighted mean so chains only
     /// combine while they genuinely stay within `max_diff`.
+    ///
+    /// `max_diff == 0` still merges *identical*-color neighbours — a boundary
+    /// between two same-colored faces is never useful. Pass a negative value
+    /// to disable merging entirely.
     pub fn merge_similar(&mut self, max_diff: i32) {
         let n = self.paints.len();
-        if max_diff <= 0 || n < 2 {
+        if max_diff < 0 || n < 2 {
             return;
         }
 
@@ -545,10 +549,20 @@ mod tests {
     }
 
     #[test]
-    fn merge_similar_zero_threshold_is_identity() {
-        let labels = vec![0, 1, 0, 1];
-        let mut map = gray_grid(2, 2, labels.clone(), &[100, 101]);
+    fn merge_similar_zero_threshold_merges_only_identical_colors() {
+        // Regions 0 and 1 share a color; region 2 differs by one level. At
+        // threshold 0 the identical pair merges, the near-identical one stays.
+        #[rustfmt::skip]
+        let mut map = gray_grid(3, 1, vec![0, 1, 2], &[100, 100, 101]);
         map.merge_similar(0);
+        assert_eq!(map.paints.len(), 2, "identical neighbours merge at 0");
+        assert_eq!(map.label(0, 0), map.label(1, 0));
+        assert_ne!(map.label(1, 0), map.label(2, 0));
+
+        // A negative threshold disables merging entirely.
+        let labels = vec![0, 1, 0, 1];
+        let mut map = gray_grid(2, 2, labels.clone(), &[100, 100]);
+        map.merge_similar(-1);
         assert_eq!(map.labels, labels);
         assert_eq!(map.paints.len(), 2);
     }

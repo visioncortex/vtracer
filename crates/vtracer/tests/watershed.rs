@@ -2,7 +2,7 @@
 //! absorption, and the hierarchy stack / cached re-cut behavior.
 
 use vtracer::frontend::{Frontend, WatershedFrontend, WatershedHierarchy};
-use vtracer::{ColorImage, Clustering, Config, Hierarchical, Segmentation, Session};
+use vtracer::{Color, ColorImage, Clustering, Config, Hierarchical, Segmentation, Session};
 
 fn image(w: usize, h: usize, f: impl Fn(usize, usize) -> (u8, u8, u8)) -> ColorImage {
     let mut pixels = Vec::with_capacity(w * h * 4);
@@ -268,5 +268,39 @@ fn cutout_keeps_watershed_partition() {
         doc.shapes.len(),
         2,
         "watershed partition must pass to the mosaic unmerged"
+    );
+}
+
+/// …but identical-color neighbours still collapse into one face: regions that
+/// snap to the same palette entry and share a boundary must not keep a useless
+/// edge between them. (The dark region sits between them in stack order, so
+/// the layer-level `MergeAdjacent` cannot be the one doing the merging — only
+/// the mosaic's same-color merge can.)
+#[test]
+fn cutout_merges_identical_palette_faces() {
+    let img = image(32, 32, |x, y| {
+        if y < 16 {
+            if x < 16 {
+                (200, 200, 200) // A: top-left
+            } else {
+                (20, 20, 20) // C: top-right
+            }
+        } else {
+            (180, 180, 180) // B: bottom, touches A
+        }
+    });
+    let cfg = Config {
+        clustering: Clustering::Watershed,
+        hierarchical: Hierarchical::Cutout,
+        watershed_detail: 255,
+        filter_speckle: 0,
+        palette: vec![Color::new(255, 255, 255), Color::new(0, 0, 0)],
+        ..Config::default()
+    };
+    let doc = cfg.build().unwrap().run(&img).unwrap();
+    assert_eq!(
+        doc.shapes.len(),
+        2,
+        "A and B snap to the same palette color and share a boundary — one face"
     );
 }
