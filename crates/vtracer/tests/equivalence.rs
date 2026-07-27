@@ -104,12 +104,13 @@ fn neighbor_diff(img: &[u8], i: usize, j: usize) -> u8 {
     (0..4).map(|c| img[i + c].abs_diff(img[j + c])).max().unwrap_or(0)
 }
 
-fn assert_equivalent(mode: FitMode) {
+fn assert_equivalent_with(mode: FitMode, clustering: vtracer::Clustering) {
     let (w, h) = (96usize, 96usize);
     let img = blobs(w, h);
 
     let stacked = Config {
         mode,
+        clustering,
         hierarchical: Hierarchical::Stacked,
         ..Config::default()
     }
@@ -120,6 +121,7 @@ fn assert_equivalent(mode: FitMode) {
 
     let cutout = Config {
         mode,
+        clustering,
         hierarchical: Hierarchical::Cutout,
         ..Config::default()
     }
@@ -151,6 +153,10 @@ fn assert_equivalent(mode: FitMode) {
     );
 }
 
+fn assert_equivalent(mode: FitMode) {
+    assert_equivalent_with(mode, vtracer::Clustering::ColorCluster);
+}
+
 #[test]
 fn stacked_and_cutout_agree_in_interiors_spline() {
     assert_equivalent(FitMode::Spline);
@@ -164,6 +170,13 @@ fn stacked_and_cutout_agree_in_interiors_polygon() {
 #[test]
 fn stacked_and_cutout_agree_in_interiors_pixel() {
     assert_equivalent(FitMode::Pixel);
+}
+
+#[test]
+fn watershed_stacked_and_cutout_agree_in_interiors() {
+    for mode in [FitMode::Pixel, FitMode::Spline] {
+        assert_equivalent_with(mode, vtracer::Clustering::Watershed);
+    }
 }
 
 // --- seam / show-through test -------------------------------------------------
@@ -180,12 +193,12 @@ fn rasterize_on(svg: &str, w: u32, h: u32, bg: [u8; 4]) -> Vec<u8> {
 /// solid layers overdraw with no gaps, so nothing shows through. Show-through
 /// (backdrop-dependent pixels away from the canvas edge) means seams — which is
 /// exactly the hole-punching bug this guards against.
-#[test]
-fn stacked_has_no_seams() {
+fn assert_no_seams(clustering: vtracer::Clustering) {
     let (w, h) = (96usize, 96usize);
     let img = blobs(w, h); // background fills the whole canvas
     let svg = Config {
         mode: FitMode::Spline,
+        clustering,
         hierarchical: Hierarchical::Stacked,
         ..Config::default()
     }
@@ -210,6 +223,18 @@ fn stacked_has_no_seams() {
     }
     assert_eq!(
         show_through, 0,
-        "stacked mode leaked {show_through} backdrop pixels — seams/holes in solid overdraw"
+        "{clustering:?} stacked leaked {show_through} backdrop pixels — seams/holes in overdraw"
     );
+}
+
+#[test]
+fn stacked_has_no_seams() {
+    assert_no_seams(vtracer::Clustering::ColorCluster);
+}
+
+/// The watershed frontend emits disjoint region masks; its full-canvas solid
+/// background layer is what restores overdraw. This guards that construction.
+#[test]
+fn watershed_stacked_has_no_seams() {
+    assert_no_seams(vtracer::Clustering::Watershed);
 }

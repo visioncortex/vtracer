@@ -43,7 +43,7 @@ pub mod progress;
 pub mod session;
 pub mod svg;
 
-pub use config::{ColorMode, Config, FitMode, Hierarchical, Preset, SegmentKey};
+pub use config::{Clustering, Config, FitMode, Hierarchical, Preset, SegmentKey};
 pub use error::Error;
 pub use frontend::Threshold;
 pub use ir::{Segmentation, VectorDoc};

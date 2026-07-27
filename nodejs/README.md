@@ -24,7 +24,7 @@ await vtracer.convertFile('in.jpg', 'out.svg', { mode: 'polygon', hierarchical: 
 const svg = vtracer.convertBuffer(fs.readFileSync('in.png'), { preset: 'poster' });
 
 // raw RGBA8 pixels
-const svg2 = vtracer.convertPixels(rgba, width, height, { colorMode: 'bw' });
+const svg2 = vtracer.convertPixels(rgba, width, height, { clustering: 'bw' });
 ```
 
 ## API
@@ -36,7 +36,7 @@ const svg2 = vtracer.convertPixels(rgba, width, height, { colorMode: 'bw' });
 
 ### `Options` (all optional, camelCase)
 
-`preset` (`"bw" | "poster" | "photo"`, applied first), `colorMode`
+`preset` (`"bw" | "poster" | "photo"`, applied first), `clustering`
 (`"color" | "bw"`), `hierarchical` (`"stacked" | "cutout"` for the seam-free
 mosaic), `mode` (`"pixel" | "polygon" | "spline"`), `filterSpeckle`,
 `colorPrecision`, `layerDifference`, `cornerThreshold`, `lengthThreshold`,

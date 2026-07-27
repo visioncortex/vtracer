@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Binary thresholding: a tunable fixed threshold and Bradley–Roth adaptive thresholding for uneven lighting — CLI `--threshold` / `--adaptive` (`--adaptive-window`, `--adaptive-t`), also on `Config`, Python, and Node.
 * Cutout mode merges neighbouring mosaic regions whose colors are within one gradient step — the flattened tessellation no longer keeps the near-identical faces that stacked gradient layering splits a smooth area into.
+* Watershed clustering (`--clustering watershed`): an alternative region-forming frontend — a hierarchical watershed by volume on the pixel graph (Cousty et al., TPAMI 2009; Najman, Cousty & Perret, ISMM 2013), cut at a single `--watershed-detail` dial (0..=255, each +25.5 roughly doubles the region count). Content-adaptive regions with no watershed-line pixels; the partition drops straight into both stacked and cutout modes.
+
+### Changed
+
+* `color_mode` is replaced by `clustering` (`color-cluster` | `bw` | `watershed`) across the CLI (`--clustering`), Rust (`Config::clustering`, enum `Clustering`), Python, and Node — the field selects the region-forming algorithm, not a color space.
 
 ## 1.0.0-alpha.1 - 2026-07-24
 

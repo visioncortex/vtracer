@@ -28,7 +28,7 @@ use pyo3::exceptions::{PyIOError, PyValueError};
 use pyo3::prelude::*;
 
 use ::vtracer::{
-    Color, ColorImage, ColorMode, Config as CoreConfig, FitMode, Hierarchical, Preset,
+    Color, ColorImage, Clustering, Config as CoreConfig, FitMode, Hierarchical, Preset,
 };
 
 // --- string <-> enum helpers -------------------------------------------------
@@ -37,10 +37,11 @@ fn parse<T: std::str::FromStr<Err = String>>(s: &str) -> PyResult<T> {
     s.parse().map_err(PyValueError::new_err)
 }
 
-fn color_mode_str(m: ColorMode) -> &'static str {
-    match m {
-        ColorMode::Color => "color",
-        ColorMode::Binary => "bw",
+fn clustering_str(c: Clustering) -> &'static str {
+    match c {
+        Clustering::ColorCluster => "color-cluster",
+        Clustering::Binary => "bw",
+        Clustering::Watershed => "watershed",
     }
 }
 
@@ -129,7 +130,7 @@ impl PyConfig {
 impl PyConfig {
     #[new]
     #[pyo3(signature = (
-        color_mode = "color",
+        clustering = "color-cluster",
         hierarchical = "stacked",
         mode = "spline",
         filter_speckle = 4,
@@ -147,10 +148,11 @@ impl PyConfig {
         adaptive = false,
         adaptive_window = 0,
         adaptive_t = 15.0,
+        watershed_detail = 128,
     ))]
     #[allow(clippy::too_many_arguments)]
     fn new(
-        color_mode: &str,
+        clustering: &str,
         hierarchical: &str,
         mode: &str,
         filter_speckle: usize,
@@ -168,6 +170,7 @@ impl PyConfig {
         adaptive: bool,
         adaptive_window: u32,
         adaptive_t: f64,
+        watershed_detail: u8,
     ) -> PyResult<Self> {
         let palette = match palette {
             Some(list) => list.iter().map(|s| parse_hex(s)).collect::<PyResult<_>>()?,
@@ -175,7 +178,7 @@ impl PyConfig {
         };
         Ok(Self {
             inner: CoreConfig {
-                color_mode: parse(color_mode)?,
+                clustering: parse(clustering)?,
                 hierarchical: parse(hierarchical)?,
                 mode: parse(mode)?,
                 filter_speckle,
@@ -193,6 +196,7 @@ impl PyConfig {
                 binary_adaptive: adaptive,
                 binary_adaptive_window: adaptive_window,
                 binary_adaptive_t: adaptive_t,
+                watershed_detail,
             },
         })
     }
@@ -224,13 +228,22 @@ impl PyConfig {
     // --- properties ---
 
     #[getter]
-    fn color_mode(&self) -> &'static str {
-        color_mode_str(self.inner.color_mode)
+    fn clustering(&self) -> &'static str {
+        clustering_str(self.inner.clustering)
     }
     #[setter]
-    fn set_color_mode(&mut self, v: &str) -> PyResult<()> {
-        self.inner.color_mode = parse(v)?;
+    fn set_clustering(&mut self, v: &str) -> PyResult<()> {
+        self.inner.clustering = parse(v)?;
         Ok(())
+    }
+
+    #[getter]
+    fn watershed_detail(&self) -> u8 {
+        self.inner.watershed_detail
+    }
+    #[setter]
+    fn set_watershed_detail(&mut self, v: u8) {
+        self.inner.watershed_detail = v;
     }
 
     #[getter]
@@ -432,11 +445,11 @@ impl PyConfig {
     fn __repr__(&self) -> String {
         let c = &self.inner;
         format!(
-            "Config(color_mode='{}', hierarchical='{}', mode='{}', filter_speckle={}, \
+            "Config(clustering='{}', hierarchical='{}', mode='{}', filter_speckle={}, \
              color_precision={}, layer_difference={}, corner_threshold={}, length_threshold={}, \
              max_iterations={}, splice_threshold={}, path_precision={:?}, palette={} colors, \
              max_colors={:?}, optimize={})",
-            color_mode_str(c.color_mode),
+            clustering_str(c.clustering),
             hierarchical_str(c.hierarchical),
             mode_str(c.mode),
             c.filter_speckle,

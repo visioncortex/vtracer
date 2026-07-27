@@ -41,7 +41,7 @@ properties, plus the presets `Config.bw()`, `Config.poster()`, `Config.photo()`:
 
 | arg | default | notes |
 |---|---|---|
-| `color_mode` | `"color"` | `"color"` or `"bw"` |
+| `clustering` | `"color-cluster"` | `"color-cluster"`, `"bw"`, or `"watershed"` |
 | `hierarchical` | `"stacked"` | `"stacked"` or `"cutout"` (mosaic) |
 | `mode` | `"spline"` | `"pixel"`, `"polygon"`, `"spline"` |
 | `filter_speckle` | `4` | discard patches smaller than X px |
@@ -55,6 +55,11 @@ properties, plus the presets `Config.bw()`, `Config.poster()`, `Config.photo()`:
 | `palette` | `None` | list of `#rrggbb` strings |
 | `max_colors` | `None` | auto-quantize target |
 | `optimize` | `1` | `0` off, `1` quantize+simplify, `2` + shorthands |
+| `binary_threshold` | `128` | bw: fixed cutoff, foreground below it |
+| `adaptive` | `False` | bw: Bradley–Roth adaptive thresholding |
+| `adaptive_window` | `0` | bw adaptive: window px (`0` = auto) |
+| `adaptive_t` | `15.0` | bw adaptive: % below local mean |
+| `watershed_detail` | `128` | watershed: hierarchy cut level 0..=255 |
 
 Each `Config` has `convert_file(input, output)`, `convert_bytes(data, format=None) -> str`,
 and `convert_pixels(rgba, width, height) -> str`.

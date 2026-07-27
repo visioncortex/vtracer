@@ -80,7 +80,7 @@ Options:
   -i, --input <INPUT>                        Path to the input raster image
   -o, --output <OUTPUT>                      Path to the output SVG
       --preset <PRESET>                      Start from a preset: bw, poster, photo
-      --colormode <COLORMODE>                Color image `color` (default) or binary image `bw`
+      --clustering <CLUSTERING>              Region forming: `color-cluster` (default), `bw`, `watershed`
       --hierarchical <HIERARCHICAL>          Clustering: `stacked` (default) or `cutout` (seam-free mosaic)
   -m, --mode <MODE>                          Curve-fitting mode: `pixel`, `polygon`, `spline`
   -f, --filter-speckle <FILTER_SPECKLE>      Discard patches smaller than X px in size (0..=128)
@@ -98,6 +98,7 @@ Options:
       --adaptive                             Binary mode: Bradley–Roth adaptive threshold (uneven lighting)
       --adaptive-window <ADAPTIVE_WINDOW>    Adaptive window size in px (0 = auto); implies --adaptive
       --adaptive-t <ADAPTIVE_T>              Adaptive sensitivity: % below local mean (default 15)
+      --watershed-detail <WATERSHED_DETAIL>  Watershed: hierarchy cut level 0..=255 (higher = more regions)
   -h, --help                                 Print help
   -V, --version                              Print version
 ```
@@ -112,6 +113,10 @@ Options:
 - **Binary thresholding** — a tunable fixed cutoff (`--threshold`) or
   **Bradley–Roth adaptive** thresholding (`--adaptive`, with `--adaptive-window`
   / `--adaptive-t`) for scans with uneven lighting.
+- **`--clustering watershed`** — an alternative region-forming algorithm: a
+  hierarchical watershed on the pixel graph (Cousty et al., TPAMI 2009; Najman,
+  Cousty & Perret, ISMM 2013), cut at `--watershed-detail`. Content-adaptive
+  regions that follow object shape — pairs beautifully with `cutout`.
 
 ## Downloads
 
@@ -135,10 +140,13 @@ cargo install vtracer-cli
 ./vtracer input.jpg output.svg --preset bw
 
 # scanned/photographed line art with uneven lighting
-./vtracer scan.jpg output.svg --colormode bw --adaptive
+./vtracer scan.jpg output.svg --clustering bw --adaptive
 
 # seam-free mosaic (gapless tessellation)
 ./vtracer input.jpg output.svg --hierarchical cutout
+
+# watershed region forming, cut to taste
+./vtracer photo.jpg output.svg --clustering watershed --watershed-detail 192
 
 # constrain to a fixed palette
 ./vtracer input.jpg output.svg --palette '#1b1b1b,#e0c088,#5a7d3c,#8fb0d0'
@@ -202,8 +210,12 @@ cfg.palette = ["#1b1b1b", "#e0c088", "#5a7d3c"]
 svg = cfg.convert_bytes(data)
 vtracer.Config.poster().convert_file("photo.jpg", "poster.svg")
 
+# watershed region forming
+ws = vtracer.Config(clustering="watershed", watershed_detail=192)
+svg = ws.convert_file("photo.jpg", "photo.svg")
+
 # binary with adaptive (Bradley–Roth) thresholding
-bw = vtracer.Config(color_mode="bw", adaptive=True)
+bw = vtracer.Config(clustering="bw", adaptive=True)
 svg = bw.convert_file("scan.jpg", "scan.svg")
 ```
 
@@ -222,10 +234,10 @@ const vtracer = require('@visioncortex/vtracer');
 
 await vtracer.convertFile('in.png', 'out.svg', { mode: 'polygon' });
 const svg = vtracer.convertBuffer(buffer, { preset: 'poster' });
-const svg2 = vtracer.convertPixels(rgba, width, height, { colorMode: 'bw' });
+const svg2 = vtracer.convertPixels(rgba, width, height, { clustering: 'bw' });
 
 // binary with adaptive thresholding
-const bw = vtracer.convertBuffer(buffer, { colorMode: 'bw', adaptive: true });
+const bw = vtracer.convertBuffer(buffer, { clustering: 'bw', adaptive: true });
 ```
 
 ## Citations

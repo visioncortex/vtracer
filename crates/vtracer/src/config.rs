@@ -8,7 +8,9 @@ use crate::colorfit::{AutoQuantize, ColorFitter, FixedPalette, Identity, MergeAd
 use crate::compose::Compositing;
 use crate::error::Error;
 use crate::fitter::{CurveFitter, FitParams, PixelFitter, PolygonFitter, SplineFitter};
-use crate::frontend::{BinaryFrontend, ColorClusterFrontend, Frontend, Threshold};
+use crate::frontend::{
+    BinaryFrontend, ColorClusterFrontend, Frontend, Threshold, WatershedFrontend,
+};
 use crate::mosaic::{
     PixelSegmentFitter, PolygonSegmentFitter, SegmentFitter, SplineSegmentFitter,
 };
@@ -16,10 +18,15 @@ use crate::optimize::{OptimizerPass, QuantizePass, SimplifyPass};
 use crate::pipeline::Pipeline;
 use crate::svg::SvgWriter;
 
+/// Which region-forming algorithm segments the image.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ColorMode {
-    Color,
+pub enum Clustering {
+    /// Hierarchical color clustering — the classic VTracer path.
+    ColorCluster,
+    /// Threshold to black/white, then cluster the foreground.
     Binary,
+    /// Hierarchical watershed on the pixel graph, cut at `watershed_detail`.
+    Watershed,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -49,7 +56,7 @@ pub enum Preset {
 /// whether to re-segment. Kept in sync with [`Config::frontend`] in one place.
 #[derive(Debug, Clone, PartialEq)]
 pub struct SegmentKey {
-    color_mode: ColorMode,
+    clustering: Clustering,
     color_precision: i32,
     layer_difference: i32,
     filter_speckle: usize,
@@ -57,13 +64,15 @@ pub struct SegmentKey {
     binary_adaptive: bool,
     binary_adaptive_window: u32,
     binary_adaptive_t: f64,
+    watershed_detail: u8,
 }
 
 /// High-level converter configuration. [`Config::build`] turns this into a
 /// concrete [`Pipeline`].
 #[derive(Debug, Clone)]
 pub struct Config {
-    pub color_mode: ColorMode,
+    /// Region-forming algorithm (see [`Clustering`]).
+    pub clustering: Clustering,
     pub hierarchical: Hierarchical,
     /// Speckle filter given as a side length; the area threshold is its square.
     pub filter_speckle: usize,
@@ -97,12 +106,15 @@ pub struct Config {
     pub binary_adaptive_window: u32,
     /// Adaptive sensitivity `t`: percent below the local mean (default 15).
     pub binary_adaptive_t: f64,
+    /// Watershed clustering: where to cut the hierarchy (0..=255). Higher
+    /// keeps more regions; 0 collapses the image to a single region.
+    pub watershed_detail: u8,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
-            color_mode: ColorMode::Color,
+            clustering: Clustering::ColorCluster,
             hierarchical: Hierarchical::Stacked,
             filter_speckle: 4,
             color_precision: 6,
@@ -120,6 +132,7 @@ impl Default for Config {
             binary_adaptive: false,
             binary_adaptive_window: 0,
             binary_adaptive_t: 15.0,
+            watershed_detail: 128,
         }
     }
 }
@@ -128,16 +141,14 @@ impl Config {
     pub fn from_preset(preset: Preset) -> Self {
         match preset {
             Preset::Bw => Self {
-                color_mode: ColorMode::Binary,
+                clustering: Clustering::Binary,
                 ..Self::default()
             },
             Preset::Poster => Self {
-                color_mode: ColorMode::Color,
                 color_precision: 8,
                 ..Self::default()
             },
             Preset::Photo => Self {
-                color_mode: ColorMode::Color,
                 filter_speckle: 10,
                 color_precision: 8,
                 layer_difference: 48,
@@ -157,13 +168,13 @@ impl Config {
     }
 
     fn frontend(&self) -> Box<dyn Frontend> {
-        match self.color_mode {
-            ColorMode::Color => Box::new(ColorClusterFrontend {
+        match self.clustering {
+            Clustering::ColorCluster => Box::new(ColorClusterFrontend {
                 color_precision_loss: 8 - self.color_precision,
                 layer_difference: self.layer_difference,
                 good_min_area: self.speckle_area(),
             }),
-            ColorMode::Binary => {
+            Clustering::Binary => {
                 let threshold = if self.binary_adaptive {
                     Threshold::Adaptive {
                         window: self.binary_adaptive_window,
@@ -178,6 +189,10 @@ impl Config {
                     min_area: self.speckle_area(),
                 })
             }
+            Clustering::Watershed => Box::new(WatershedFrontend {
+                detail: self.watershed_detail,
+                min_area: self.speckle_area(),
+            }),
         }
     }
 
@@ -253,13 +268,14 @@ impl Config {
     }
 
     /// The clustering-relevant subset of this config. Changing any field it
-    /// captures (color mode, color precision, layer difference, speckle, or the
-    /// binary threshold settings) requires re-segmenting; changing anything else
-    /// — fit mode, curve params, compositing, palette, optimization — reuses a
-    /// cached segmentation. See [`Session`](crate::Session).
+    /// captures (clustering algorithm, color precision, layer difference,
+    /// speckle, binary threshold settings, or watershed detail) requires
+    /// re-segmenting; changing anything else — fit mode, curve params,
+    /// compositing, palette, optimization — reuses a cached segmentation. See
+    /// [`Session`](crate::Session).
     pub fn segment_key(&self) -> SegmentKey {
         SegmentKey {
-            color_mode: self.color_mode,
+            clustering: self.clustering,
             color_precision: self.color_precision,
             layer_difference: self.layer_difference,
             filter_speckle: self.filter_speckle,
@@ -267,6 +283,7 @@ impl Config {
             binary_adaptive: self.binary_adaptive,
             binary_adaptive_window: self.binary_adaptive_window,
             binary_adaptive_t: self.binary_adaptive_t,
+            watershed_detail: self.watershed_detail,
         }
     }
 
@@ -297,13 +314,14 @@ fn deg2rad(deg: i32) -> f64 {
     deg as f64 / 180.0 * std::f64::consts::PI
 }
 
-impl FromStr for ColorMode {
+impl FromStr for Clustering {
     type Err = String;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "color" => Ok(Self::Color),
+            "color-cluster" | "colorcluster" | "color" => Ok(Self::ColorCluster),
             "binary" | "bw" | "BW" => Ok(Self::Binary),
-            _ => Err(format!("unknown color mode {s}")),
+            "watershed" => Ok(Self::Watershed),
+            _ => Err(format!("unknown clustering {s}")),
         }
     }
 }

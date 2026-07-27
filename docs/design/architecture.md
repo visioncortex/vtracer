@@ -111,9 +111,10 @@ Driver flow:
 
 ## Built-in implementations
 
-- **Frontends**
+- **Frontends** (selected by `Config::clustering`)
   - `ColorClusterFrontend` — wraps `visioncortex::color_clusters::Runner`, including the transparency-keying logic that currently lives in `converter.rs` (find unused key color, key fully-transparent pixels, `KeyingAction`).
   - `BinaryFrontend` — threshold → `BinaryImage::to_clusters`.
+  - `WatershedFrontend` — hierarchical watershed by volume on the 4-adjacency pixel graph (Cousty et al. TPAMI 2009; Najman, Cousty & Perret ISMM 2013), cut at `watershed_detail`. Emits a flat partition with a solid full-canvas background layer so stacked overdraw stays seam-free.
   - Third parties implement `Frontend` to feed external label maps or ML segmentation.
 - **ColorFitters**
   - `Identity` (today's behavior: mean cluster color)
@@ -141,7 +142,7 @@ Output size is a tracked metric: the test suite asserts a byte-size budget again
 
 ## CLI
 
-clap 4 derive, in the `vtracer` crate. Kept flags (mapping naturally): `-i/--input`, `-o/--output`, `--preset bw|poster|photo`, `--colormode color|bw`, `--filter_speckle`, `--color_precision`, `--gradient_step`, `--mode pixel|polygon|spline`, `--corner_threshold`, `--segment_length`, `--splice_threshold`, `--path_precision`.
+clap 4 derive, in the `vtracer` crate. Kept flags (mapping naturally): `-i/--input`, `-o/--output`, `--preset bw|poster|photo`, `--clustering color-cluster|bw|watershed` (formerly `--colormode`), `--filter_speckle`, `--color_precision`, `--gradient_step`, `--mode pixel|polygon|spline`, `--corner_threshold`, `--segment_length`, `--splice_threshold`, `--path_precision`.
 
 New:
 

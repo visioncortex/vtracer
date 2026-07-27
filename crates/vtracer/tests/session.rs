@@ -72,7 +72,15 @@ fn segment_key_tracks_only_clustering_params() {
             ..base.clone()
         },
         Config {
-            color_mode: vtracer::ColorMode::Binary,
+            clustering: vtracer::Clustering::Binary,
+            ..base.clone()
+        },
+        Config {
+            clustering: vtracer::Clustering::Watershed,
+            ..base.clone()
+        },
+        Config {
+            watershed_detail: 200,
             ..base.clone()
         },
     ] {

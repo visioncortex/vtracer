@@ -2,7 +2,8 @@
 export interface Options {
   /** Applied before other fields: "bw" | "poster" | "photo". */
   preset?: 'bw' | 'poster' | 'photo';
-  colorMode?: 'color' | 'bw';
+  /** Region forming: hierarchical color clustering (default), binary threshold, or watershed. */
+  clustering?: 'color-cluster' | 'bw' | 'watershed';
   hierarchical?: 'stacked' | 'cutout';
   mode?: 'pixel' | 'polygon' | 'spline';
   filterSpeckle?: number;
@@ -19,7 +20,7 @@ export interface Options {
   maxColors?: number;
   /** 0 = off, 1 = quantize+simplify, 2 = + shorthands/grouping. */
   optimize?: number;
-  /** Binary mode (`colorMode: 'bw'`): fixed threshold 0..=255; foreground when intensity is below it. */
+  /** Binary mode (`clustering: 'bw'`): fixed threshold 0..=255; foreground when intensity is below it. */
   binaryThreshold?: number;
   /** Binary mode: use Bradley–Roth adaptive thresholding (handles uneven lighting). */
   adaptive?: boolean;
@@ -27,6 +28,8 @@ export interface Options {
   adaptiveWindow?: number;
   /** Adaptive sensitivity: percent below the local mean (default 15). */
   adaptiveT?: number;
+  /** Watershed clustering: hierarchy cut level 0..=255 (higher = more regions, default 128). */
+  watershedDetail?: number;
 }
 
 /** Vectorize an encoded image (PNG/JPEG/GIF/BMP) buffer to an SVG string. */

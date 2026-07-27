@@ -9,7 +9,7 @@ use std::process::ExitCode;
 
 use clap::Parser;
 use visioncortex::{Color, ColorImage};
-use vtracer::{ColorMode, Config, FitMode, Hierarchical, Preset};
+use vtracer::{Clustering, Config, FitMode, Hierarchical, Preset};
 
 /// Convert an image into vector graphics.
 #[derive(Parser, Debug)]
@@ -35,9 +35,9 @@ struct Args {
     #[arg(long)]
     preset: Option<Preset>,
 
-    /// Color image (`color`) or binary image (`bw`).
-    #[arg(long = "colormode")]
-    colormode: Option<ColorMode>,
+    /// Region forming: `color-cluster` (default), `bw`, or `watershed`.
+    #[arg(long)]
+    clustering: Option<Clustering>,
 
     /// Hierarchical clustering: `stacked` (default) or `cutout` (mosaic).
     #[arg(long)]
@@ -106,6 +106,10 @@ struct Args {
     /// Adaptive sensitivity: percent below the local mean (default 15). Implies --adaptive.
     #[arg(long)]
     adaptive_t: Option<f64>,
+
+    /// Watershed clustering: hierarchy cut level (0..=255, higher = more regions).
+    #[arg(long, value_parser = clap::value_parser!(u8))]
+    watershed_detail: Option<u8>,
 }
 
 fn parse_segment_length(s: &str) -> Result<f64, String> {
@@ -148,8 +152,8 @@ fn build_config(args: &Args) -> Result<Config, String> {
         None => Config::default(),
     };
 
-    if let Some(v) = args.colormode {
-        config.color_mode = v;
+    if let Some(v) = args.clustering {
+        config.clustering = v;
     }
     if let Some(v) = args.hierarchical {
         config.hierarchical = v;
@@ -198,6 +202,9 @@ fn build_config(args: &Args) -> Result<Config, String> {
     }
     if let Some(v) = args.adaptive_t {
         config.binary_adaptive_t = v;
+    }
+    if let Some(v) = args.watershed_detail {
+        config.watershed_detail = v;
     }
 
     // Palette: inline flag wins over file; both parse to a color list.

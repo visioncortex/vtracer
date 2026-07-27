@@ -19,7 +19,7 @@
 use std::path::PathBuf;
 
 use resvg::{tiny_skia, usvg};
-use vtracer::{Color, ColorImage, ColorMode, Config, FitMode, Hierarchical};
+use vtracer::{Color, ColorImage, Clustering, Config, FitMode, Hierarchical};
 
 // --- synthetic image builders ------------------------------------------------
 
@@ -141,7 +141,7 @@ fn cases() -> Vec<(&'static str, ColorImage, Config)> {
             "checker_bw",
             checker(),
             Config {
-                color_mode: ColorMode::Binary,
+                clustering: Clustering::Binary,
                 ..base()
             },
         ),
@@ -207,6 +207,25 @@ fn cases() -> Vec<(&'static str, ColorImage, Config)> {
             Config {
                 hierarchical: Hierarchical::Cutout,
                 mode: FitMode::Spline,
+                ..base()
+            },
+        ),
+        // Watershed clustering: stacked and mosaic.
+        (
+            "disc_watershed_spline",
+            disc(),
+            Config {
+                clustering: Clustering::Watershed,
+                ..base()
+            },
+        ),
+        (
+            "swatches_watershed_mosaic",
+            swatches(),
+            Config {
+                clustering: Clustering::Watershed,
+                hierarchical: Hierarchical::Cutout,
+                mode: FitMode::Polygon,
                 ..base()
             },
         ),

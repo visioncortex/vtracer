@@ -8,7 +8,7 @@ class Config:
 
     def __init__(
         self,
-        color_mode: str = "color",          # "color" | "bw"
+        clustering: str = "color-cluster",  # "color-cluster" | "bw" | "watershed"
         hierarchical: str = "stacked",      # "stacked" | "cutout" (mosaic)
         mode: str = "spline",               # "pixel" | "polygon" | "spline"
         filter_speckle: int = 4,
@@ -22,6 +22,11 @@ class Config:
         palette: Optional[list[str]] = None,   # e.g. ["#112233", "#445566"]
         max_colors: Optional[int] = None,      # auto-quantize target
         optimize: int = 1,                     # 0 | 1 | 2
+        binary_threshold: int = 128,           # bw: fixed cutoff 0..=255
+        adaptive: bool = False,                # bw: Bradley–Roth adaptive
+        adaptive_window: int = 0,              # bw adaptive: window px (0 = auto)
+        adaptive_t: float = 15.0,              # bw adaptive: % below local mean
+        watershed_detail: int = 128,           # watershed: cut level 0..=255
     ) -> None: ...
 
     @staticmethod
@@ -31,7 +36,7 @@ class Config:
     @staticmethod
     def photo() -> "Config": ...
 
-    color_mode: str
+    clustering: str
     hierarchical: str
     mode: str
     filter_speckle: int
@@ -45,6 +50,11 @@ class Config:
     palette: list[str]
     max_colors: Optional[int]
     optimize: int
+    binary_threshold: int
+    adaptive: bool
+    adaptive_window: int
+    adaptive_t: float
+    watershed_detail: int
 
     def convert_file(self, input_path: str, output_path: str) -> None: ...
     def convert_bytes(self, data: bytes, format: Optional[str] = None) -> str: ...

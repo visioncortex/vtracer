@@ -15,7 +15,8 @@ use wasm_bindgen::prelude::*;
 #[derive(Default, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 struct Options {
-    color_mode: Option<String>,
+    /// Region forming: "color-cluster" | "bw" | "watershed".
+    clustering: Option<String>,
     hierarchical: Option<String>,
     mode: Option<String>,
     filter_speckle: Option<usize>,
@@ -37,6 +38,8 @@ struct Options {
     adaptive_window: Option<u32>,
     /// Adaptive sensitivity: percent below the local mean (default 15).
     adaptive_t: Option<f64>,
+    /// Watershed clustering: hierarchy cut level (0..=255).
+    watershed_detail: Option<u8>,
     /// One of "bw" | "poster" | "photo"; applied before the other fields.
     preset: Option<String>,
 }
@@ -71,8 +74,8 @@ fn config_from(options: JsValue) -> Result<Config, JsValue> {
         None => Config::default(),
     };
 
-    if let Some(v) = opts.color_mode {
-        config.color_mode = v.parse().map_err(err)?;
+    if let Some(v) = opts.clustering {
+        config.clustering = v.parse().map_err(err)?;
     }
     if let Some(v) = opts.hierarchical {
         config.hierarchical = v.parse().map_err(err)?;
@@ -125,6 +128,9 @@ fn config_from(options: JsValue) -> Result<Config, JsValue> {
     }
     if let Some(v) = opts.adaptive_t {
         config.binary_adaptive_t = v;
+    }
+    if let Some(v) = opts.watershed_detail {
+        config.watershed_detail = v;
     }
     Ok(config)
 }

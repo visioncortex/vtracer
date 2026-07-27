@@ -4,6 +4,7 @@
 //! * [`ColorClusterFrontend`] — hierarchical color clustering (the classic
 //!   VTracer color path), including transparency keying.
 //! * [`BinaryFrontend`] — threshold to black/white then cluster.
+//! * [`WatershedFrontend`] — hierarchical watershed on the pixel graph.
 //!
 //! Third parties can implement [`Frontend`] to feed external label maps or ML
 //! segmentation into the pipeline.
@@ -11,9 +12,11 @@
 mod binary;
 mod color_cluster;
 mod keying;
+mod watershed;
 
 pub use binary::{BinaryFrontend, Threshold};
 pub use color_cluster::ColorClusterFrontend;
+pub use watershed::WatershedFrontend;
 
 use visioncortex::ColorImage;
 

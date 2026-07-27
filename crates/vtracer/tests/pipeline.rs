@@ -1,6 +1,6 @@
 //! End-to-end pipeline smoke tests over synthetic images.
 
-use vtracer::{ColorImage, ColorMode, Config, FitMode, Hierarchical};
+use vtracer::{ColorImage, Clustering, Config, FitMode, Hierarchical};
 
 /// Build a `size × size` image split into two vertical color bands.
 fn two_band_image(size: usize) -> ColorImage {
@@ -52,11 +52,25 @@ fn all_fit_modes_produce_svg() {
 fn binary_pipeline_produces_svg() {
     let img = two_band_image(32);
     let config = Config {
-        color_mode: ColorMode::Binary,
+        clustering: Clustering::Binary,
         ..Config::default()
     };
     let svg = config.build().unwrap().to_svg(&img).unwrap();
     assert_valid_svg(&svg);
+}
+
+#[test]
+fn watershed_pipeline_produces_svg() {
+    let img = two_band_image(32);
+    for hierarchical in [Hierarchical::Stacked, Hierarchical::Cutout] {
+        let config = Config {
+            clustering: Clustering::Watershed,
+            hierarchical,
+            ..Config::default()
+        };
+        let svg = config.build().unwrap().to_svg(&img).unwrap();
+        assert_valid_svg(&svg);
+    }
 }
 
 #[test]
