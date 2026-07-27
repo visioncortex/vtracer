@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * `color_mode` is replaced by `clustering` (`color-cluster` | `bw` | `watershed`) across the CLI (`--clustering`), Rust (`Config::clustering`, enum `Clustering`), Python, and Node — the field selects the region-forming algorithm, not a color space.
 
+### Fixed
+
+* Spline fitting no longer swings far away from the outline around thin strands (a long-standing defect, via visioncortex 0.9.1): a sparse splice slice — a few-pixel jog followed by a long straight leg — could be fitted by a single cubic that interpolated every sample while ballooning up to ~30 px sideways between them, visibly crossing narrow gaps. Slices are now densified before fitting and multi-cubic fits are kept in full, in both stacked mode and the mosaic's shared-boundary fitter.
+
 ## 1.0.0-alpha.1 - 2026-07-24
 
 Ground-up rewrite of VTracer into a **vectorization framework** with pluggable stages.

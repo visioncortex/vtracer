@@ -1,52 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Generator: visioncortex VTracer 1.0.0-alpha.1 -->
 <svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="48" height="48">
+<path d="M8,8V0H0V8H8Z" fill="#141414"/>
 <path d="M16,0H8V8h8V0Z" fill="#EBEBEB"/>
-<path d="M48,40H40v8h8V40Z" fill="#141414"/>
-<path d="M40,40H32v8h8V40Z" fill="#EBEBEB"/>
-<path d="M32,40H24v8h8V40Z" fill="#141414"/>
-<path d="M24,40H16v8h8V40Z" fill="#EBEBEB"/>
-<path d="M16,40H8v8h8V40Z" fill="#141414"/>
-<g fill="#EBEBEB">
-<path d="M8,40H0v8H8V40Z"/>
-<path d="M48,32H40v8h8V32Z"/>
-</g>
-<path d="M40,32H32v8h8V32Z" fill="#141414"/>
-<path d="M32,32H24v8h8V32Z" fill="#EBEBEB"/>
-<path d="M24,32H16v8h8V32Z" fill="#141414"/>
-<path d="M16,32H8v8h8V32Z" fill="#EBEBEB"/>
-<g fill="#141414">
-<path d="M8,32H0v8H8V32Z"/>
-<path d="M48,24H40v8h8V24Z"/>
-</g>
-<path d="M40,24H32v8h8V24Z" fill="#EBEBEB"/>
-<path d="M32,24H24v8h8V24Z" fill="#141414"/>
-<path d="M24,24H16v8h8V24Z" fill="#EBEBEB"/>
-<path d="M16,24H8v8h8V24Z" fill="#141414"/>
-<g fill="#EBEBEB">
-<path d="M8,24H0v8H8V24Z"/>
-<path d="M48,16H40v8h8V16Z"/>
-</g>
-<path d="M40,16H32v8h8V16Z" fill="#141414"/>
-<path d="M32,16H24v8h8V16Z" fill="#EBEBEB"/>
-<path d="M24,16H16v8h8V16Z" fill="#141414"/>
-<path d="M16,16H8v8h8V16Z" fill="#EBEBEB"/>
-<g fill="#141414">
-<path d="M8,16H0v8H8V16Z"/>
-<path d="M48,8H40v8h8V8Z"/>
-</g>
-<path d="M40,8H32v8h8V8Z" fill="#EBEBEB"/>
-<path d="M32,8H24v8h8V8Z" fill="#141414"/>
-<path d="M24,8H16v8h8V8Z" fill="#EBEBEB"/>
-<path d="M16,8H8v8h8V8Z" fill="#141414"/>
-<g fill="#EBEBEB">
-<path d="M8,8H0v8H8V8Z"/>
-<path d="M48,8V0H40V8h8Z"/>
-</g>
-<path d="M40,0H32V8h8V0Z" fill="#141414"/>
+<path d="M24,0H16V8h8V0Z" fill="#141414"/>
 <path d="M32,0H24V8h8V0Z" fill="#EBEBEB"/>
-<g fill="#141414">
-<path d="M24,0H16V8h8V0Z"/>
-<path d="M8,8V0H0V8H8Z"/>
+<path d="M40,0H32V8h8V0Z" fill="#141414"/>
+<g fill="#EBEBEB">
+<path d="M48,8V0H40V8h8Z"/>
+<path d="M8,8H0v8H8V8Z"/>
 </g>
+<path d="M16,8H8v8h8V8Z" fill="#141414"/>
+<path d="M24,8H16v8h8V8Z" fill="#EBEBEB"/>
+<path d="M32,8H24v8h8V8Z" fill="#141414"/>
+<path d="M40,8H32v8h8V8Z" fill="#EBEBEB"/>
+<g fill="#141414">
+<path d="M48,8H40v8h8V8Z"/>
+<path d="M8,16H0v8H8V16Z"/>
+</g>
+<path d="M16,16H8v8h8V16Z" fill="#EBEBEB"/>
+<path d="M24,16H16v8h8V16Z" fill="#141414"/>
+<path d="M32,16H24v8h8V16Z" fill="#EBEBEB"/>
+<path d="M40,16H32v8h8V16Z" fill="#141414"/>
+<g fill="#EBEBEB">
+<path d="M48,16H40v8h8V16Z"/>
+<path d="M8,24H0v8H8V24Z"/>
+</g>
+<path d="M16,24H8v8h8V24Z" fill="#141414"/>
+<path d="M24,24H16v8h8V24Z" fill="#EBEBEB"/>
+<path d="M32,24H24v8h8V24Z" fill="#141414"/>
+<path d="M40,24H32v8h8V24Z" fill="#EBEBEB"/>
+<g fill="#141414">
+<path d="M48,24H40v8h8V24Z"/>
+<path d="M8,32H0v8H8V32Z"/>
+</g>
+<path d="M16,32H8v8h8V32Z" fill="#EBEBEB"/>
+<path d="M24,32H16v8h8V32Z" fill="#141414"/>
+<path d="M32,32H24v8h8V32Z" fill="#EBEBEB"/>
+<path d="M40,32H32v8h8V32Z" fill="#141414"/>
+<g fill="#EBEBEB">
+<path d="M48,32H40v8h8V32Z"/>
+<path d="M8,40H0v8H8V40Z"/>
+</g>
+<path d="M16,40H8v8h8V40Z" fill="#141414"/>
+<path d="M24,40H16v8h8V40Z" fill="#EBEBEB"/>
+<path d="M32,40H24v8h8V40Z" fill="#141414"/>
+<path d="M40,40H32v8h8V40Z" fill="#EBEBEB"/>
+<path d="M48,40H40v8h8V40Z" fill="#141414"/>
 </svg>

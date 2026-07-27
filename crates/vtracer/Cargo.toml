@@ -22,3 +22,5 @@ visioncortex.workspace = true
 # Rasterize-and-diff equivalence tests (stacked vs mosaic). Test-only; not
 # compiled for wasm targets, so the library stays wasm-safe.
 resvg = "0.45"
+# Decode the sample photo for the spline-fitting regression test. Test-only.
+image = { version = "0.25", default-features = false, features = ["jpeg"] }

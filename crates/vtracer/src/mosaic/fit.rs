@@ -98,7 +98,7 @@ impl SegmentFitter for PolygonSegmentFitter {
 /// gapless. A distance-based DP can't do this: near the √2/2 threshold it
 /// can't separate staircase noise from real curvature. Smoothing and per-slice
 /// cubic fitting then reuse the same visioncortex machinery stacked mode uses
-/// (open-path variants of the smoothing primitives + `fit_points_with_bezier`),
+/// (open-path variants of the smoothing primitives + `fit_points_with_beziers`),
 /// so the curve character matches stacked.
 #[derive(Debug, Clone)]
 pub struct SplineSegmentFitter {
@@ -146,14 +146,15 @@ fn straight_cubic(a: PointF64, b: PointF64) -> [PointF64; 4] {
 /// uses in `Spline::from_path_f64`, so mosaic curves have the same character.
 const FIT_ERROR: f64 = 10.0;
 
-/// Fit one splice slice into a single cubic, exactly as stacked mode does
-/// (`fit_points_with_bezier`: one retract-handled cubic per slice, endpoints
-/// pinned to the slice ends).
+/// Fit one splice slice, exactly as stacked mode does
+/// (`fit_points_with_beziers`: the full retract-handled cubic chain per slice,
+/// outer endpoints pinned to the slice ends — a sparse or multi-curve slice is
+/// kept faithful instead of being collapsed onto one ballooning cubic).
 fn fit_slice(slice: &[PointF64], out: &mut Vec<[PointF64; 4]>) {
     match slice.len() {
         0 | 1 => {}
         2 => out.push(straight_cubic(slice[0], slice[1])),
-        _ => out.push(SubdivideSmooth::fit_points_with_bezier(slice, FIT_ERROR)),
+        _ => out.extend(SubdivideSmooth::fit_points_with_beziers(slice, FIT_ERROR)),
     }
 }
 

@@ -26,7 +26,4 @@ homepage = "http://www.visioncortex.org/vtracer"
 repository = "https://github.com/visioncortex/vtracer/"
 
 [workspace.dependencies]
-visioncortex = "0.9"
-# For local development against an unreleased visioncortex, add a patch:
-#   [patch.crates-io]
-#   visioncortex = { path = "../visioncortex" }
+visioncortex = "0.9.1"
