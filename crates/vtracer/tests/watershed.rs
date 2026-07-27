@@ -40,13 +40,15 @@ fn flatten(seg: &Segmentation) -> Vec<usize> {
 }
 
 /// The stacked-hierarchy invariants: the bottom layer is a solid full canvas
-/// (so overdraw is seam-free), every pixel is covered, and the flattened
-/// partition has exactly `regions` distinct labels.
+/// (so overdraw is seam-free), every pixel is covered, the flattened
+/// partition has exactly `regions` distinct labels, and the stack size is
+/// bounded by the merge tree (at most 2·regions − 1 layers).
 fn assert_stack(seg: &Segmentation, regions: usize) {
     let (w, h) = (seg.width as usize, seg.height as usize);
     let bottom = &seg.layers[0].mask;
     assert_eq!((bottom.width(), bottom.height()), (w, h), "bottom layer is full-canvas");
     assert_eq!(bottom.area(), w * h, "bottom layer is solid");
+    assert!(seg.layers.len() <= 2 * regions.max(1) - 1, "stack bounded by the merge tree");
 
     let labels = flatten(seg);
     assert!(labels.iter().all(|&l| l != usize::MAX), "every pixel covered");
@@ -269,6 +271,187 @@ fn cutout_keeps_watershed_partition() {
         2,
         "watershed partition must pass to the mosaic unmerged"
     );
+}
+
+/// Regions are 4-connected: two same-colored squares touching only at a
+/// corner are separate basins (and so are the two squares of the other color).
+#[test]
+fn diagonal_touch_does_not_connect() {
+    let img = image(16, 16, |x, y| {
+        if (x / 8 + y / 8) % 2 == 0 {
+            (30, 30, 30)
+        } else {
+            (220, 220, 220)
+        }
+    });
+    let seg = WatershedFrontend {
+        detail: 255,
+        min_area: 0,
+    }
+    .segment(&img)
+    .unwrap();
+    let labels = flatten(&seg);
+    assert_eq!(regions(&seg), 4, "four quadrants, none diagonally joined");
+    assert_ne!(labels[2 * 16 + 2], labels[10 * 16 + 10], "dark squares separate");
+    assert_ne!(labels[2 * 16 + 10], labels[10 * 16 + 2], "light squares separate");
+    assert_stack(&seg, 4);
+}
+
+/// Nested flat zones — a frame around a ring around a core — come out as
+/// three exact regions, and the ring face (which has a hole) survives both
+/// compositors.
+#[test]
+fn nested_regions() {
+    // Background frame 230, square ring 40 (4..28 minus 10..22), core 130.
+    let img = image(32, 32, |x, y| {
+        let ring = (4..28).contains(&x) && (4..28).contains(&y);
+        let core = (10..22).contains(&x) && (10..22).contains(&y);
+        if core {
+            (130, 130, 130)
+        } else if ring {
+            (40, 40, 40)
+        } else {
+            (230, 230, 230)
+        }
+    });
+    let seg = WatershedFrontend {
+        detail: 255,
+        min_area: 0,
+    }
+    .segment(&img)
+    .unwrap();
+    assert_eq!(regions(&seg), 3, "frame + ring + core");
+    let labels = flatten(&seg);
+    let at = |x: usize, y: usize| labels[y * 32 + x];
+    assert_ne!(at(1, 1), at(6, 6), "frame vs ring");
+    assert_ne!(at(6, 6), at(16, 16), "ring vs core");
+    assert_ne!(at(1, 1), at(16, 16), "frame vs core");
+    assert_stack(&seg, 3);
+
+    // The same nesting through the mosaic: three faces, ring with a hole.
+    let cfg = Config {
+        clustering: Clustering::Watershed,
+        hierarchical: Hierarchical::Cutout,
+        watershed_detail: 255,
+        filter_speckle: 0,
+        ..Config::default()
+    };
+    let doc = cfg.build().unwrap().run(&img).unwrap();
+    assert_eq!(doc.shapes.len(), 3, "nested faces survive the mosaic");
+}
+
+/// Volume extinction, the hierarchy's ranking attribute: a small but vivid
+/// basin (large color rise) outlives a bigger but faint one. Cutting to two
+/// regions must keep the black dot, not the barely-different patch.
+#[test]
+fn volume_extinction_prefers_vivid_over_large() {
+    let img = image(48, 32, |x, y| {
+        if (4..7).contains(&x) && (4..7).contains(&y) {
+            (0, 0, 0) // 9 px, rise ~128: volume ≈ 1150
+        } else if (20..30).contains(&x) && (10..20).contains(&y) {
+            (132, 132, 132) // 100 px, rise 4: volume ≈ 400
+        } else {
+            (128, 128, 128)
+        }
+    });
+    let seg = WatershedFrontend {
+        detail: 26, // target = 2 regions
+        min_area: 0,
+    }
+    .segment(&img)
+    .unwrap();
+    assert_eq!(regions(&seg), 2);
+    let labels = flatten(&seg);
+    // The surviving split isolates the dot: its 9 pixels share a label that
+    // appears nowhere else.
+    let dot = labels[5 * 48 + 5];
+    let dot_area = labels.iter().filter(|&&l| l == dot).count();
+    assert_eq!(dot_area, 9, "the vivid dot is the kept region");
+    assert_eq!(
+        labels[15 * 48 + 25],
+        labels[0],
+        "the faint patch merged into the background"
+    );
+}
+
+/// Plateaus joined by short ramps — the antialiased-boundary shape. Cutting to
+/// three regions recovers the plateaus, with each region's mean close to its
+/// plateau value (ramp pixels split between the sides they descend from).
+#[test]
+fn plateaus_with_ramps() {
+    // Columns: 40 ×20 | ramp ×2 | 128 ×20 | ramp ×2 | 216 ×20.
+    let level = |x: usize| -> u8 {
+        match x {
+            0..=19 => 40,
+            20 => 69,
+            21 => 99,
+            22..=41 => 128,
+            42 => 157,
+            43 => 187,
+            _ => 216,
+        }
+    };
+    let img = image(64, 16, |x, _| {
+        let v = level(x);
+        (v, v, v)
+    });
+    let seg = WatershedFrontend {
+        detail: 40, // target = 3 regions
+        min_area: 4,
+    }
+    .segment(&img)
+    .unwrap();
+    assert_eq!(regions(&seg), 3);
+    // Means sit near the plateau values — the ramps don't form regions of
+    // their own or drag a mean far off.
+    let mut means: Vec<u8> = seg
+        .layers
+        .iter()
+        .rev()
+        .take(3)
+        .map(|l| l.paint.color().r)
+        .collect();
+    means.sort_unstable();
+    for (mean, plateau) in means.iter().zip([40u8, 128, 216]) {
+        assert!(
+            mean.abs_diff(plateau) <= 20,
+            "region mean {mean} strays from plateau {plateau}"
+        );
+    }
+}
+
+/// Degenerate geometries: single pixel, single row, single column.
+#[test]
+fn degenerate_geometries() {
+    let one = image(1, 1, |_, _| (7, 8, 9));
+    let seg = WatershedFrontend {
+        detail: 128,
+        min_area: 0,
+    }
+    .segment(&one)
+    .unwrap();
+    assert_eq!(seg.layers.len(), 1);
+    assert_stack(&seg, 1);
+
+    let row = image(16, 1, |x, _| if x < 8 { (0, 0, 0) } else { (255, 255, 255) });
+    let seg = WatershedFrontend {
+        detail: 128,
+        min_area: 0,
+    }
+    .segment(&row)
+    .unwrap();
+    assert_eq!(regions(&seg), 2, "single row splits");
+    assert_stack(&seg, 2);
+
+    let col = image(1, 16, |_, y| if y < 8 { (0, 0, 0) } else { (255, 255, 255) });
+    let seg = WatershedFrontend {
+        detail: 128,
+        min_area: 0,
+    }
+    .segment(&col)
+    .unwrap();
+    assert_eq!(regions(&seg), 2, "single column splits");
+    assert_stack(&seg, 2);
 }
 
 /// …but identical-color neighbours still collapse into one face: regions that
