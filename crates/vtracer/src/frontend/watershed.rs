@@ -20,8 +20,10 @@
 //!   its MST edge. This depends only on the image — no tuning parameters.
 //! * [`WatershedHierarchy::cut`] — cutting at level λ is single-linkage over
 //!   MST edges with persistence ≤ λ (every pixel gets a label, no
-//!   watershed-line pixels), small basins are absorbed, and the surviving
-//!   merge tree above λ becomes the output layer stack.
+//!   watershed-line pixels), antialiased boundary pixels are snapped to the
+//!   color-midpoint iso-line (see [`snap_boundaries`]), small basins are
+//!   absorbed, and the surviving merge tree above λ becomes the output layer
+//!   stack.
 //!
 //! The cut emits a **stacked hierarchy**, the same principle as the color
 //! clustering frontend: the root (whole canvas, mean color) is painted first,
@@ -279,12 +281,11 @@ impl WatershedHierarchy {
         // region *count*, exponentially: every +25.5 of detail doubles the
         // target, from 1 region at 0 up to 1024 at 255.
         let mut uf = Uf::new(n);
-        let mut split_from = 0usize;
         if m > 0 {
             let target = (2f64).powf(detail as f64 / 25.5).round() as usize;
             let target = target.clamp(1, m);
             let lambda = self.pers[self.order[m - target] as usize];
-            for (i, &k) in self.order.iter().enumerate() {
+            for &k in &self.order {
                 if self.pers[k as usize] > lambda {
                     break;
                 }
@@ -293,11 +294,10 @@ impl WatershedHierarchy {
                 if rp != rq {
                     uf.link(rp, rq);
                 }
-                split_from = i + 1;
             }
         }
 
-        // --- Compact to region ids, region stats, boundary adjacency --------
+        // --- Compact to region ids and region stats --------------------------
         // One find per pixel; everything after this works on the (small)
         // region graph so re-cuts stay cheap.
         let mut pre_of_root = vec![u32::MAX; n];
@@ -313,14 +313,20 @@ impl WatershedHierarchy {
         }
         let mut area = vec![0u64; kp];
         let mut sum = vec![[0u64; 3]; kp];
+        for i in 0..n {
+            let a = pre[i] as usize;
+            let c = img.get_pixel(i % w, i / w);
+            area[a] += 1;
+            sum[a][0] += c.r as u64;
+            sum[a][1] += c.g as u64;
+            sum[a][2] += c.b as u64;
+        }
+
+        // --- Boundary snap, then boundary adjacency ---------------------------
+        snap_boundaries(img, w, h, &mut pre, &mut area, &mut sum);
         let mut pairs: Vec<(u32, u32)> = Vec::new();
         for i in 0..n {
             let a = pre[i];
-            let c = img.get_pixel(i % w, i / w);
-            area[a as usize] += 1;
-            sum[a as usize][0] += c.r as u64;
-            sum[a as usize][1] += c.g as u64;
-            sum[a as usize][2] += c.b as u64;
             if i % w + 1 < w && pre[i + 1] != a {
                 pairs.push((a, pre[i + 1]));
             }
@@ -363,11 +369,14 @@ impl WatershedHierarchy {
         }
 
         // --- Merge tree above the cut ----------------------------------------
-        // Re-run the remaining merges (ascending persistence) over the final
-        // regions: each one that still joins two components is a kept split.
-        // Nodes 0..k are the final regions; internal nodes are created in
-        // ascending persistence order, so the reverse is a root-first order in
-        // which every ancestor precedes its descendants.
+        // Re-run all merges (ascending persistence) over the final regions:
+        // each one that still joins two components is a kept split. Nodes 0..k
+        // are the final regions; internal nodes are created in ascending
+        // persistence order, so the reverse is a root-first order in which
+        // every ancestor precedes its descendants. Below-cut edges are almost
+        // all no-ops (their endpoints share a region), but not quite: boundary
+        // snapping can leave a region's only adjacency running through a
+        // below-cut edge, and skipping those would leave the tree unconnected.
         let n_tree = 2 * k - 1;
         let mut tree_child: Vec<[u32; 2]> = Vec::with_capacity(k - 1);
         let mut tree_area = vec![0u64; n_tree];
@@ -379,12 +388,15 @@ impl WatershedHierarchy {
         let mut uf2 = Uf::new(k);
         let mut node_rep: Vec<u32> = (0..k as u32).collect();
         let mut next = k as u32;
-        for &e in &self.order[split_from..] {
+        for &e in &self.order {
             let (p, q) = self.mst[e as usize];
             let (lp, lq) = (ids[p as usize], ids[q as usize]);
+            if lp == lq {
+                continue; // same region — the bulk of the below-cut edges
+            }
             let (a, b) = (uf2.find(lp), uf2.find(lq));
             if a == b {
-                continue; // rejoined by absorption; not a split anymore
+                continue; // already merged, or rejoined by absorption
             }
             let node = next as usize;
             tree_child.push([node_rep[a as usize], node_rep[b as usize]]);
@@ -496,6 +508,306 @@ fn node_mask(
         }
     }
     RegionMask::new(image, PointI32 { x: x0, y: y0 })
+}
+
+/// How many 1-px boundary-snap sweeps to run: bounds the boundary movement to
+/// the width of an antialiasing ramp / JPEG halo (compression ringing spreads
+/// a hard edge over up to ~3 px; a plain AA ramp over 1–2 px).
+const SNAP_SWEEPS: usize = 4;
+
+/// Tolerance for the mixture test below: an antialiased blend of two region
+/// colors satisfies `d(p,A) + d(p,B) = d(A,B)` exactly (L1, per-channel
+/// between-ness); this slack admits sensor/JPEG noise of a few units per
+/// channel without admitting genuine third colors.
+const SNAP_SLACK: i32 = 16;
+
+/// Re-assign boundary pixels to whichever adjacent region's mean color is
+/// closest (strictly closer than their own region's mean, L1).
+///
+/// The minimum-spanning-forest cut routes the boundary through whichever
+/// crack of an antialiasing ramp has the minutely-largest weight, so along a
+/// smooth edge it meanders ±1–2 px with the pixel noise and the fitted curves
+/// visibly wave (crisp synthetic edges are unaffected: their boundary pixels
+/// sit exactly at a region's mean). Snapping by color lands the boundary on
+/// the color-midpoint iso-line of the ramp instead — the same rule color
+/// quantization applies, which is why the color-cluster frontend never shows
+/// this.
+///
+/// Only pixels whose color is a *mixture* of the two region means may flip
+/// (`d(p,A) + d(p,B) ≤ d(A,B) + slack`): a pixel of a genuine third color —
+/// say a dark outline stroke absorbed into a lighter region — must stay with
+/// its basin even when some other neighbour's mean happens to sit closer.
+/// Sweeps are double-buffered (flips apply after scanning) and each moves the
+/// boundary at most 1 px, so total movement stays within the ambiguity band;
+/// regions are never emptied. Only the first sweep scans the whole canvas;
+/// later sweeps revisit the moving front (last sweep's flips and their
+/// neighbours), so the cost past sweep one is proportional to the boundary
+/// that is actually moving.
+fn snap_boundaries(
+    img: &ColorImage,
+    w: usize,
+    h: usize,
+    labels: &mut [u32],
+    area: &mut [u64],
+    sum: &mut [[u64; 3]],
+) {
+    let n = w * h;
+    let k = area.len();
+    if k < 2 {
+        return;
+    }
+    // Where a boundary pixel should move, if anywhere: strict improvement
+    // only, gated on the mixture test; the first of the fixed neighbour
+    // order wins ties, keeping the sweep deterministic.
+    let snap_target = |i: usize, labels: &[u32], mean: &[[i32; 3]]| -> Option<u32> {
+        let a = labels[i] as usize;
+        // Neighbour labels, replicated at the canvas border (a no-op
+        // candidate) so the hot path below stays branch-light.
+        let (x, y) = (i % w, i / w);
+        let nb = [
+            labels[if x > 0 { i - 1 } else { i }] as usize,
+            labels[if x + 1 < w { i + 1 } else { i }] as usize,
+            labels[if y > 0 { i - w } else { i }] as usize,
+            labels[if y + 1 < h { i + w } else { i }] as usize,
+        ];
+        if nb == [a; 4] {
+            return None; // interior pixel — the overwhelmingly common case
+        }
+        let c = img.get_pixel(x, y);
+        let cv = [c.r as i32, c.g as i32, c.b as i32];
+        let dist = |m: &[i32; 3]| {
+            (cv[0] - m[0]).abs() + (cv[1] - m[1]).abs() + (cv[2] - m[2]).abs()
+        };
+        let da = dist(&mean[a]);
+        let mut best = (da, a);
+        for b in nb {
+            if b == a {
+                continue;
+            }
+            let db = dist(&mean[b]);
+            let dab: i32 = (0..3).map(|ch| (mean[a][ch] - mean[b][ch]).abs()).sum();
+            if db < best.0 && da + db <= dab + SNAP_SLACK {
+                best = (db, b);
+            }
+        }
+        (best.1 != a).then_some(best.1 as u32)
+    };
+
+    let mut mean = vec![[0i32; 3]; k];
+    let mut flips: Vec<(u32, u32)> = Vec::new(); // (pixel, new label)
+    let mut front: Vec<u32> = Vec::new(); // pixels to rescan; sweep 0 scans all
+    let mut touched: Vec<u32> = Vec::new(); // every front, for the fragment check
+    for sweep in 0..SNAP_SWEEPS {
+        for r in 0..k {
+            for ch in 0..3 {
+                mean[r][ch] = (sum[r][ch] / area[r]) as i32;
+            }
+        }
+        flips.clear();
+        if sweep == 0 {
+            // Interior first with a branch-free neighbour check (the div/mod
+            // and border branches in snap_target would dominate a whole-canvas
+            // scan), then the border rim.
+            for y in 1..h.saturating_sub(1) {
+                for i in y * w + 1..y * w + w.saturating_sub(1) {
+                    let a = labels[i];
+                    if labels[i - 1] == a
+                        && labels[i + 1] == a
+                        && labels[i - w] == a
+                        && labels[i + w] == a
+                    {
+                        continue;
+                    }
+                    if let Some(b) = snap_target(i, labels, &mean) {
+                        flips.push((i as u32, b));
+                    }
+                }
+            }
+            let h1 = h.saturating_sub(1);
+            let rim = (0..w)
+                .chain((1..h1).map(|y| y * w))
+                .chain((1..h1).map(|y| y * w + w - 1).filter(|_| w > 1))
+                .chain(if h > 1 { h1 * w..n } else { 0..0 });
+            for i in rim {
+                if let Some(b) = snap_target(i, labels, &mean) {
+                    flips.push((i as u32, b));
+                }
+            }
+        } else {
+            for &i in &front {
+                if let Some(b) = snap_target(i as usize, labels, &mean) {
+                    flips.push((i, b));
+                }
+            }
+        }
+        if flips.is_empty() {
+            break;
+        }
+        for &(i, b) in &flips {
+            let (i, b) = (i as usize, b as usize);
+            let a = labels[i] as usize;
+            if area[a] <= 1 {
+                continue; // never empty a region
+            }
+            let c = img.get_pixel(i % w, i / w);
+            labels[i] = b as u32;
+            area[a] -= 1;
+            area[b] += 1;
+            for (ch, v) in [c.r, c.g, c.b].into_iter().enumerate() {
+                sum[a][ch] -= v as u64;
+                sum[b][ch] += v as u64;
+            }
+        }
+        // Next sweep revisits each flipped pixel and its 4-neighbourhood,
+        // in raster order for determinism; the same set seeds the fragment
+        // check below (a severed strand is always adjacent to the flipped
+        // bridge pixel that cut it off).
+        front.clear();
+        for &(i, _) in &flips {
+            let i = i as usize;
+            let (x, y) = (i % w, i / w);
+            front.push(i as u32);
+            if x > 0 {
+                front.push((i - 1) as u32);
+            }
+            if x + 1 < w {
+                front.push((i + 1) as u32);
+            }
+            if y > 0 {
+                front.push((i - w) as u32);
+            }
+            if y + 1 < h {
+                front.push((i + w) as u32);
+            }
+        }
+        front.sort_unstable();
+        front.dedup();
+        touched.extend_from_slice(&front);
+    }
+    touched.sort_unstable();
+    touched.dedup();
+    absorb_fragments(img, w, h, labels, area, sum, &touched);
+}
+
+/// Fragments a snap flip may pinch off: a pixel can flip toward a neighbour
+/// whose own flip then strands it, and a flipped bridge pixel can sever a
+/// thin strand of its source region. Watershed basins are connected by
+/// construction and everything downstream relies on regions staying coherent
+/// (the mosaic gives every disjoint patch its own face), so the snap must not
+/// leave debris: a connected component that is disconnected from the rest of
+/// its region and fits under this floor is re-assigned to the most
+/// color-similar adjacent region. (A *substantial* patch severed at a thin
+/// antialiased neck stays — it makes a coherent face of its own; recoloring
+/// it would be visible.)
+const SNAP_FRAGMENT_MAX: usize = SNAP_SWEEPS * SNAP_SWEEPS;
+
+fn absorb_fragments(
+    img: &ColorImage,
+    w: usize,
+    h: usize,
+    labels: &mut [u32],
+    area: &mut [u64],
+    sum: &mut [[u64; 3]],
+    seeds: &[u32],
+) {
+    let n = w * h;
+    let mut visited = vec![false; n];
+    let mut comp: Vec<usize> = Vec::new();
+    let mut rim: Vec<u32> = Vec::new(); // adjacent region labels
+    for &s in seeds {
+        let s = s as usize;
+        if visited[s] {
+            continue;
+        }
+        // Flood s's same-label component, capped: hitting the cap — or a
+        // pixel already visited by an earlier over-cap flood of the same
+        // component — proves it is no fragment.
+        let l = labels[s];
+        visited[s] = true;
+        comp.clear();
+        comp.push(s);
+        rim.clear();
+        let mut over = false;
+        let mut qi = 0;
+        'flood: while qi < comp.len() {
+            let i = comp[qi];
+            qi += 1;
+            let (x, y) = (i % w, i / w);
+            for j in [
+                (x > 0).then(|| i - 1),
+                (x + 1 < w).then(|| i + 1),
+                (y > 0).then(|| i - w),
+                (y + 1 < h).then(|| i + w),
+            ]
+            .into_iter()
+            .flatten()
+            {
+                if labels[j] != l {
+                    rim.push(labels[j]);
+                    continue;
+                }
+                if visited[j] {
+                    if !comp.contains(&j) {
+                        over = true; // joined an earlier over-cap flood
+                        break 'flood;
+                    }
+                    continue;
+                }
+                if comp.len() > SNAP_FRAGMENT_MAX {
+                    over = true;
+                    break 'flood;
+                }
+                visited[j] = true;
+                comp.push(j);
+            }
+        }
+        // A component as large as its whole region is the region itself, not
+        // a fragment of one. (The flood can end at cap + 1 without tripping
+        // `over`, so re-check the size.)
+        if over
+            || comp.len() > SNAP_FRAGMENT_MAX
+            || comp.len() as u64 >= area[l as usize]
+            || rim.is_empty()
+        {
+            continue;
+        }
+        // The whole fragment moves to the adjacent region whose mean is
+        // closest to the fragment's own mean.
+        let mut fsum = [0i64; 3];
+        for &i in &comp {
+            let c = img.get_pixel(i % w, i / w);
+            for (ch, v) in [c.r, c.g, c.b].into_iter().enumerate() {
+                fsum[ch] += v as i64;
+            }
+        }
+        let fl = comp.len() as i64;
+        rim.sort_unstable();
+        rim.dedup();
+        let target = rim
+            .iter()
+            .map(|&b| {
+                let d: i64 = (0..3)
+                    .map(|ch| {
+                        (fsum[ch] / fl - (sum[b as usize][ch] / area[b as usize]) as i64).abs()
+                    })
+                    .sum();
+                (d, b)
+            })
+            .min()
+            .unwrap()
+            .1 as usize;
+        let l = l as usize;
+        for &i in &comp {
+            let c = img.get_pixel(i % w, i / w);
+            labels[i] = target as u32;
+            area[l] -= 1;
+            area[target] += 1;
+            for (ch, v) in [c.r, c.g, c.b].into_iter().enumerate() {
+                sum[l][ch] -= v as u64;
+                sum[target][ch] += v as u64;
+            }
+        }
+    }
 }
 
 /// Absorb regions smaller than `min_area` into their most color-similar

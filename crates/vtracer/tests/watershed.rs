@@ -487,3 +487,154 @@ fn cutout_merges_identical_palette_faces() {
         "A and B snap to the same palette color and share a boundary — one face"
     );
 }
+
+/// An antialiased edge with pixel noise must come out straight: inside the
+/// ramp the per-pixel differences are near-equal, so the raw
+/// minimum-spanning-forest boundary meanders with the noise; the boundary
+/// snap re-assigns ramp pixels by color proximity, landing the cut on the
+/// color-midpoint iso-line (within a pixel).
+#[test]
+fn antialiased_edge_snaps_to_midline() {
+    let (w, h) = (32usize, 16usize);
+    let edge = |x: usize| 6.0 + 0.2 * x as f64; // nearly horizontal
+    let img = image(w, h, |x, y| {
+        // A 4-px linear ramp: adjacent in-ramp differences are near-equal,
+        // so without the snap the cut meanders on the noise.
+        let t = ((y as f64 + 0.5 - edge(x)) / 4.0 + 0.5).clamp(0.0, 1.0);
+        let mut v = (t * 200.0).round() as i32;
+        if t > 0.0 && t < 1.0 {
+            v += ((x * 7 + y * 13) % 5) as i32 - 2; // deterministic "sensor" noise
+        }
+        let v = v.clamp(0, 255) as u8;
+        (v, v, v)
+    });
+    let seg = WatershedFrontend {
+        detail: 26, // target 2 regions
+        min_area: 1,
+    }
+    .segment(&img)
+    .unwrap();
+    let labels = flatten(&seg);
+    assert_eq!(regions(&seg), 2);
+    for x in 0..w {
+        let col: Vec<usize> = (0..h).map(|y| labels[y * w + x]).collect();
+        let cross: Vec<usize> = (1..h).filter(|&y| col[y] != col[y - 1]).collect();
+        assert_eq!(
+            cross.len(),
+            1,
+            "column {x} crosses the boundary exactly once, got {col:?}"
+        );
+        let dev = cross[0] as f64 - edge(x);
+        assert!(
+            dev.abs() <= 1.5,
+            "column {x}: boundary at row {} strays from the edge at {:.1}",
+            cross[0],
+            edge(x)
+        );
+    }
+}
+
+/// Sizes of the 4-connected components of a label map.
+fn component_sizes(labels: &[usize], w: usize, h: usize) -> Vec<usize> {
+    let mut seen = vec![false; labels.len()];
+    let mut sizes = Vec::new();
+    let mut stack = Vec::new();
+    for start in 0..labels.len() {
+        if seen[start] {
+            continue;
+        }
+        let mut size = 0;
+        seen[start] = true;
+        stack.push(start);
+        while let Some(i) = stack.pop() {
+            size += 1;
+            let (x, y) = (i % w, i / w);
+            for j in [
+                (x > 0).then(|| i - 1),
+                (x + 1 < w).then(|| i + 1),
+                (y > 0).then(|| i - w),
+                (y + 1 < h).then(|| i + w),
+            ]
+            .into_iter()
+            .flatten()
+            {
+                if !seen[j] && labels[j] == labels[i] {
+                    seen[j] = true;
+                    stack.push(j);
+                }
+            }
+        }
+        sizes.push(size);
+    }
+    sizes
+}
+
+/// The boundary snap must not leave debris: a pixel can flip toward a
+/// neighbour whose own flip then strands it, leaving 1-px chips that the
+/// mosaic turns into micro-faces wedged between the real ones (faces that
+/// visually abut but no longer share a fitted boundary). Every connected
+/// patch of the partition must clear the speckle floor — a *substantial*
+/// patch severed at a thin antialiased neck is fine (it becomes its own
+/// tight face), sub-speckle debris is not. The real photo is the
+/// reproduction: its JPEG noise produced 62 such chips before the snap
+/// absorbed fragments.
+#[test]
+fn snap_leaves_no_debris() {
+    let mut p = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    p.push("../../docs/assets/samples/Cityscape Sunset_DFM3-01.jpg");
+    let decoded = image::open(&p).expect("sample image").to_rgba8();
+    let (w, h) = (decoded.width() as usize, decoded.height() as usize);
+    let img = ColorImage {
+        pixels: decoded.into_raw(),
+        width: w,
+        height: h,
+    };
+    let min_area = 16;
+    let seg = WatershedFrontend {
+        detail: 128,
+        min_area,
+    }
+    .segment(&img)
+    .unwrap();
+    let labels = flatten(&seg);
+    let sizes = component_sizes(&labels, w, h);
+    assert!(
+        sizes.iter().all(|&s| s >= min_area),
+        "smallest patch {} px is under the speckle floor ({} patches total)",
+        sizes.iter().min().unwrap(),
+        sizes.len()
+    );
+}
+
+/// The snap must not bulldoze genuine detail: a pixel of the *other side's*
+/// color sitting across the boundary (here a bright pixel notching into the
+/// dark half) is not a mixture of the two region means, so the mixture gate
+/// keeps it with its color-correct basin — where a geometric smoothing
+/// filter would have erased the notch.
+#[test]
+fn snap_keeps_genuine_color_detail() {
+    let (w, h) = (16usize, 16usize);
+    let img = image(w, h, |x, y| {
+        if (x, y) == (7, 7) {
+            (190, 190, 190) // bright pixel on the dark side of the edge
+        } else if x < 8 {
+            (0, 0, 0)
+        } else {
+            (200, 200, 200)
+        }
+    });
+    let seg = WatershedFrontend {
+        detail: 26,
+        min_area: 1,
+    }
+    .segment(&img)
+    .unwrap();
+    let labels = flatten(&seg);
+    assert_eq!(regions(&seg), 2);
+    assert_eq!(
+        labels[7 * w + 7],
+        labels[7 * w + 8],
+        "the bright pixel stays with the bright region"
+    );
+    assert_ne!(labels[7 * w + 7], labels[7 * w + 6], "the notch survives");
+}
