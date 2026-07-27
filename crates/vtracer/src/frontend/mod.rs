@@ -16,7 +16,7 @@ mod watershed;
 
 pub use binary::{BinaryFrontend, Threshold};
 pub use color_cluster::ColorClusterFrontend;
-pub use watershed::WatershedFrontend;
+pub use watershed::{WatershedFrontend, WatershedHierarchy};
 
 use visioncortex::ColorImage;
 

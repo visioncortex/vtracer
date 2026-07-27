@@ -113,9 +113,7 @@ struct Args {
 }
 
 fn parse_segment_length(s: &str) -> Result<f64, String> {
-    let v: f64 = s
-        .parse()
-        .map_err(|_| format!("`{s}` is not a number"))?;
+    let v: f64 = s.parse().map_err(|_| format!("`{s}` is not a number"))?;
     if !(3.5..=10.0).contains(&v) {
         return Err(format!("segment length {v} is out of range [3.5, 10]"));
     }
@@ -211,8 +209,8 @@ fn build_config(args: &Args) -> Result<Config, String> {
     if let Some(text) = &args.palette {
         config.palette = parse_palette(text)?;
     } else if let Some(path) = &args.palette_file {
-        let text = std::fs::read_to_string(path)
-            .map_err(|e| format!("cannot read palette file: {e}"))?;
+        let text =
+            std::fs::read_to_string(path).map_err(|e| format!("cannot read palette file: {e}"))?;
         config.palette = parse_palette(&text)?;
     }
 

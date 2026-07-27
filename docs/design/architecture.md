@@ -114,7 +114,7 @@ Driver flow:
 - **Frontends** (selected by `Config::clustering`)
   - `ColorClusterFrontend` — wraps `visioncortex::color_clusters::Runner`, including the transparency-keying logic that currently lives in `converter.rs` (find unused key color, key fully-transparent pixels, `KeyingAction`).
   - `BinaryFrontend` — threshold → `BinaryImage::to_clusters`.
-  - `WatershedFrontend` — hierarchical watershed by volume on the 4-adjacency pixel graph (Cousty et al. TPAMI 2009; Najman, Cousty & Perret ISMM 2013), cut at `watershed_detail`. Emits a flat partition with a solid full-canvas background layer so stacked overdraw stays seam-free.
+  - `WatershedFrontend` — hierarchical watershed by volume on the 4-adjacency pixel graph (Cousty et al. TPAMI 2009; Najman, Cousty & Perret ISMM 2013), cut at `watershed_detail`. Split into `WatershedHierarchy::build` (expensive, image-only) and `cut` (near-instant), so `Session` re-cuts a cached hierarchy when the detail changes. Emits the merge tree as a stacked hierarchy (root first, refined regions on top — the color-cluster principle), so stacked mode stays seam-free and sub-pixel gaps show ancestor colors; in cutout the partition reaches the mosaic untouched (`merge_diff = 0`).
   - Third parties implement `Frontend` to feed external label maps or ML segmentation.
 - **ColorFitters**
   - `Identity` (today's behavior: mean cluster color)

@@ -196,8 +196,8 @@ impl Config {
         }
     }
 
-    /// Speckle filter area (px), applied in the `finish` phase.
-    fn speckle_area(&self) -> usize {
+    /// Speckle filter area (px), fed to the frontend.
+    pub(crate) fn speckle_area(&self) -> usize {
         self.filter_speckle * self.filter_speckle
     }
 
@@ -295,8 +295,13 @@ impl Config {
                 fitter: self.segment_fitter(),
                 // Rejoin flattened neighbours the gradient layering split:
                 // clustering itself considers colors within one gradient step
-                // to be the same region (`deepen_diff`).
-                merge_diff: self.layer_difference,
+                // to be the same region (`deepen_diff`). The watershed
+                // hierarchy already decided every merge, so its partition
+                // passes to the mosaic untouched.
+                merge_diff: match self.clustering {
+                    Clustering::Watershed => 0,
+                    _ => self.layer_difference,
+                },
             },
         };
 
