@@ -3,7 +3,7 @@ name = "vtracer-wasm"
 description = "WebAssembly core for the vtracer Node.js package."
 version = "1.0.0-alpha.1"
 authors = ["Chris Tsang <tyt2y7@gmail.com>"]
-edition = "2021"
+edition = "2024"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/visioncortex/vtracer/"
 

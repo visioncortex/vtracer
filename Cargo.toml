@@ -20,7 +20,7 @@ resolver = "2"
 [workspace.package]
 version = "1.0.0-alpha.1"
 authors = ["Chris Tsang <chris.2y3@outlook.com>"]
-edition = "2021"
+edition = "2024"
 license = "MIT OR Apache-2.0"
 homepage = "http://www.visioncortex.org/vtracer"
 repository = "https://github.com/visioncortex/vtracer/"
