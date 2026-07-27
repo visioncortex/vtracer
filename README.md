@@ -86,9 +86,6 @@ Options:
   -f, --filter-speckle <FILTER_SPECKLE>      Discard patches smaller than X px in size (0..=128)
   -p, --color-precision <COLOR_PRECISION>    Significant bits per RGB channel (1..=8)
   -g, --gradient-step <GRADIENT_STEP>        Color difference between gradient layers (0..=255)
-  -c, --corner-threshold <CORNER_THRESHOLD>  Minimum momentary angle (degrees) to be a corner (0..=180)
-  -l, --segment-length <SEGMENT_LENGTH>      Subdivide until all segments are shorter than this (3.5..=10)
-  -s, --splice-threshold <SPLICE_THRESHOLD>  Minimum angle displacement (degrees) to splice a spline (0..=180)
       --simplify <TOLERANCE>                 Simplify curves: fewest cubics within this tolerance in px (try 1–2.5)
       --path-precision <PATH_PRECISION>      Decimal places to use in path coordinates
       --palette <PALETTE>                    Fixed palette: comma-separated hex colors, e.g. '#112233,#445566'
@@ -103,6 +100,12 @@ Options:
   -h, --help                                 Print help
   -V, --version                              Print version
 ```
+
+The spline fine-tuning flags `--corner-threshold <0..=180>`,
+`--segment-length <3.5..=10>`, and `--splice-threshold <0..=180>` are still
+accepted but hidden from `--help`: their defaults (60 / 4 / 45) serve
+virtually every conversion, and `--simplify` is the knob that actually moves
+output size and smoothness.
 
 ### New in 1.0
 

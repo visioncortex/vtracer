@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 * `color_mode` is replaced by `clustering` (`color-cluster` | `bw` | `watershed`) across the CLI (`--clustering`), Rust (`Config::clustering`, enum `Clustering`), Python, and Node — the field selects the region-forming algorithm, not a color space.
+* The spline fine-tuning flags `--corner-threshold`, `--segment-length`, and `--splice-threshold` are hidden from CLI help (still accepted) and their short forms `-c`/`-l`/`-s` are removed — the defaults serve virtually every conversion, and `--simplify` supersedes them as the knob that actually moves output size.
 
 ### Fixed
 

@@ -60,19 +60,27 @@ struct Args {
     gradient_step: Option<i64>,
 
     /// Minimum momentary angle (degrees) to be a corner (0..=180).
-    #[arg(short = 'c', long, value_parser = clap::value_parser!(i64).range(0..=180))]
+    ///
+    /// Hidden from help: a fine-tuning knob few conversions need — the
+    /// default (60) serves; `--simplify` is the knob worth reaching for.
+    #[arg(long, hide = true, value_parser = clap::value_parser!(i64).range(0..=180))]
     corner_threshold: Option<i64>,
 
     /// Subdivide until all segments are shorter than this length (3.5..=10).
-    #[arg(short = 'l', long, value_parser = parse_segment_length)]
+    ///
+    /// Hidden from help: with `--simplify` reducing anchors by an explicit
+    /// error tolerance, this legacy knob's effect on output is negligible.
+    #[arg(long, hide = true, value_parser = parse_segment_length)]
     segment_length: Option<f64>,
 
     /// Minimum angle displacement (degrees) to splice a spline (0..=180).
-    #[arg(short = 's', long, value_parser = clap::value_parser!(i64).range(0..=180))]
+    ///
+    /// Hidden from help: a fine-tuning knob few conversions need — the
+    /// default (45) serves; `--simplify` is the knob worth reaching for.
+    #[arg(long, hide = true, value_parser = clap::value_parser!(i64).range(0..=180))]
     splice_threshold: Option<i64>,
 
-    /// Simplify curves (spline mode): re-fit with the fewest cubics staying
-    /// within this tolerance in px (try 1–2.5; paper.js uses 2.5).
+    /// Simplify curves: fewest cubics within this tolerance in px (try 1-2.5).
     #[arg(long, value_name = "TOLERANCE", value_parser = parse_simplify_tolerance)]
     simplify: Option<f64>,
 
