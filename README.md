@@ -89,11 +89,12 @@ Options:
   -c, --corner-threshold <CORNER_THRESHOLD>  Minimum momentary angle (degrees) to be a corner (0..=180)
   -l, --segment-length <SEGMENT_LENGTH>      Subdivide until all segments are shorter than this (3.5..=10)
   -s, --splice-threshold <SPLICE_THRESHOLD>  Minimum angle displacement (degrees) to splice a spline (0..=180)
+      --simplify <TOLERANCE>                 Simplify curves: fewest cubics within this tolerance in px (try 1–2.5)
       --path-precision <PATH_PRECISION>      Decimal places to use in path coordinates
       --palette <PALETTE>                    Fixed palette: comma-separated hex colors, e.g. '#112233,#445566'
       --palette-file <PALETTE_FILE>          Fixed palette from a file (hex colors, comma/newline separated)
       --max-colors <MAX_COLORS>              Auto-quantize to at most N colors
-      --optimize <OPTIMIZE>                  Output optimization: 0 = off, 1 = quantize+simplify, 2 = + shorthands
+      --optimize <OPTIMIZE>                  Output optimization: 0 = off, 1 = quantize+cleanup, 2 = + shorthands
       --threshold <THRESHOLD>                Binary mode: fixed threshold 0..=255 (foreground below it)
       --adaptive                             Binary mode: Bradley–Roth adaptive threshold (uneven lighting)
       --adaptive-window <ADAPTIVE_WINDOW>    Adaptive window size in px (0 = auto); implies --adaptive
@@ -113,6 +114,10 @@ Options:
 - **Binary thresholding** — a tunable fixed cutoff (`--threshold`) or
   **Bradley–Roth adaptive** thresholding (`--adaptive`, with `--adaptive-window`
   / `--adaptive-t`) for scans with uneven lighting.
+- **`--simplify <tolerance>`** — paper.js-style curve simplification: re-fits
+  smooth runs with the fewest cubics that stay within the tolerance (px),
+  typically halving file size; seam-free in cutout mode because shared
+  boundaries are simplified once for both faces.
 - **`--clustering watershed`** — an alternative region-forming algorithm: a
   hierarchical watershed on the pixel graph (Cousty et al., TPAMI 2009; Najman,
   Cousty & Perret, ISMM 2013), cut at `--watershed-detail`. Content-adaptive

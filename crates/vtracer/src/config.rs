@@ -14,8 +14,9 @@ use crate::frontend::{
 use crate::mosaic::{
     PixelSegmentFitter, PolygonSegmentFitter, SegmentFitter, SplineSegmentFitter,
 };
-use crate::optimize::{OptimizerPass, QuantizePass, SimplifyPass};
+use crate::optimize::{CleanupPass, OptimizerPass, QuantizePass};
 use crate::pipeline::Pipeline;
+use crate::simplify::{CurvePass, SimplifyCurves};
 use crate::svg::SvgWriter;
 
 /// Which region-forming algorithm segments the image.
@@ -88,13 +89,18 @@ pub struct Config {
     pub max_iterations: usize,
     /// Splice threshold in degrees.
     pub splice_threshold: i32,
+    /// Curve simplification tolerance in px (paper.js-style `simplify`):
+    /// re-fit smooth runs of fitted cubics with the fewest curves that stay
+    /// within this distance, keeping corners in place. `None` = off. Only
+    /// affects spline mode; pixel/polygon polylines pass through untouched.
+    pub simplify: Option<f64>,
     /// Coordinate precision (decimal places) for output.
     pub path_precision: Option<u32>,
     /// Fixed palette (empty = none). Takes priority over `max_colors`.
     pub palette: Vec<Color>,
     /// Auto-quantize target color count (None = off).
     pub max_colors: Option<usize>,
-    /// Optimization level: 0 = off, 1 = quantize+simplify, 2 = + shorthands/grouping.
+    /// Optimization level: 0 = off, 1 = quantize+cleanup, 2 = + shorthands/grouping.
     pub optimize: u8,
     /// Binary-mode fixed threshold (0..=255): foreground when grayscale
     /// intensity is below this. Ignored when `binary_adaptive` is set.
@@ -124,6 +130,7 @@ impl Default for Config {
             length_threshold: 4.0,
             max_iterations: 10,
             splice_threshold: 45,
+            simplify: None,
             path_precision: Some(2),
             palette: Vec::new(),
             max_colors: None,
@@ -236,6 +243,16 @@ impl Config {
         }
     }
 
+    fn curve_passes(&self) -> Vec<Box<dyn CurvePass>> {
+        match self.simplify {
+            Some(tolerance) if tolerance > 0.0 => vec![Box::new(SimplifyCurves {
+                tolerance,
+                corner_threshold: deg2rad(self.corner_threshold),
+            })],
+            _ => Vec::new(),
+        }
+    }
+
     fn optimizers(&self) -> Vec<Box<dyn OptimizerPass>> {
         if self.optimize == 0 {
             return Vec::new();
@@ -243,7 +260,7 @@ impl Config {
         let precision = self.path_precision.unwrap_or(2);
         vec![
             Box::new(QuantizePass::new(precision)),
-            Box::new(SimplifyPass),
+            Box::new(CleanupPass),
         ]
     }
 
@@ -314,6 +331,7 @@ impl Config {
             frontend: self.frontend(),
             color_fitters: self.color_fitters(),
             compositing,
+            curve_passes: self.curve_passes(),
             optimizers: self.optimizers(),
             writer: self.writer(),
         })

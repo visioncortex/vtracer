@@ -1,11 +1,13 @@
 //! Optimizer passes over the [`VectorDoc`] before serialization.
 //!
 //! * [`QuantizePass`] — round every coordinate once, in document space. Doing
-//!   it here (rather than at write time) lets [`SimplifyPass`] act on the
+//!   it here (rather than at write time) lets [`CleanupPass`] act on the
 //!   rounded geometry, and it bakes offsets into coordinates so the writer
 //!   never needs a per-path `translate`.
-//! * [`SimplifyPass`] — drop zero-length and collinear-redundant segments that
-//!   quantization may have created.
+//! * [`CleanupPass`] — drop zero-length and collinear-redundant segments that
+//!   quantization may have created. (Curve *simplification* is not an
+//!   optimizer pass: it must run on shared fitted geometry before composition
+//!   — see [`crate::simplify`].)
 
 use visioncortex::PointF64;
 
@@ -63,7 +65,7 @@ impl OptimizerPass for QuantizePass {
 
 /// Remove zero-length segments and collinear-redundant line vertices.
 #[derive(Debug, Clone, Copy, Default)]
-pub struct SimplifyPass;
+pub struct CleanupPass;
 
 /// Tolerance for treating two points as coincident.
 const COINCIDENT_EPS: f64 = 1e-6;
@@ -84,7 +86,7 @@ fn collinear(a: PointF64, b: PointF64, c: PointF64) -> bool {
     (cross.abs() / base) < COLLINEAR_EPS
 }
 
-fn simplify_subpath(sub: &SubPath) -> SubPath {
+fn cleanup_subpath(sub: &SubPath) -> SubPath {
     let mut out = SubPath::new();
     // `prev` is the point active before the last emitted command; `last` is the
     // current point after it. Both are needed to test collinearity of a run.
@@ -127,12 +129,12 @@ fn simplify_subpath(sub: &SubPath) -> SubPath {
     out
 }
 
-impl OptimizerPass for SimplifyPass {
+impl OptimizerPass for CleanupPass {
     fn run(&self, doc: &mut VectorDoc) {
         for shape in &mut doc.shapes {
             let mut subpaths = Vec::with_capacity(shape.path.subpaths.len());
             for sub in &shape.path.subpaths {
-                let simplified = simplify_subpath(sub);
+                let simplified = cleanup_subpath(sub);
                 // Keep only subpaths with real geometry (a MoveTo plus at least
                 // one drawing command beyond Close).
                 let draws = simplified
@@ -185,7 +187,7 @@ mod tests {
     }
 
     #[test]
-    fn simplify_drops_collinear_and_zero_length() {
+    fn cleanup_drops_collinear_and_zero_length() {
         // A straight run of colinear points plus a duplicate should collapse.
         let mut doc = doc_with(vec![
             PathCmd::MoveTo(pt(0.0, 0.0)),
@@ -195,7 +197,7 @@ mod tests {
             PathCmd::LineTo(pt(2.0, 5.0)),
             PathCmd::Close,
         ]);
-        SimplifyPass.run(&mut doc);
+        CleanupPass.run(&mut doc);
         let cmds = &doc.shapes[0].path.subpaths[0].commands;
         // MoveTo, one merged horizontal LineTo, one vertical LineTo, Close.
         assert_eq!(cmds.len(), 4);

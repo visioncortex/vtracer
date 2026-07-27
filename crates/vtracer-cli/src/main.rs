@@ -71,6 +71,11 @@ struct Args {
     #[arg(short = 's', long, value_parser = clap::value_parser!(i64).range(0..=180))]
     splice_threshold: Option<i64>,
 
+    /// Simplify curves (spline mode): re-fit with the fewest cubics staying
+    /// within this tolerance in px (try 1–2.5; paper.js uses 2.5).
+    #[arg(long, value_name = "TOLERANCE", value_parser = parse_simplify_tolerance)]
+    simplify: Option<f64>,
+
     /// Decimal places to use in path coordinates.
     #[arg(long)]
     path_precision: Option<u32>,
@@ -87,7 +92,7 @@ struct Args {
     #[arg(long)]
     max_colors: Option<usize>,
 
-    /// Optimization level: 0 = off, 1 = quantize+simplify, 2 = + shorthands/grouping.
+    /// Optimization level: 0 = off, 1 = quantize+cleanup, 2 = + shorthands/grouping.
     #[arg(long, value_parser = clap::value_parser!(u8).range(0..=2))]
     optimize: Option<u8>,
 
@@ -110,6 +115,14 @@ struct Args {
     /// Watershed clustering: hierarchy cut level (0..=255, higher = more regions).
     #[arg(long, value_parser = clap::value_parser!(u8))]
     watershed_detail: Option<u8>,
+}
+
+fn parse_simplify_tolerance(s: &str) -> Result<f64, String> {
+    let v: f64 = s.parse().map_err(|_| format!("`{s}` is not a number"))?;
+    if !v.is_finite() || v <= 0.0 {
+        return Err(format!("simplify tolerance {v} must be positive"));
+    }
+    Ok(v)
 }
 
 fn parse_segment_length(s: &str) -> Result<f64, String> {
@@ -176,6 +189,9 @@ fn build_config(args: &Args) -> Result<Config, String> {
     }
     if let Some(v) = args.splice_threshold {
         config.splice_threshold = v as i32;
+    }
+    if args.simplify.is_some() {
+        config.simplify = args.simplify;
     }
     if args.path_precision.is_some() {
         config.path_precision = args.path_precision;

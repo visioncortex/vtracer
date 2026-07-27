@@ -188,6 +188,8 @@ impl PyConfig {
                 length_threshold,
                 max_iterations,
                 splice_threshold,
+                // Curve simplification is not surfaced in the Python API yet.
+                simplify: None,
                 path_precision: Some(path_precision),
                 palette,
                 max_colors,

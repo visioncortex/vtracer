@@ -21,7 +21,8 @@ mod graph;
 
 pub use compose::compose_mosaic;
 pub use fit::{
-    FittedSegment, PixelSegmentFitter, PolygonSegmentFitter, SegmentFitter, SplineSegmentFitter,
+    FittedGeom, FittedSegment, PixelSegmentFitter, PolygonSegmentFitter, SegmentFitter,
+    SplineSegmentFitter,
 };
 pub use graph::{BoundaryGraph, Node, Segment, SegRef};
 
@@ -485,6 +486,49 @@ mod tests {
         assert!(checked > 0, "expected some open segments");
     }
 
+    #[test]
+    fn curve_passes_keep_segment_endpoints_pinned() {
+        use super::fit::{FittedGeom, SegmentFitter, SplineSegmentFitter};
+        use crate::simplify::{CurvePass, SimplifyCurves};
+        // Simplification runs per shared segment; junction nodes must not
+        // move or the faces meeting there would disagree.
+        let map = grid(4, 4, vec![
+            0, 0, 1, 1,
+            0, 0, 1, 1,
+            2, 2, 1, 1,
+            2, 2, 2, 2,
+        ]);
+        let graph = BoundaryGraph::extract(&map);
+        let fitter = SplineSegmentFitter::default();
+        let pass = SimplifyCurves {
+            tolerance: 2.0,
+            corner_threshold: std::f64::consts::PI / 3.0,
+        };
+        let mut checked = 0;
+        for seg in &graph.segments {
+            if seg.is_ring() {
+                continue;
+            }
+            let start = PointF64 { x: seg.points[0].x as f64, y: seg.points[0].y as f64 };
+            let end = {
+                let p = seg.points[seg.points.len() - 1];
+                PointF64 { x: p.x as f64, y: p.y as f64 }
+            };
+            match pass.open(fitter.fit_open(seg).geom) {
+                FittedGeom::Beziers(b) => {
+                    assert_eq!(b.first().unwrap()[0], start, "start pinned through pass");
+                    assert_eq!(b.last().unwrap()[3], end, "end pinned through pass");
+                }
+                FittedGeom::Polyline(p) => {
+                    assert_eq!(*p.first().unwrap(), start);
+                    assert_eq!(*p.last().unwrap(), end);
+                }
+            }
+            checked += 1;
+        }
+        assert!(checked > 0, "expected some open segments");
+    }
+
     /// Build a label map with explicit per-region gray levels.
     fn gray_grid(width: u32, height: u32, labels: Vec<RegionId>, grays: &[u8]) -> LabelMap {
         LabelMap {
@@ -594,8 +638,8 @@ mod tests {
             });
         }
 
-        let unmerged = compose_mosaic(&seg, &PixelSegmentFitter, 0);
-        let merged = compose_mosaic(&seg, &PixelSegmentFitter, 16);
+        let unmerged = compose_mosaic(&seg, &PixelSegmentFitter, 0, &[]);
+        let merged = compose_mosaic(&seg, &PixelSegmentFitter, 16, &[]);
         assert_eq!(unmerged.shapes.len(), 3);
         assert_eq!(merged.shapes.len(), 1, "gradient strips coalesce into one face");
         assert_eq!(merged.shapes[0].paint.color().r, 102, "area-weighted mean");

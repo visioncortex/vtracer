@@ -27,3 +27,7 @@ repository = "https://github.com/visioncortex/vtracer/"
 
 [workspace.dependencies]
 visioncortex = "0.9.1"
+# Schneider curve fitting for the simplify pass. visioncortex pins an old
+# flo_curves internally for legacy reasons; we depend on the current one
+# directly and convert at the call boundary.
+flo_curves = "0.8"

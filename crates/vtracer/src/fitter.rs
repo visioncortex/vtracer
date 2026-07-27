@@ -1,22 +1,44 @@
 //! Curve fitters: turn a region's pixel mask into vector outlines.
 //!
 //! The three built-ins wrap the corresponding visioncortex tracing modes and
-//! emit our [`MultiPath`] IR in absolute (document) coordinates:
+//! emit [`FittedGeom`] contours in absolute (document) coordinates:
 //!
 //! * [`PixelFitter`] — exact lattice polyline (no simplification).
 //! * [`PolygonFitter`] — staircase-symmetric Douglas–Peucker polygon.
 //! * [`SplineFitter`] — subdivision + corner detection + least-squares cubics.
 //!
-//! All three trace *closed* region outlines (outer ring plus holes). Open
-//! polyline fitting (needed for the mosaic compositor) will arrive with that
-//! milestone.
+//! All three trace *closed* region outlines (outer ring plus holes). The
+//! mosaic compositor fits open boundary segments instead; see
+//! [`crate::mosaic::SegmentFitter`].
 
 use visioncortex::clusters::Cluster as BinaryCluster;
 use visioncortex::{
     CompoundPath, CompoundPathElement, PathSimplifyMode, PointF64, PointI32,
 };
 
-use crate::ir::{MultiPath, PathCmd, RegionMask, SubPath};
+use crate::ir::{PathCmd, RegionMask, SubPath};
+
+/// Fitted geometry for one contour — the common currency between the curve
+/// fitters, the [`CurvePass`](crate::simplify::CurvePass) stage, and
+/// composition. The stacked fitters produce one per closed outline; the
+/// mosaic fitters produce one per shared boundary segment.
+#[derive(Clone, Debug)]
+pub enum FittedGeom {
+    /// Polyline (pixel / polygon backends).
+    Polyline(Vec<PointF64>),
+    /// Chain of cubic Béziers; consecutive curves share endpoints (spline backend).
+    Beziers(Vec<[PointF64; 4]>),
+}
+
+impl FittedGeom {
+    /// Convert one closed contour into a `MoveTo … Close` subpath.
+    pub fn into_closed_subpath(self) -> SubPath {
+        match self {
+            FittedGeom::Polyline(points) => polyline_subpath(&points),
+            FittedGeom::Beziers(chain) => beziers_subpath(&chain),
+        }
+    }
+}
 
 /// Fitting parameters shared by the built-in fitters. Only the spline fitter
 /// consults the smoothing/splice fields.
@@ -43,9 +65,10 @@ impl Default for FitParams {
     }
 }
 
-/// A curve fitter traces a region mask into closed vector outlines.
+/// A curve fitter traces a region mask into closed vector outlines, one
+/// [`FittedGeom`] per contour (outer ring or hole).
 pub trait CurveFitter {
-    fn fit_region(&self, mask: &RegionMask) -> MultiPath;
+    fn fit_region(&self, mask: &RegionMask) -> Vec<FittedGeom>;
 }
 
 /// Exact lattice polyline; every pixel-boundary step is preserved.
@@ -53,7 +76,7 @@ pub trait CurveFitter {
 pub struct PixelFitter;
 
 impl CurveFitter for PixelFitter {
-    fn fit_region(&self, mask: &RegionMask) -> MultiPath {
+    fn fit_region(&self, mask: &RegionMask) -> Vec<FittedGeom> {
         trace_region(mask, PathSimplifyMode::None, FitParams::default())
     }
 }
@@ -63,7 +86,7 @@ impl CurveFitter for PixelFitter {
 pub struct PolygonFitter;
 
 impl CurveFitter for PolygonFitter {
-    fn fit_region(&self, mask: &RegionMask) -> MultiPath {
+    fn fit_region(&self, mask: &RegionMask) -> Vec<FittedGeom> {
         trace_region(mask, PathSimplifyMode::Polygon, FitParams::default())
     }
 }
@@ -81,19 +104,19 @@ impl SplineFitter {
 }
 
 impl CurveFitter for SplineFitter {
-    fn fit_region(&self, mask: &RegionMask) -> MultiPath {
+    fn fit_region(&self, mask: &RegionMask) -> Vec<FittedGeom> {
         trace_region(mask, PathSimplifyMode::Spline, self.params)
     }
 }
 
-/// Trace every connected component of a masked region and merge the resulting
-/// outlines into a single [`MultiPath`] in absolute coordinates.
+/// Trace every connected component of a masked region and collect the
+/// resulting outlines, one [`FittedGeom`] per contour, in absolute coordinates.
 ///
 /// This mirrors visioncortex's `Cluster::to_compound_path`: the mask (with
 /// holes already punched) is split into connected sub-clusters, each traced
 /// independently, then offset into document space.
-fn trace_region(mask: &RegionMask, mode: PathSimplifyMode, params: FitParams) -> MultiPath {
-    let mut multi = MultiPath::new();
+fn trace_region(mask: &RegionMask, mode: PathSimplifyMode, params: FitParams) -> Vec<FittedGeom> {
+    let mut geoms = Vec::new();
     for sub in mask.image.to_clusters(false).iter() {
         let offset = PointI32 {
             x: mask.offset.x + sub.rect.left,
@@ -108,12 +131,12 @@ fn trace_region(mask: &RegionMask, mode: PathSimplifyMode, params: FitParams) ->
             params.max_iterations,
             params.splice_threshold,
         );
-        append_compound(&mut multi, &compound);
+        append_compound(&mut geoms, &compound);
     }
-    multi
+    geoms
 }
 
-fn append_compound(multi: &mut MultiPath, compound: &CompoundPath) {
+fn append_compound(geoms: &mut Vec<FittedGeom>, compound: &CompoundPath) {
     for element in compound.iter() {
         match element {
             CompoundPathElement::PathI32(p) => {
@@ -125,16 +148,32 @@ fn append_compound(multi: &mut MultiPath, compound: &CompoundPath) {
                         y: q.y as f64,
                     })
                     .collect();
-                multi.push(polyline_subpath(&pts));
+                geoms.push(FittedGeom::Polyline(pts));
             }
             CompoundPathElement::PathF64(p) => {
-                multi.push(polyline_subpath(&p.path));
+                geoms.push(FittedGeom::Polyline(p.path.clone()));
             }
             CompoundPathElement::Spline(s) => {
-                multi.push(spline_subpath(&s.points));
+                geoms.push(FittedGeom::Beziers(spline_chain(&s.points)));
             }
         }
     }
+}
+
+/// A spline of `1 + 3n` points becomes a chain of `n` cubics sharing endpoints.
+fn spline_chain(points: &[PointF64]) -> Vec<[PointF64; 4]> {
+    if points.len() < 4 || (points.len() - 1) % 3 != 0 {
+        return Vec::new();
+    }
+    let mut chain = Vec::with_capacity((points.len() - 1) / 3);
+    let mut start = points[0];
+    let mut i = 1;
+    while i + 2 < points.len() {
+        chain.push([start, points[i], points[i + 1], points[i + 2]]);
+        start = points[i + 2];
+        i += 3;
+    }
+    chain
 }
 
 /// A closed polyline whose last point repeats the first becomes
@@ -155,18 +194,15 @@ fn polyline_subpath(points: &[PointF64]) -> SubPath {
     sub
 }
 
-/// A spline of `1 + 3n` points becomes `MoveTo · CubicTo* · Close`.
-fn spline_subpath(points: &[PointF64]) -> SubPath {
+/// A cubic chain becomes `MoveTo · CubicTo* · Close`.
+fn beziers_subpath(chain: &[[PointF64; 4]]) -> SubPath {
     let mut sub = SubPath::new();
-    if points.len() < 4 || (points.len() - 1) % 3 != 0 {
+    if chain.is_empty() {
         return sub;
     }
-    sub.commands.push(PathCmd::MoveTo(points[0]));
-    let mut i = 1;
-    while i + 2 < points.len() {
-        sub.commands
-            .push(PathCmd::CubicTo(points[i], points[i + 1], points[i + 2]));
-        i += 3;
+    sub.commands.push(PathCmd::MoveTo(chain[0][0]));
+    for c in chain {
+        sub.commands.push(PathCmd::CubicTo(c[1], c[2], c[3]));
     }
     sub.commands.push(PathCmd::Close);
     sub

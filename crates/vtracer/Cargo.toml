@@ -17,6 +17,7 @@ path = "src/lib.rs"
 
 [dependencies]
 visioncortex.workspace = true
+flo_curves.workspace = true
 
 [dev-dependencies]
 # Rasterize-and-diff equivalence tests (stacked vs mosaic). Test-only; not

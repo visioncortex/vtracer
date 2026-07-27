@@ -80,6 +80,11 @@ pub trait CurveFitter {
     fn fit_open(&self, polyline: &[PointF64]) -> Vec<PathCmd>;    // mosaic edges, endpoints pinned
 }
 
+pub trait CurvePass {
+    fn open(&self, geom: FittedGeom) -> FittedGeom;  // endpoints pinned
+    fn ring(&self, geom: FittedGeom) -> FittedGeom;  // stays closed
+}
+
 pub trait OptimizerPass {
     fn run(&self, doc: &mut VectorDoc);
 }
@@ -91,6 +96,7 @@ pub struct Pipeline {
     pub color_fitters: Vec<Box<dyn ColorFitter>>,
     pub fitter:        Box<dyn CurveFitter>,
     pub compositing:   Compositing,
+    pub curve_passes:  Vec<Box<dyn CurvePass>>,
     pub optimizers:    Vec<Box<dyn OptimizerPass>>,
 }
 
@@ -106,6 +112,7 @@ Driver flow:
 3. compositing:
    - **Stacked** — trace each layer's closed outlines independently (port of today's `to_compound_path` flow) via `fitter.fit_closed`
    - **Mosaic** — flatten to `LabelMap`, merge adjacent same-paint regions, extract the boundary graph, fit each shared edge once via `fitter.fit_open`, assemble faces (see [mosaic.md](mosaic.md))
+   - either way, `CurvePass`es run on each fitted contour *before* paths are assembled — in mosaic mode that means once per shared boundary segment, so both faces reference the transformed geometry and the tessellation stays seam-free. Running them any later (on the `VectorDoc`) would re-fit the two copies of every shared boundary independently and reopen the seams.
 4. optimizer passes over the `VectorDoc`
 5. `SvgWriter` serializes
 
@@ -125,13 +132,15 @@ Driver flow:
   - `PixelFitter` — exact lattice polyline
   - `PolygonFitter` — staircase-symmetric Douglas-Peucker
   - `SplineFitter` — subdivision + corner detection + least-squares cubic fit (port of the visioncortex flow, extended to open polylines with pinned endpoints)
+- **CurvePasses** (selected by `Config::simplify`)
+  - `SimplifyCurves { tolerance, corner_threshold }` — the paper.js `simplify` analogue: samples each smooth run of fitted cubics between corners and re-fits it with the fewest curves that stay within `tolerance` px (Schneider's algorithm via a current `flo_curves`, with tangents taken from the chain's own ends; visioncortex's internal copy is pinned to an old flo_curves and block-splits at 200 points, so it is not used here). A run is only replaced when the re-fit is strictly smaller, corners stay in place, open-segment endpoints are pinned bit-for-bit, and rings are seamed at their sharpest junction. Polylines pass through untouched.
 
 ## Optimizer and SVG writer
 
 Two levels: geometry passes over `VectorDoc`, then encoding choices in the writer.
 
 - `QuantizePass { precision }` — round coordinates once, in document space. Replaces today's per-write rounding, and eliminates the per-path `translate(x,y)` transform by baking offsets into coordinates.
-- `SimplifyPass` — drop zero-length and collinear-redundant segments *after* quantization.
+- `CleanupPass` — drop zero-length and collinear-redundant segments *after* quantization. (Curve *simplification* is deliberately not an optimizer pass — see `CurvePass` above.)
 - `SvgWriter { relative: bool, shorthands: bool, precision }` — per segment picks the shortest encoding:
   - relative (`l c s h v`) vs absolute deltas, whichever serializes shorter
   - `h`/`v` for axis-aligned lines, `s` for smooth cubic continuations

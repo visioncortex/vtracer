@@ -8,17 +8,10 @@ use visioncortex::{PathI32, PathSimplify, PointF64, PointI32, Spline, SubdivideS
 
 use super::graph::Segment;
 
+pub use crate::fitter::FittedGeom;
+
 /// Outset ratio for the 4-point subdivision scheme (matches visioncortex).
 const OUTSET_RATIO: f64 = 8.0;
-
-/// Fitted geometry for one boundary segment.
-#[derive(Clone, Debug)]
-pub enum FittedGeom {
-    /// Polyline (pixel / polygon backends).
-    Polyline(Vec<PointF64>),
-    /// Chain of cubic Béziers; consecutive curves share endpoints (spline backend).
-    Beziers(Vec<[PointF64; 4]>),
-}
 
 /// A fitted segment, cached and indexed by segment id.
 #[derive(Clone, Debug)]

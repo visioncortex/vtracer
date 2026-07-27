@@ -4,11 +4,11 @@
 //! pipeline of pluggable stages.
 //!
 //! ```text
-//! Frontend ─▶ ColorFitter* ─▶ Compositing ─▶ CurveFitter ─▶ VectorDoc
-//!                                                              │
-//!                                          OptimizerPass* ─────┤
-//!                                                              ▼
-//!                                                          SvgWriter ─▶ SVG
+//! Frontend ─▶ ColorFitter* ─▶ Compositing ─▶ CurveFitter ─▶ CurvePass* ─▶ VectorDoc
+//!                                                                            │
+//!                                                        OptimizerPass* ─────┤
+//!                                                                            ▼
+//!                                                                        SvgWriter ─▶ SVG
 //! ```
 //!
 //! The crate is wasm-safe: it performs no file or image I/O (that lives in the
@@ -26,8 +26,8 @@
 //! ```
 //!
 //! For finer control, assemble a [`Pipeline`] directly from the stage traits
-//! in [`frontend`], [`colorfit`], [`fitter`], [`compose`], [`optimize`], and
-//! [`svg`].
+//! in [`frontend`], [`colorfit`], [`fitter`], [`simplify`], [`compose`],
+//! [`optimize`], and [`svg`].
 
 pub mod colorfit;
 pub mod compose;
@@ -41,6 +41,7 @@ pub mod optimize;
 pub mod pipeline;
 pub mod progress;
 pub mod session;
+pub mod simplify;
 pub mod svg;
 
 pub use config::{Clustering, Config, FitMode, Hierarchical, Preset, SegmentKey};

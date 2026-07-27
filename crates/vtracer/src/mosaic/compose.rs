@@ -7,6 +7,7 @@
 //! both sides.
 
 use crate::ir::{MultiPath, PathCmd, Shape, SubPath, VectorDoc};
+use crate::simplify::CurvePass;
 use visioncortex::PointF64;
 
 use super::face::{assemble, Contour, Face};
@@ -15,14 +16,23 @@ use super::graph::BoundaryGraph;
 use super::{LabelMap, Segmentation};
 
 /// Run the full mosaic pipeline: flatten → merge similar neighbours →
-/// boundary graph → faces → fit → compose.
+/// boundary graph → faces → fit → curve passes → compose.
 ///
 /// `merge_diff` is the color-difference threshold for
 /// [`LabelMap::merge_similar`]; pass the clustering `deepen_diff`
 /// (gradient step) so the flattened mosaic rejoins what only the stacked
 /// gradient layering had split. `0` still merges identical-color
 /// neighbours; negative disables merging entirely.
-pub fn compose_mosaic(seg: &Segmentation, fitter: &dyn SegmentFitter, merge_diff: i32) -> VectorDoc {
+///
+/// `passes` run on each fitted segment before composition — once per shared
+/// boundary, so both adjacent faces reference the transformed geometry and
+/// the tessellation stays seam-free.
+pub fn compose_mosaic(
+    seg: &Segmentation,
+    fitter: &dyn SegmentFitter,
+    merge_diff: i32,
+    passes: &[Box<dyn CurvePass>],
+) -> VectorDoc {
     let mut map = LabelMap::from_segmentation(seg);
     map.merge_similar(merge_diff);
     let graph = BoundaryGraph::extract(&map);
@@ -33,11 +43,16 @@ pub fn compose_mosaic(seg: &Segmentation, fitter: &dyn SegmentFitter, merge_diff
         .segments
         .iter()
         .map(|s| {
-            if s.is_ring() {
-                fitter.fit_ring(s)
+            let ring = s.is_ring();
+            let mut geom = if ring {
+                fitter.fit_ring(s).geom
             } else {
-                fitter.fit_open(s)
+                fitter.fit_open(s).geom
+            };
+            for pass in passes {
+                geom = if ring { pass.ring(geom) } else { pass.open(geom) };
             }
+            FittedSegment { geom }
         })
         .collect();
 

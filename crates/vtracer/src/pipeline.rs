@@ -9,6 +9,7 @@ use crate::frontend::Frontend;
 use crate::ir::{Segmentation, VectorDoc};
 use crate::optimize::OptimizerPass;
 use crate::progress::{CancelToken, Ctx, Phase, Progress};
+use crate::simplify::CurvePass;
 use crate::svg::SvgWriter;
 
 /// A fully-assembled vectorization pipeline. Build one with
@@ -17,6 +18,10 @@ pub struct Pipeline {
     pub frontend: Box<dyn Frontend>,
     pub color_fitters: Vec<Box<dyn ColorFitter>>,
     pub compositing: Compositing,
+    /// Geometry passes over fitted contours (e.g. curve simplification), run
+    /// inside compositing — after curve fitting, before paths are assembled —
+    /// so mosaic mode applies them once per shared boundary segment.
+    pub curve_passes: Vec<Box<dyn CurvePass>>,
     pub optimizers: Vec<Box<dyn OptimizerPass>>,
     pub writer: SvgWriter,
 }
@@ -106,7 +111,7 @@ impl Pipeline {
             ctx.check()?;
         }
 
-        let mut doc = self.compositing.compose_with(&seg, ctx)?;
+        let mut doc = self.compositing.compose_with(&seg, &self.curve_passes, ctx)?;
 
         let total = self.optimizers.len().max(1);
         for (i, pass) in self.optimizers.iter().enumerate() {
