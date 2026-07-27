@@ -50,12 +50,16 @@ Technical descriptions of the [tracing algorithm](https://www.visioncortex.org/v
 
 ![screenshot](docs/images/desktop-app.png)
 
-VTracer App features:
+The familiar web-app workflow, now on the native 1.0 engine:
 
-+ Higher performance
-+ Adaptive thresholding in B/W mode
-+ Perfect cutout mode
-+ Fixed color palette
++ **Native speed** — the engine runs natively instead of in-browser wasm, so conversions are quicker
++ **A/B comparator** — a sliding split view to check the trace against the original
++ **Curve inspector** — examine the fitted curves up close
++ **Seam-free cutout** — a true gapless tessellation with shared boundaries, no cracks between shapes
++ **Watershed clustering** — content-adaptive regions that follow object shape, with one interactive detail slider
++ **Curve simplification** — the fewest curves within a pixel tolerance, typically halving file size
++ **Adaptive B/W thresholding** — handles scans and photos with uneven lighting
++ **Fixed color palettes** — snap the output to your own colors
 
 ## Cmd App
 
