@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## Unreleased
+## 1.0.0-alpha.2 - 2026-07-27
 
 ### Added
 
@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   * `stacked` stacks the merge tree itself (coarse ancestors below, refined regions on top), so overdraw stays seam-free.
   * `cutout` gets the partition natively; neighbouring faces closer than `max(2, (255 − detail) / 8)` merge, so faces a human cannot tell apart never survive as separate patches.
   * `WatershedHierarchy` is public, split into `build` (expensive, image-only) and `cut` (near-instant); `Session` re-cuts a cached hierarchy on detail changes, making the slider fully interactive (~25 ms vs ~40 ms on a 1400×775 photo).
-* Curve simplification (`--simplify <tolerance>`, `Config::simplify`; off by default): a paper.js-style Schneider re-fit — each smooth run between corners is redrawn with the fewest cubics that stay within the tolerance (px). Roughly halves file size (sample photo at tolerance 1: 229 → 138 KB stacked, 103 → 36 KB watershed cutout). Runs on fitted geometry before composition, so cutout simplifies each shared boundary once and stays seam-free; corners and junction endpoints stay pinned.
+* Curve simplification (`--simplify <tolerance>`, `Config::simplify`, `simplify` in Python and Node; off by default): a paper.js-style Schneider re-fit — each smooth run between corners is redrawn with the fewest cubics that stay within the tolerance (px). Roughly halves file size (sample photo at tolerance 1: 229 → 138 KB stacked, 103 → 36 KB watershed cutout). Runs on fitted geometry before composition, so cutout simplifies each shared boundary once and stays seam-free; corners and junction endpoints stay pinned.
 * Binary thresholding: a tunable fixed threshold (`--threshold`) and Bradley–Roth adaptive thresholding for uneven lighting (`--adaptive`, `--adaptive-window`, `--adaptive-t`) — also on `Config`, Python, and Node.
 * Cutout mode merges neighbouring faces whose colors are within one gradient step, rejoining the near-identical faces that stacked gradient layering splits a smooth area into.
 

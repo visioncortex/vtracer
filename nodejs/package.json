@@ -1,6 +1,6 @@
 {
   "name": "@visioncortex/vtracer",
-  "version": "1.0.0-alpha.1",
+  "version": "1.0.0-alpha.2",
   "description": "Raster to vector graphics converter (SVG). WebAssembly build of the vtracer framework — no native dependencies.",
   "main": "index.js",
   "types": "index.d.ts",

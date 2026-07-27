@@ -1,7 +1,7 @@
 [package]
 name = "vtracer-wasm"
 description = "WebAssembly core for the vtracer Node.js package."
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha.2"
 authors = ["Chris Tsang <tyt2y7@gmail.com>"]
 edition = "2024"
 license = "MIT OR Apache-2.0"
@@ -15,7 +15,7 @@ repository = "https://github.com/visioncortex/vtracer/"
 crate-type = ["cdylib"]
 
 [dependencies]
-vtracer = { version = "1.0.0-alpha.1", path = "../crates/vtracer" }
+vtracer = { version = "1.0.0-alpha.2", path = "../crates/vtracer" }
 wasm-bindgen = "0.2"
 serde = { version = "1", features = ["derive"] }
 serde-wasm-bindgen = "0.6"
