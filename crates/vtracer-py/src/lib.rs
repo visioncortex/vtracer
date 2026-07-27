@@ -27,7 +27,9 @@ use std::path::PathBuf;
 use pyo3::exceptions::{PyIOError, PyValueError};
 use pyo3::prelude::*;
 
-use ::vtracer::{Color, ColorImage, ColorMode, Config as CoreConfig, FitMode, Hierarchical, Preset};
+use ::vtracer::{
+    Color, ColorImage, ColorMode, Config as CoreConfig, FitMode, Hierarchical, Preset,
+};
 
 // --- string <-> enum helpers -------------------------------------------------
 
@@ -198,19 +200,25 @@ impl PyConfig {
     /// Preset for black & white line art.
     #[staticmethod]
     fn bw() -> Self {
-        Self { inner: CoreConfig::from_preset(Preset::Bw) }
+        Self {
+            inner: CoreConfig::from_preset(Preset::Bw),
+        }
     }
 
     /// Preset for posterized color art.
     #[staticmethod]
     fn poster() -> Self {
-        Self { inner: CoreConfig::from_preset(Preset::Poster) }
+        Self {
+            inner: CoreConfig::from_preset(Preset::Poster),
+        }
     }
 
     /// Preset tuned for photographs.
     #[staticmethod]
     fn photo() -> Self {
-        Self { inner: CoreConfig::from_preset(Preset::Photo) }
+        Self {
+            inner: CoreConfig::from_preset(Preset::Photo),
+        }
     }
 
     // --- properties ---
@@ -319,7 +327,11 @@ impl PyConfig {
 
     #[getter]
     fn palette(&self) -> Vec<String> {
-        self.inner.palette.iter().map(Color::to_hex_string).collect()
+        self.inner
+            .palette
+            .iter()
+            .map(Color::to_hex_string)
+            .collect()
     }
     #[setter]
     fn set_palette(&mut self, v: Vec<String>) -> PyResult<()> {
@@ -385,11 +397,13 @@ impl PyConfig {
 
     /// Trace the image at `input_path` and write the SVG to `output_path`.
     fn convert_file(&self, input_path: PathBuf, output_path: PathBuf) -> PyResult<()> {
-        let img = image::open(&input_path)
-            .map_err(|e| PyIOError::new_err(format!("cannot open `{}`: {e}", input_path.display())))?;
+        let img = image::open(&input_path).map_err(|e| {
+            PyIOError::new_err(format!("cannot open `{}`: {e}", input_path.display()))
+        })?;
         let svg = self.to_svg(&dynimg_to_color(img))?;
-        std::fs::write(&output_path, svg)
-            .map_err(|e| PyIOError::new_err(format!("cannot write `{}`: {e}", output_path.display())))
+        std::fs::write(&output_path, svg).map_err(|e| {
+            PyIOError::new_err(format!("cannot write `{}`: {e}", output_path.display()))
+        })
     }
 
     /// Trace encoded image `data` (png/jpg/...) and return the SVG string.
@@ -450,7 +464,9 @@ fn convert_file(
     output_path: PathBuf,
     config: Option<PyConfig>,
 ) -> PyResult<()> {
-    config.unwrap_or_else(default_config).convert_file(input_path, output_path)
+    config
+        .unwrap_or_else(default_config)
+        .convert_file(input_path, output_path)
 }
 
 /// Convert encoded image bytes to an SVG string, using `config` (or defaults).
@@ -461,7 +477,9 @@ fn convert_bytes(
     config: Option<PyConfig>,
     format: Option<&str>,
 ) -> PyResult<String> {
-    config.unwrap_or_else(default_config).convert_bytes(data, format)
+    config
+        .unwrap_or_else(default_config)
+        .convert_bytes(data, format)
 }
 
 /// Convert a raw RGBA8 buffer to an SVG string, using `config` (or defaults).
@@ -473,7 +491,9 @@ fn convert_pixels(
     height: usize,
     config: Option<PyConfig>,
 ) -> PyResult<String> {
-    config.unwrap_or_else(default_config).convert_pixels(rgba, width, height)
+    config
+        .unwrap_or_else(default_config)
+        .convert_pixels(rgba, width, height)
 }
 
 fn default_config() -> PyConfig {
