@@ -293,14 +293,18 @@ impl Config {
             Hierarchical::Stacked => Compositing::Stacked(self.fitter()),
             Hierarchical::Cutout => Compositing::Mosaic {
                 fitter: self.segment_fitter(),
-                // Rejoin flattened neighbours the gradient layering split:
-                // clustering itself considers colors within one gradient step
-                // to be the same region (`deepen_diff`). The watershed
-                // hierarchy already decided every merge, so its partition
-                // keeps its shape — only identical-color neighbours (e.g.
-                // after a palette snap) still collapse into one face.
+                // Rejoin flattened neighbours the clustering split too finely.
+                // Color clustering considers colors within one gradient step
+                // to be the same region (`deepen_diff`), so that is its
+                // tolerance. The watershed dial has no color units (it
+                // targets a region *count*), so its tolerance is anchored
+                // instead: at the default detail (128) it matches the
+                // color-cluster default gradient step (16) and grows linearly
+                // as detail drops; the floor keeps faces a human cannot tell
+                // apart (within a just-noticeable difference) from surviving
+                // as separate patches even at maximum detail.
                 merge_diff: match self.clustering {
-                    Clustering::Watershed => 0,
+                    Clustering::Watershed => ((255 - self.watershed_detail as i32) / 8).max(2),
                     _ => self.layer_difference,
                 },
             },

@@ -244,13 +244,16 @@ fn session_recut_matches_one_shot() {
     }
 }
 
-/// Watershed + cutout is native: the partition reaches the mosaic untouched,
-/// so two regions within one gradient step stay separate faces (the color
-/// path's `merge_similar` would have rejoined them).
+/// Watershed + cutout is native: at max detail the partition reaches the
+/// mosaic essentially untouched, so two *distinguishable* regions within one
+/// gradient step stay separate faces (the color path's `merge_similar` would
+/// have rejoined them). Only the just-noticeable-difference floor applies —
+/// see `cutout_merge_tolerance_follows_detail`.
 #[test]
 fn cutout_keeps_watershed_partition() {
-    // Two halves 4 gray-levels apart: close enough that the flatten merge
-    // (threshold = layer_difference = 16 >= 3*4) would union them.
+    // Two halves 4 gray-levels apart (12 L1): close enough that the flatten
+    // merge (threshold = layer_difference = 16 >= 3*4) would union them, yet
+    // clearly above the JND floor (2).
     let img = image(32, 20, |x, _| {
         if x < 16 {
             (100, 100, 100)
@@ -270,6 +273,45 @@ fn cutout_keeps_watershed_partition() {
         doc.shapes.len(),
         2,
         "watershed partition must pass to the mosaic unmerged"
+    );
+}
+
+/// The cutout merge tolerance is derived from the detail dial —
+/// `max(2, (255 − detail) / 8)` — because detail has no color units of its
+/// own. The same two halves 12 L1 apart that max detail keeps separate (see
+/// above) merge into one face at the default detail, whose tolerance (15)
+/// matches the color-cluster default gradient step; and a pair a human
+/// cannot tell apart (within the just-noticeable-difference floor) merges
+/// even at max detail.
+#[test]
+fn cutout_merge_tolerance_follows_detail() {
+    let halves = |a: (u8, u8, u8), b: (u8, u8, u8)| {
+        image(32, 20, |x, _| if x < 16 { a } else { b })
+    };
+    let cfg = |detail| Config {
+        clustering: Clustering::Watershed,
+        hierarchical: Hierarchical::Cutout,
+        watershed_detail: detail,
+        filter_speckle: 0,
+        ..Config::default()
+    };
+
+    let img = halves((100, 100, 100), (104, 104, 104));
+    let doc = cfg(128).build().unwrap().run(&img).unwrap();
+    assert_eq!(
+        doc.shapes.len(),
+        1,
+        "near-identical neighbours merge at the default detail"
+    );
+
+    // #863339 next to #863238 (2 L1 apart): indistinguishable by eye, so it
+    // must never survive as two patches, not even at maximum detail.
+    let img = halves((0x86, 0x33, 0x39), (0x86, 0x32, 0x38));
+    let doc = cfg(255).build().unwrap().run(&img).unwrap();
+    assert_eq!(
+        doc.shapes.len(),
+        1,
+        "sub-JND neighbours merge even at max detail"
     );
 }
 
