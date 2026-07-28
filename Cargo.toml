@@ -3,6 +3,7 @@
 members = [
     "crates/vtracer",
     "crates/vtracer-cli",
+    "crates/vtracer-bench",
 ]
 
 # The pre-1.0 webapp is kept in the tree for now but is no longer part of the

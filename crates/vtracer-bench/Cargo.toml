@@ -1,0 +1,18 @@
+[package]
+name = "vtracer-bench"
+description = "Blind fidelity benchmark for raster-to-vector tracers: compare the original raster with a rendered reconstruction and get one 0..1 fidelity score built from PSNR, SSIM and a clustered-diff patch metric."
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+categories = ["graphics", "development-tools::testing"]
+keywords = ["vectorization", "benchmark", "fidelity", "ssim", "psnr"]
+
+[dependencies]
+visioncortex.workspace = true
+dssim-core = "3"
+rgb = "0.8"
+# Decode-only: trimmed to real input formats (drops the AV1 encoder + OpenEXR).
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp"] }
