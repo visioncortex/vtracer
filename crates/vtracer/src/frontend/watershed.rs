@@ -533,10 +533,16 @@ const SNAP_SLACK: i32 = 16;
 /// quantization applies, which is why the color-cluster frontend never shows
 /// this.
 ///
-/// Only pixels whose color is a *mixture* of the two region means may flip
-/// (`d(p,A) + d(p,B) ≤ d(A,B) + slack`): a pixel of a genuine third color —
-/// say a dark outline stroke absorbed into a lighter region — must stay with
-/// its basin even when some other neighbour's mean happens to sit closer.
+/// Only pixels whose color is a *mixture* of two adjacent region means may
+/// flip (`d(p,A) + d(p,B) ≤ d(A,B) + slack`): a pixel of a genuine third
+/// color — say a dark outline stroke absorbed into a lighter region — must
+/// stay with its basin even when some other neighbour's mean happens to sit
+/// closer. The mixture pair is usually the pixel's own region and the flip
+/// candidate (the classic AA ramp), but a pair of *neighbouring* regions
+/// also qualifies: on a blurred low-contrast crack the basin cut can leak a
+/// distant region along the crack's blend band as a 1-px filament — those
+/// pixels blend the two flanking regions and are unrelated to their own
+/// region's color, and they belong to the closer flank.
 /// Sweeps are double-buffered (flips apply after scanning) and each moves the
 /// boundary at most 1 px, so total movement stays within the ambiguity band;
 /// regions are never emptied. Only the first sweep scans the whole canvas;
@@ -579,14 +585,22 @@ fn snap_boundaries(
             (cv[0] - m[0]).abs() + (cv[1] - m[1]).abs() + (cv[2] - m[2]).abs()
         };
         let da = dist(&mean[a]);
+        // The pixel qualifies as a blend of regions `p` and `q` when its
+        // color sits between their means (L1 between-ness plus noise slack).
+        let mixture = |p: usize, q: usize| -> bool {
+            let dpq: i32 = (0..3).map(|ch| (mean[p][ch] - mean[q][ch]).abs()).sum();
+            dist(&mean[p]) + dist(&mean[q]) <= dpq + SNAP_SLACK
+        };
         let mut best = (da, a);
         for b in nb {
             if b == a {
                 continue;
             }
             let db = dist(&mean[b]);
-            let dab: i32 = (0..3).map(|ch| (mean[a][ch] - mean[b][ch]).abs()).sum();
-            if db < best.0 && da + db <= dab + SNAP_SLACK {
+            if db >= best.0 {
+                continue;
+            }
+            if mixture(a, b) || nb.iter().any(|&c| c != a && c != b && mixture(c, b)) {
                 best = (db, b);
             }
         }

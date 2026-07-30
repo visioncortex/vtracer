@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## Unreleased
+
+### Fixed
+
+* Watershed no longer leaks a region along a blurred low-contrast crack as a 1-px filament (a slightly soft image could grow a hairline of one region's color running tens of px down a neighbouring boundary). The boundary snap's mixture gate now also admits pixels that blend two *neighbouring* regions — a blend band belongs to its closer flank even when the basin cut misattributed it to a distant region. On the blurred striped synthetic the circle's max boundary error drops from 31.6 px to 1.5 px; crisp images are byte-unaffected.
+
 ## 1.0.0-alpha.2 - 2026-07-27
 
 ### Added
