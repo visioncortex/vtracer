@@ -206,7 +206,7 @@ See [docs.rs/vtracer](https://docs.rs/vtracer/1.0.0-alpha.2/vtracer/) for the fu
 [`vtracer`](https://pypi.org/project/vtracer/) is also packaged as a Python native extension.
 
 ```sh
-pip install --pre vtracer
+pip install vtracer==1.0.0a2
 ```
 
 ```python

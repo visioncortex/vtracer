@@ -5,6 +5,7 @@ version = "1.0.0-alpha.2"
 authors = ["Chris Tsang <tyt2y7@gmail.com>"]
 edition = "2024"
 license = "MIT OR Apache-2.0"
+readme = "README.md"
 homepage = "http://www.visioncortex.org/vtracer"
 repository = "https://github.com/visioncortex/vtracer/"
 

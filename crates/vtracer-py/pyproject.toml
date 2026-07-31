@@ -5,6 +5,7 @@ build-backend = "maturin"
 [project]
 name = "vtracer"
 description = "Raster to vector graphics converter — Python bindings for the vtracer framework."
+readme = "README.md"
 requires-python = ">=3.8"
 license = { text = "MIT OR Apache-2.0" }
 authors = [{ name = "Chris Tsang", email = "tyt2y7@gmail.com" }]
