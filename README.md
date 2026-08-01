@@ -169,7 +169,7 @@ cargo install vtracer-cli
 You can install [`vtracer`](https://crates.io/crates/vtracer) as a Rust library.
 
 ```sh
-cargo add vtracer@1.0.0-alpha.2
+cargo add vtracer@1.0.0-alpha.3
 ```
 
 ```rust
@@ -199,14 +199,14 @@ let seg = pipeline.segment(&img)?;        // the expensive part
 let doc = pipeline.finish(&seg)?;         // VectorDoc, ready to serialize
 ```
 
-See [docs.rs/vtracer](https://docs.rs/vtracer/1.0.0-alpha.2/vtracer/) for the full API.
+See [docs.rs/vtracer](https://docs.rs/vtracer/1.0.0-alpha.3/vtracer/) for the full API.
 
 ### Python Library
 
 [`vtracer`](https://pypi.org/project/vtracer/) is also packaged as a Python native extension.
 
 ```sh
-pip install vtracer==1.0.0a2
+pip install vtracer==1.0.0a3
 ```
 
 ```python
@@ -238,7 +238,7 @@ See [`crates/vtracer-py`](crates/vtracer-py/README.md) for the full API.
 [`@visioncortex/vtracer`](https://www.npmjs.com/package/@visioncortex/vtracer) is available for Node as a WebAssembly build (from the [`nodejs`](nodejs/README.md) package) — image decoding and vectorization both run in wasm, so there is **no native dependency**. Decodes PNG, JPEG, GIF, BMP, and WebP; for other formats, decode yourself and pass raw RGBA to `convertPixels`.
 
 ```sh
-npm install @visioncortex/vtracer@1.0.0-alpha.2
+npm install @visioncortex/vtracer@1.0.0-alpha.3
 ```
 
 ```js

@@ -5,7 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## Unreleased
+## 1.0.0-alpha.3 - 2026-08-01
+
+### Added
+
+* `vtracer-bench`: a blind fidelity benchmark for raster-to-vector tracers — it compares an original raster against a rendered reconstruction and reports one 0..1 score built from PSNR, SSIM, and a clustered-diff "missing patch" metric (geometric mean, so a single collapsed axis drags the score down). Blind to how the reconstruction was produced: render any tracer's output to pixels and score it. A new workspace crate, separate from the four shipped packages.
 
 ### Fixed
 

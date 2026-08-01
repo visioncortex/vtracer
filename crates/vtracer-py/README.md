@@ -8,7 +8,7 @@ this crate adds image decoding and a Pythonic API.
 ## Install
 
 ```sh
-pip install vtracer==1.0.0a2
+pip install vtracer==1.0.0a3
 ```
 
 ## Usage
