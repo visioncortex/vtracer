@@ -1,9 +1,38 @@
+<div align="center">
+
+  <img src="https://raw.githubusercontent.com/visioncortex/vtracer/master/docs/images/visioncortex-banner.png">
+  <h1>VTracer</h1>
+
+  <p>
+    <strong>Raster to Vector Graphics Converter</strong>
+  </p>
+
+  <h3>
+    <a href="https://www.visioncortex.org/vtracer/">Web App</a>
+    <span> | </span>
+    <a href="https://github.com/visioncortex/vtracer/releases/download/1.0.0-alpha.3/VTracer_1.0.0-alpha.3_x64-setup.exe">Windows App</a>
+  </h3>
+
+</div>
+
 # vtracer (Node.js)
 
-Raster → vector (SVG) for Node, a WebAssembly build of the
-[`vtracer`](https://github.com/visioncortex/vtracer) framework. Image decoding
-and vectorization both happen in wasm, so there is **no native dependency** —
-just `npm install`.
+Raster → vector (SVG) for Node, a WebAssembly build of
+[`vtracer`](https://github.com/visioncortex/vtracer). Image decoding and
+vectorization both happen in wasm, so there is **no native dependency** — just
+`npm install`.
+
+## Introduction
+
+visioncortex VTracer is an open source software to convert raster images (like jpg & png) into vector graphics (svg). It can vectorize graphics and photographs and trace the curves to output compact vector files.
+
+Comparing to Potrace, VTracer has an image processing pipeline which can handle colored images. VTracer skips Potrace's expensive optimal-polygon search in favor of a fast, linear pipeline that stays faithful to high-resolution images.
+
+Comparing to Adobe Illustrator's Image Trace, VTracer's output is much more compact as we adopt a stacking strategy and avoid producing shapes with holes.
+
+VTracer is originally designed for processing high resolution scans of historic blueprints up to gigapixels. At the same time, VTracer can also handle low resolution pixel art, simulating `image-rendering: pixelated` for retro game artworks.
+
+Technical descriptions of the [tracing algorithm](https://www.visioncortex.org/vtracer-docs) and [clustering algorithm](https://www.visioncortex.org/impression-docs).
 
 ## Install
 
@@ -14,6 +43,7 @@ npm install @visioncortex/vtracer
 ## Usage
 
 ```js
+const fs = require('fs');
 const vtracer = require('@visioncortex/vtracer');
 
 // file in, file out

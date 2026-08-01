@@ -8,11 +8,9 @@
   </p>
 
   <h3>
-    <a href="https://www.visioncortex.org/vtracer-docs">Article</a>
-    <span> | </span>
     <a href="https://www.visioncortex.org/vtracer/">Web App</a>
     <span> | </span>
-    <a href="https://github.com/visioncortex/vtracer/releases">Download</a>
+    <a href="https://github.com/visioncortex/vtracer/releases/download/1.0.0-alpha.3/VTracer_1.0.0-alpha.3_x64-setup.exe">Windows App</a>
   </h3>
 
   <p>
@@ -23,55 +21,66 @@
 
 </div>
 
-## Packages
-
-VTracer 1.0 is a vectorization **framework** (pluggable frontends, curve fitters, color fitting, and output optimization) shipped across four surfaces from this repository:
-
-| Package | Registry | Source | Use |
-| --- | --- | --- | --- |
-| `vtracer-cli` | [crates.io](https://crates.io/crates/vtracer-cli) | [`crates/vtracer-cli`](crates/vtracer-cli) | Command-line tool (`vtracer` binary) |
-| `vtracer` | [crates.io](https://crates.io/crates/vtracer) | [`crates/vtracer`](crates/vtracer) | Rust library / the framework core |
-| `vtracer` | [PyPI](https://pypi.org/project/vtracer/) | [`crates/vtracer-py`](crates/vtracer-py) | Python native extension (pyo3 + maturin) |
-| `@visioncortex/vtracer` | [npm](https://www.npmjs.com/package/@visioncortex/vtracer) | [`nodejs`](nodejs) | Node.js WebAssembly build, no native dependency |
-
 ## Introduction
 
 visioncortex VTracer is an open source software to convert raster images (like jpg & png) into vector graphics (svg). It can vectorize graphics and photographs and trace the curves to output compact vector files.
 
-Comparing to [Potrace](http://potrace.sourceforge.net/) which only accept binarized inputs (Black & White pixmap), VTracer has an image processing pipeline which can handle colored high resolution scans. tl;dr: Potrace uses a `O(n^2)` fitting algorithm, whereas `vtracer` is entirely `O(n)`.
+Comparing to Potrace, VTracer has an image processing pipeline which can handle colored images. VTracer skips Potrace's expensive optimal-polygon search in favor of a fast, linear pipeline that stays faithful to high-resolution images.
 
-Comparing to Adobe Illustrator's [Image Trace](https://helpx.adobe.com/illustrator/using/image-trace.html), VTracer's output is much more compact (less shapes) as we adopt a stacking strategy and avoid producing shapes with holes.
+Comparing to Adobe Illustrator's Image Trace, VTracer's output is much more compact as we adopt a stacking strategy and avoid producing shapes with holes.
 
 VTracer is originally designed for processing high resolution scans of historic blueprints up to gigapixels. At the same time, VTracer can also handle low resolution pixel art, simulating `image-rendering: pixelated` for retro game artworks.
 
 Technical descriptions of the [tracing algorithm](https://www.visioncortex.org/vtracer-docs) and [clustering algorithm](https://www.visioncortex.org/impression-docs).
 
-## Desktop App (coming soon)
+## Desktop App
 
 ![screenshot](docs/images/desktop-app.png)
 
 The familiar web-app workflow, now on the native 1.0 engine:
 
-+ **Native speed** — the engine runs natively instead of in-browser wasm, so conversions are quicker
++ **Native speed** — the engine runs natively, so conversions are quicker
 + **A/B comparator** — a sliding split view to check the trace against the original
 + **Curve inspector** — examine the fitted curves up close
-+ **Seam-free cutout** — a true gapless tessellation with shared boundaries, no cracks between shapes
++ **Seam-free cutout** — a true gapless tessellation with shared boundaries, no seams between shapes
 + **Watershed clustering** — content-adaptive regions that follow object shape, with one interactive detail slider
 + **Curve simplification** — the fewest curves within a pixel tolerance, typically halving file size
 + **Adaptive B/W thresholding** — handles scans and photos with uneven lighting
 + **Fixed color palettes** — snap the output to your own colors
 
-## Cmd App
+## Console App
 
-Input and output can be given as positional arguments or as named flags:
+You can download pre-built binaries from [Releases](https://github.com/visioncortex/vtracer/releases).
+
+You can also install the program from source:
 
 ```sh
-vtracer input.jpg output.svg
-# equivalent to:
-vtracer --input input.jpg --output output.svg
+cargo install vtracer-cli
 ```
 
-Full options (flag names are kebab-case, e.g. `--filter-speckle`):
+### Usage
+
+```sh
+# simplest form
+./vtracer input.jpg output.svg
+
+# black & white line art
+./vtracer input.jpg output.svg --preset bw
+
+# scanned/photographed line art with uneven lighting
+./vtracer scan.jpg output.svg --clustering bw --adaptive
+
+# seam-free mosaic (gapless tessellation)
+./vtracer input.jpg output.svg --hierarchical cutout
+
+# watershed region forming, cut to taste
+./vtracer photo.jpg output.svg --clustering watershed --watershed-detail 192
+
+# constrain to a fixed palette
+./vtracer input.jpg output.svg --palette '#1b1b1b,#e0c088,#5a7d3c,#8fb0d0'
+```
+
+Full options:
 
 ```sh
 Usage: vtracer [OPTIONS] [INPUT] [OUTPUT]
@@ -130,43 +139,18 @@ output size and smoothness.
   Cousty & Perret, ISMM 2013), cut at `--watershed-detail`. Content-adaptive
   regions that follow object shape — pairs beautifully with `cutout`.
 
-## Downloads
+## Programming Libraries
 
-You can download pre-built binaries from [Releases](https://github.com/visioncortex/vtracer/releases).
+VTracer 1.0 is a vectorization framework with pluggable stages: segmentation, curve fitting, color fitting, and output optimization — usable from the command line or as a library in Rust, Python, and JavaScript:
 
-You can also install the program from source:
-
-```sh
-cargo install vtracer-cli
-```
-
-> You are strongly advised to not download from any other third-party sources 
-
-### Usage
-
-```sh
-# simplest form
-./vtracer input.jpg output.svg
-
-# black & white line art
-./vtracer input.jpg output.svg --preset bw
-
-# scanned/photographed line art with uneven lighting
-./vtracer scan.jpg output.svg --clustering bw --adaptive
-
-# seam-free mosaic (gapless tessellation)
-./vtracer input.jpg output.svg --hierarchical cutout
-
-# watershed region forming, cut to taste
-./vtracer photo.jpg output.svg --clustering watershed --watershed-detail 192
-
-# constrain to a fixed palette
-./vtracer input.jpg output.svg --palette '#1b1b1b,#e0c088,#5a7d3c,#8fb0d0'
-```
+| Package | Registry | Source | Use |
+| --- | --- | --- | --- |
+| `vtracer-cli` | [crates.io](https://crates.io/crates/vtracer-cli) | [`crates/vtracer-cli`](crates/vtracer-cli) | Command-line tool (`vtracer` binary) |
+| `vtracer` | [crates.io](https://crates.io/crates/vtracer) | [`crates/vtracer`](crates/vtracer) | Rust library / the framework core |
+| `vtracer` | [PyPI](https://pypi.org/project/vtracer/) | [`crates/vtracer-py`](crates/vtracer-py) | Python native extension (pyo3 + maturin) |
+| `@visioncortex/vtracer` | [npm](https://www.npmjs.com/package/@visioncortex/vtracer) | [`nodejs`](nodejs) | Node.js WebAssembly build, no native dependency |
 
 ### Rust Library
-
-You can install [`vtracer`](https://crates.io/crates/vtracer) as a Rust library.
 
 ```sh
 cargo add vtracer@1.0.0-alpha.3
@@ -202,8 +186,6 @@ let doc = pipeline.finish(&seg)?;         // VectorDoc, ready to serialize
 See [docs.rs/vtracer](https://docs.rs/vtracer/1.0.0-alpha.3/vtracer/) for the full API.
 
 ### Python Library
-
-[`vtracer`](https://pypi.org/project/vtracer/) is also packaged as a Python native extension.
 
 ```sh
 pip install vtracer==1.0.0a3
