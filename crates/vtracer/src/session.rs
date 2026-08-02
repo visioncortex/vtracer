@@ -3,7 +3,7 @@
 //!
 //! A desktop app loads an image once, then calls [`Session::render`] on every
 //! slider change with a fresh [`Config`]. The session compares the config's
-//! [`SegmentKey`](crate::config::SegmentKey) to what it last clustered and
+//! [`SegmentKey`] to what it last clustered and
 //! re-segments only if a clustering parameter changed — the caller never has to
 //! know which parameters those are.
 //!

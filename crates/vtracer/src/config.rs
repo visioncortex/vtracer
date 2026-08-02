@@ -30,31 +30,46 @@ pub enum Clustering {
     Watershed,
 }
 
+/// How regions are combined into the final document.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Hierarchical {
+    /// Trace each layer independently and stack them in paint order (painter's
+    /// algorithm). Simple and robust; smoothed neighbours may drift slightly
+    /// apart along a shared edge.
     Stacked,
-    /// True mosaic cutout — not yet implemented (separate milestone).
+    /// Seam-free, gapless mosaic: each shared boundary is fitted once and
+    /// referenced by both adjacent faces, so the tessellation never cracks.
+    /// See [`crate::mosaic`].
     Cutout,
 }
 
+/// How a region's pixel outline is turned into vector geometry.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FitMode {
+    /// Exact pixel-lattice polyline; no smoothing.
     Pixel,
+    /// Douglas–Peucker polygon — straight edges, fewer points.
     Polygon,
+    /// Corner detection plus least-squares cubic Béziers — smooth curves.
     Spline,
 }
 
+/// A starting point for [`Config`], tuned for a common kind of input. See
+/// [`Config::from_preset`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Preset {
+    /// Black-and-white line art (binary clustering).
     Bw,
+    /// Flat, poster-like color with a fuller palette.
     Poster,
+    /// Photographic input: heavier speckle filtering and coarser layering.
     Photo,
 }
 
 /// The clustering-relevant projection of a [`Config`]. Two configs with equal
 /// keys produce the same [`Segmentation`](crate::Segmentation), so a cached one
 /// stays valid — this is what [`Session`](crate::Session) compares to decide
-/// whether to re-segment. Kept in sync with [`Config::frontend`] in one place.
+/// whether to re-segment. Produced by [`Config::segment_key`].
 #[derive(Debug, Clone, PartialEq)]
 pub struct SegmentKey {
     clustering: Clustering,
@@ -74,6 +89,8 @@ pub struct SegmentKey {
 pub struct Config {
     /// Region-forming algorithm (see [`Clustering`]).
     pub clustering: Clustering,
+    /// How regions are combined — stacked layers or a seam-free mosaic (see
+    /// [`Hierarchical`]).
     pub hierarchical: Hierarchical,
     /// Speckle filter given as a side length; the area threshold is its square.
     pub filter_speckle: usize,
@@ -81,11 +98,13 @@ pub struct Config {
     pub color_precision: i32,
     /// Color difference between gradient layers.
     pub layer_difference: i32,
+    /// Curve-fitting mode (see [`FitMode`]).
     pub mode: FitMode,
     /// Corner threshold in degrees.
     pub corner_threshold: i32,
     /// Segment length threshold in pixels.
     pub length_threshold: f64,
+    /// Maximum least-squares refinement iterations per spline segment.
     pub max_iterations: usize,
     /// Splice threshold in degrees.
     pub splice_threshold: i32,
@@ -145,6 +164,8 @@ impl Default for Config {
 }
 
 impl Config {
+    /// Build a [`Config`] from a [`Preset`], adjusting the defaults for a
+    /// common kind of input.
     pub fn from_preset(preset: Preset) -> Self {
         match preset {
             Preset::Bw => Self {

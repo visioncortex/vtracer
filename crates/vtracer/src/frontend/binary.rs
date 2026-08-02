@@ -53,11 +53,16 @@ impl Default for Threshold {
 /// Binary (black/white) frontend: threshold the image then cluster the
 /// foreground. Every region is painted black.
 ///
+/// The [`Threshold`] chooses how foreground is separated from background — a
+/// fixed global cutoff ([`Threshold::Fixed`]) or Bradley–Roth adaptive
+/// thresholding ([`Threshold::Adaptive`]) for scans and photos with uneven
+/// lighting.
+///
 /// Speckle removal drops clusters smaller than `min_area` px as the clusters
 /// are collected, matching the pre-1.0 binary path (`cluster.size() >= area`).
 #[derive(Debug, Clone)]
 pub struct BinaryFrontend {
-    /// How foreground pixels are selected.
+    /// How foreground pixels are selected (see [`Threshold`]).
     pub threshold: Threshold,
     /// Whether to connect clusters diagonally.
     pub diagonal: bool,

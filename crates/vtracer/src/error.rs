@@ -1,3 +1,5 @@
+//! The crate's [`Error`] type, returned by the pipeline and every stage.
+
 use std::fmt;
 
 /// Errors produced by the framework stages and the pipeline driver.

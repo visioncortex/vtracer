@@ -3,7 +3,9 @@
 //! Built-ins:
 //! * [`ColorClusterFrontend`] — hierarchical color clustering (the classic
 //!   VTracer color path), including transparency keying.
-//! * [`BinaryFrontend`] — threshold to black/white then cluster.
+//! * [`BinaryFrontend`] — threshold to black/white then cluster; the
+//!   [`Threshold`] can be a fixed global cutoff or Bradley–Roth adaptive
+//!   thresholding for unevenly-lit input.
 //! * [`WatershedFrontend`] — hierarchical watershed on the pixel graph.
 //!
 //! Third parties can implement [`Frontend`] to feed external label maps or ML
