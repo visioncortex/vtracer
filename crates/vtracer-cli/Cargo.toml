@@ -1,0 +1,24 @@
+[package]
+name = "vtracer-cli"
+description = "Command-line front-end for the vtracer vectorization framework."
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+categories = ["graphics", "command-line-utilities"]
+keywords = ["svg", "vectorization", "computer-graphics"]
+
+[[bin]]
+name = "vtracer"
+path = "src/main.rs"
+
+[dependencies]
+vtracer = { version = "1.0.0-alpha.3", path = "../vtracer" }
+visioncortex.workspace = true
+# Decode-only: trimmed to real input formats (drops the AV1 encoder + OpenEXR).
+image = { version = "0.25", default-features = false, features = [
+    "png", "jpeg", "gif", "bmp", "webp", "tiff", "ico", "pnm", "tga", "qoi",
+] }
+clap = { version = "4", features = ["derive"] }

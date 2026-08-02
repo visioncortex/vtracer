@@ -1,0 +1,6 @@
+/pkg
+/target
+/node_modules
+Cargo.lock
+# npm auth token — per-project, never commit
+.npmrc

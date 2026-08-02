@@ -1,0 +1,27 @@
+[package]
+name = "vtracer-wasm"
+description = "WebAssembly core for the vtracer Node.js package."
+version = "1.0.0-alpha.3"
+authors = ["Chris Tsang <tyt2y7@gmail.com>"]
+edition = "2024"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/visioncortex/vtracer/"
+
+# Not the core workspace: this is a wasm-bindgen cdylib built with wasm-pack as
+# the Node package's native core. The Node layer does file I/O; image decoding
+# happens here in wasm, so the package has no native dependency.
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+vtracer = { version = "1.0.0-alpha.3", path = "../crates/vtracer" }
+wasm-bindgen = "0.2"
+serde = { version = "1", features = ["derive"] }
+serde-wasm-bindgen = "0.6"
+# Pure-Rust decoders that compile to wasm32-unknown-unknown (webp via image-webp).
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "gif", "bmp", "webp"] }
+
+[profile.release]
+opt-level = "s"
+lto = true

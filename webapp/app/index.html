@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>VTracer</title>
+        <link rel="apple-touch-icon" sizes="192x192" href="./assets/apple-icon.png">
+        <link rel="icon" type="image/png" sizes="192x192"  href="./assets/apple-icon.png">
+        <style>
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+        }
+        .button {
+            cursor: pointer;
+            font-family: sans-serif;
+            border-radius: 2px;
+            border: 1px solid #aaa;
+            padding: 4px 8px;
+        }
+        #droptext {
+            border: 2px dashed #000;
+        }
+        #droptext.hovering {
+            border: 2px dashed #fff;
+        }
+        #canvas-container {
+            position: absolute;
+            left: 2.5%;
+            top: 5%;
+            width: 95%;
+            height: 90%;
+        }
+        #svg, #frame {
+            position: absolute;
+            width: 100%;
+            margin-bottom: 50px;
+        }
+        #svg > path:hover {
+            stroke: #ff0;
+        }
+        #droptext {
+            height: 100%;
+            text-align: center;
+        }
+        #options {
+            position: absolute;
+            left: 2.5%;
+            top: 5%;
+            padding: 50px;
+            background: rgba(255,255,255,0.5);
+        }
+        </style>
+    </head>
+
+    <body>
+        <input type="file" id="imageInput" accept="image/*" style="display: none;">
+        <div>
+            <div id="progressregion" style="display: none;">
+                <progress id="progressbar" value="0" max="100" style="width: 98%;"></progress>
+            </div>
+            <div>
+                <div id="drop">
+                    <div id="canvas-container">
+                        <div id="droptext">
+                            <p>Drag an image here or <a href="#" id="imageSelect">Select file</a></p>
+                        </div>
+                        <canvas id="frame"></canvas>
+                        <svg id="svg" version="1.1" xmlns="http://www.w3.org/2000/svg"></svg>
+                    </div>
+                </div>
+            </div>
+            <div id="options">
+                <div>
+                    <a class="button" id="export">Download as SVG</a>    
+                </div>
+
+                <p></p>
+
+                <div>
+                    <div title="Algorithm for segmentation and grouping of pixel clusters">
+                        Clustering
+                    </div>
+                </div>
+
+                <div>
+                    <div>
+                        <button id="clustering-binary" title="Black & White (Binary Image)">B/W</button>
+                        <button id="clustering-color" title="True Color Image">Color</button>
+                    </div>
+                </div>
+
+                <div>
+                    <div>
+                        <button id="clustering-cutout" title="Shapes disjoint with others">Cutout</button>
+                        <button id="clustering-stacked" title="Stack shapes on top of another">Stacked</button>
+                    </div>
+                </div>
+
+                <div>
+                    <div title="Discard patches small than X px in size">
+                        Filter Speckle <span>(Cleaner)</span>
+                    </div>
+                </div>
+                <div id="filterspecklevalue">
+                    4
+                </div>
+                <div>
+                    <input id="filterspeckle" type="range" min="1" max="16" step="1" value="4">
+                </div>
+
+                <div class="clustering-color-options">
+                    <div title="Number of significant bits to use in a RGB channel">
+                        Color Precision <span>(More accurate)</span>
+                    </div>
+                </div>
+                <div id="colorprecisionvalue" class="clustering-color-options">
+                    6
+                </div>
+                <div class="clustering-color-options">
+                    <input id="colorprecision" type="range" min="1" max="8" step="1" value="6">
+                </div>
+
+                <div class="clustering-color-options">
+                    <div title="Color difference between gradient layers">
+                        Gradient Step <span>(Less layers)</span>
+                    </div>
+                </div>
+                <div id="layerdifferencevalue" class="clustering-color-options">
+                    16
+                </div>
+                <div class="clustering-color-options">
+                    <input id="layerdifference" type="range" min="0" max="255" step="1" value="16">
+                </div>
+
+                <p></p>
+
+                <div>
+                    <div title="Algorithm for converting clusters to shapes">
+                        Curve Fitting
+                    </div>
+                </div>
+
+                <div>
+                    <div>
+                        <button id="none" title="Exact cluster boundary">Pixel</button>
+                        <button id="polygon" title="Simplify to Polygon">Polygon</button>
+                        <button id="spline" class="selected" title="Smooth and Curve-fit">Spline</button>
+                    </div>
+                </div>
+
+                <div class="spline-options">
+                    <div title="Minimum Momentary Angle (in degrees) to be considered a corner (to be kept after smoothing)">
+                        Corner Threshold <span>(Smoother)</span>
+                    </div>
+                </div>
+                <div id="cornervalue" class="spline-options">
+                    60
+                </div>
+                <div class="spline-options">
+                    <input id="corner" type="range" min="0" max="180" step="1" value="60">
+                </div>
+
+                <div class="spline-options">
+                    <div title="Perform Iterative Subdivide Smooth until all segments are shorter than this length">
+                        Segment Length <span>(More coarse)</span>
+                    </div>
+                </div>
+                <div id="lengthvalue" class="spline-options">
+                    4
+                </div>
+                <div class="spline-options">
+                    <input id="length" type="range" min="3.5" max="10" step="0.5" value="4">
+                </div>
+
+                <div class="spline-options">
+                    <div title="Minimum Angle Displacement (in degrees) to be considered a cutting point between curves">
+                        Splice Threshold <span>(More accurate)</span>
+                    </div>
+                </div>
+                <div id="splicevalue" class="spline-options">
+                    45
+                </div>
+                <div class="spline-options">
+                    <input id="splice" type="range" min="0" max="180" step="1" value="45">
+                </div>
+                
+                <div style="display: none">
+                <div class="spline-options">
+                    <div title="Number of decimal places used in svg path string">
+                        Path Precision <span>(More digits)</span>
+                    </div>
+                </div>
+                <div id="pathprecisionvalue" class="spline-options">
+                    8
+                </div>
+                <div class="spline-options">
+                    <input id="pathprecision" class="uk-range" type="range" min="0" max="16" step="1" value="8">
+                </div>
+                </div>
+            </div>
+        </div>
+        <script src="./bootstrap.js"></script>
+    </body>
+</html>

@@ -1,0 +1,27 @@
+[build-system]
+requires = ["maturin>=1.5,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "vtracer"
+description = "Raster to vector graphics converter — Python bindings for the vtracer framework."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT OR Apache-2.0" }
+authors = [{ name = "Chris Tsang", email = "tyt2y7@gmail.com" }]
+keywords = ["svg", "vectorization", "raster", "computer-graphics"]
+classifiers = [
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: 3",
+    "Topic :: Multimedia :: Graphics",
+]
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "http://www.visioncortex.org/vtracer"
+Repository = "https://github.com/visioncortex/vtracer/"
+
+[tool.maturin]
+# Pure-Rust extension module; the compiled library is imported as `vtracer`.
+module-name = "vtracer"
+features = ["pyo3/extension-module"]

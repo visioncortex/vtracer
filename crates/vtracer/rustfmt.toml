@@ -1,0 +1,2 @@
+# This crate is hand-formatted; a stray `cargo fmt` must not rewrite it.
+disable_all_formatting = true

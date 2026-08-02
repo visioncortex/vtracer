@@ -1,0 +1,57 @@
+name: Rust
+
+on:
+  pull_request:
+    paths-ignore:
+      - '**.md'
+      - '.github/ISSUE_TEMPLATE/**'
+  push:
+    paths-ignore:
+      - '**.md'
+      - '.github/ISSUE_TEMPLATE/**'
+    branches:
+      - master
+      - 0.*.x
+      - ci-*
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: cargo build --workspace --verbose
+      - name: Test
+        run: cargo test --workspace --verbose
+
+  wasm:
+    name: wasm-safety (core)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup target add wasm32-unknown-unknown
+      - name: Build core for wasm32
+        run: cargo build --target wasm32-unknown-unknown -p vtracer
+
+  nodejs:
+    name: Node package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+      - name: Build & test
+        working-directory: nodejs
+        run: |
+          wasm-pack build --target nodejs --out-dir pkg
+          node test.js

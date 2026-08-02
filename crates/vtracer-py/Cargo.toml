@@ -1,0 +1,27 @@
+[package]
+name = "vtracer-py"
+description = "Python bindings for the vtracer vectorization framework."
+version = "1.0.0-alpha.3"
+authors = ["Chris Tsang <tyt2y7@gmail.com>"]
+edition = "2024"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+homepage = "http://www.visioncortex.org/vtracer"
+repository = "https://github.com/visioncortex/vtracer/"
+
+# Excluded from the workspace: pyo3 `extension-module` cdylibs don't link
+# libpython, which breaks `cargo test` at the workspace root. Built with
+# maturin. Deps are declared explicitly (no workspace inheritance).
+
+[lib]
+# Python imports this as `vtracer`.
+name = "vtracer"
+crate-type = ["cdylib"]
+
+[dependencies]
+vtracer = { version = "1.0.0-alpha.3", path = "../vtracer" }
+# Decode-only: trimmed to real input formats (drops the AV1 encoder + OpenEXR).
+image = { version = "0.25", default-features = false, features = [
+    "png", "jpeg", "gif", "bmp", "webp", "tiff", "ico", "pnm", "tga", "qoi",
+] }
+pyo3 = { version = "0.26", features = ["extension-module", "abi3-py38"] }

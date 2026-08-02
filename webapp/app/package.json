@@ -1,0 +1,25 @@
+{
+  "name": "vtracer-app",
+  "version": "0.1.0",
+  "description": "VTracer Webapp",
+  "author": "Chris Tsang <chris.2y3@outlook.com>",
+  "license": "proprietary",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "start": "webpack serve",
+    "build": "webpack"
+  },
+  "keywords": [
+    "rust",
+    "wasm"
+  ],
+  "dependencies": {
+    "vtracer": "file:../pkg",
+    "webpack": "^5.101.0"
+  },
+  "devDependencies": {
+    "webpack-cli": "^6.0.1",
+    "webpack-dev-server": "^5.2.2"
+  }
+}

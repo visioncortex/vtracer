@@ -1,0 +1,27 @@
+[package]
+name = "vtracer"
+description = "A vectorization framework that converts raster images into vector graphics: pluggable frontends, curve fitters, color fitting, and output optimization."
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+categories = ["graphics", "computer-vision"]
+keywords = ["svg", "vectorization", "computer-graphics"]
+readme = "../../README.md"
+
+[lib]
+name = "vtracer"
+path = "src/lib.rs"
+
+[dependencies]
+visioncortex.workspace = true
+flo_curves.workspace = true
+
+[dev-dependencies]
+# Rasterize-and-diff equivalence tests (stacked vs mosaic). Test-only; not
+# compiled for wasm targets, so the library stays wasm-safe.
+resvg = "0.45"
+# Decode the sample photo for the spline-fitting regression test. Test-only.
+image = { version = "0.25", default-features = false, features = ["jpeg"] }

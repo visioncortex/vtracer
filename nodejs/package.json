@@ -1,0 +1,35 @@
+{
+  "name": "@visioncortex/vtracer",
+  "version": "1.0.0-alpha.3",
+  "description": "Raster to vector graphics converter (SVG). WebAssembly build of the vtracer framework — no native dependencies.",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "pkg/vtracer_wasm.js",
+    "pkg/vtracer_wasm_bg.wasm",
+    "pkg/vtracer_wasm.d.ts",
+    "pkg/vtracer_wasm_bg.wasm.d.ts"
+  ],
+  "scripts": {
+    "build": "wasm-pack build --target nodejs --out-dir pkg",
+    "test": "node test.js",
+    "publish:local": "node scripts/publish.mjs",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": ["svg", "vectorization", "raster", "wasm", "computer-graphics"],
+  "license": "MIT OR Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/visioncortex/vtracer.git",
+    "directory": "nodejs"
+  },
+  "homepage": "http://www.visioncortex.org/vtracer",
+  "engines": {
+    "node": ">=16"
+  }
+}
