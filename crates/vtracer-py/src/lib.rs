@@ -172,7 +172,7 @@ impl PyConfig {
         adaptive: bool,
         adaptive_window: u32,
         adaptive_t: f64,
-        watershed_detail: u8,
+        watershed_detail: u32,
     ) -> PyResult<Self> {
         let palette = match palette {
             Some(list) => list.iter().map(|s| parse_hex(s)).collect::<PyResult<_>>()?,
@@ -241,11 +241,11 @@ impl PyConfig {
     }
 
     #[getter]
-    fn watershed_detail(&self) -> u8 {
+    fn watershed_detail(&self) -> u32 {
         self.inner.watershed_detail
     }
     #[setter]
-    fn set_watershed_detail(&mut self, v: u8) {
+    fn set_watershed_detail(&mut self, v: u32) {
         self.inner.watershed_detail = v;
     }
 

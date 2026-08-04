@@ -78,7 +78,7 @@ fn regions(seg: &Segmentation) -> usize {
 #[test]
 fn flat_image_is_one_region() {
     let img = image(24, 16, |_, _| (90, 120, 150));
-    for detail in [0u8, 128, 255] {
+    for detail in [0u32, 128, 255] {
         let seg = WatershedFrontend {
             detail,
             min_area: 0,
@@ -127,7 +127,7 @@ fn detail_is_monotone() {
         (r, g, 128)
     });
     let mut prev = 0usize;
-    for detail in [0u8, 64, 128, 192, 255] {
+    for detail in [0u32, 64, 128, 192, 255] {
         let seg = WatershedFrontend {
             detail,
             min_area: 0,
@@ -202,7 +202,7 @@ fn hierarchy_recut_matches_one_shot() {
         (((x * 5 + y * 3) % 200) as u8, ((x / 8) * 30) as u8, ((y / 8) * 40) as u8)
     });
     let hierarchy = WatershedHierarchy::build(&img).unwrap();
-    for detail in [64u8, 128, 200] {
+    for detail in [64u32, 128, 200] {
         let recut = hierarchy.cut(&img, detail, 16);
         let one_shot = WatershedFrontend {
             detail,
@@ -231,7 +231,7 @@ fn session_recut_matches_one_shot() {
         clustering: Clustering::Watershed,
         ..Config::default()
     };
-    for detail in [128u8, 200, 64] {
+    for detail in [128u32, 200, 64] {
         let cfg = Config {
             watershed_detail: detail,
             ..base.clone()

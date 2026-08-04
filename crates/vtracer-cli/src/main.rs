@@ -121,8 +121,8 @@ struct Args {
     adaptive_t: Option<f64>,
 
     /// Watershed clustering: hierarchy cut level (0..=255, higher = more regions).
-    #[arg(long, value_parser = clap::value_parser!(u8))]
-    watershed_detail: Option<u8>,
+    #[arg(long, value_parser = clap::value_parser!(u32))]
+    watershed_detail: Option<u32>,
 }
 
 fn parse_simplify_tolerance(s: &str) -> Result<f64, String> {

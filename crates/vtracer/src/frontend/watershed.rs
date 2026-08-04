@@ -53,9 +53,10 @@ const ANCESTOR_AREA_BUDGET: usize = 3;
 /// Watershed frontend: hierarchical watershed by volume, cut at `detail`.
 #[derive(Debug, Clone)]
 pub struct WatershedFrontend {
-    /// Detail level (0..=255): where to cut the hierarchy. Each +25.5 roughly
-    /// doubles the region count; 0 collapses the image to a single region.
-    pub detail: u8,
+    /// Detail level: where to cut the hierarchy. The normal range is 0..=255 —
+    /// each +25.5 roughly doubles the region count, 0 collapses the image to a
+    /// single region. Values above 255 are practically uncapped.
+    pub detail: u32,
     /// Absorb regions smaller than this many pixels into their most
     /// color-similar neighbour after the cut (0 = keep all).
     pub min_area: usize,
@@ -268,7 +269,7 @@ impl WatershedHierarchy {
 
     /// Cut the hierarchy at `detail` and emit the stacked [`Segmentation`].
     /// Near-linear; safe to call repeatedly with different parameters.
-    pub fn cut(&self, img: &ColorImage, detail: u8, min_area: usize) -> Segmentation {
+    pub fn cut(&self, img: &ColorImage, detail: u32, min_area: usize) -> Segmentation {
         let (w, h) = (self.width, self.height);
         let n = w * h;
         let m = self.mst.len();
@@ -279,7 +280,10 @@ impl WatershedHierarchy {
         // merge a little more). The persistence distribution is extremely
         // skewed — most merges are trivia at ≈ 0 — so the dial maps to a
         // region *count*, exponentially: every +25.5 of detail doubles the
-        // target, from 1 region at 0 up to 1024 at 255.
+        // target, from 1 region at 0. The target saturates at the edge count,
+        // so a large detail (≥ 25.5·log2(pixels), e.g. ≥ 612 for a 4096²
+        // image) is practically uncapped: λ = min persistence, keeping every
+        // basin above the zero-persistence trivia.
         let mut uf = Uf::new(n);
         if m > 0 {
             let target = (2f64).powf(detail as f64 / 25.5).round() as usize;

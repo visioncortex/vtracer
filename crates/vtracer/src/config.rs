@@ -80,7 +80,7 @@ pub struct SegmentKey {
     binary_adaptive: bool,
     binary_adaptive_window: u32,
     binary_adaptive_t: f64,
-    watershed_detail: u8,
+    watershed_detail: u32,
 }
 
 /// High-level converter configuration. [`Config::build`] turns this into a
@@ -133,7 +133,7 @@ pub struct Config {
     pub binary_adaptive_t: f64,
     /// Watershed clustering: where to cut the hierarchy (0..=255). Higher
     /// keeps more regions; 0 collapses the image to a single region.
-    pub watershed_detail: u8,
+    pub watershed_detail: u32,
 }
 
 impl Default for Config {
@@ -342,7 +342,9 @@ impl Config {
                 // apart (within a just-noticeable difference) from surviving
                 // as separate patches even at maximum detail.
                 merge_diff: match self.clustering {
-                    Clustering::Watershed => ((255 - self.watershed_detail as i32) / 8).max(2),
+                    Clustering::Watershed => {
+                        (((255i64 - self.watershed_detail as i64) / 8).max(2)) as i32
+                    }
                     _ => self.layer_difference,
                 },
             },
