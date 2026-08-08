@@ -1,0 +1,32 @@
+[
+  {
+    "src": "assets/samples/K1_drawing.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:K1_drawing.jpg",
+    "credit": "<a href=\"https://commons.wikimedia.org/\">Wikimedia</a>"
+  },
+  {
+    "src": "assets/samples/Cityscape Sunset_DFM3-01.jpg",
+    "source": "https://www.vecteezy.com/vector-art/227400-beautiful-cityscape-at-sunset",
+    "credit": "<a href=\"https://www.vecteezy.com/free-vector/building\">Building Vectors by Vecteezy</a>"
+  },
+  {
+    "src": "assets/samples/Gum Tree Vector.jpg",
+    "source": "https://www.vecteezy.com/vector-art/172177-gum-tree-vector",
+    "credit": "<a href=\"https://www.vecteezy.com/free-vector/nature\">Nature Vectors by Vecteezy</a>"
+  },
+  {
+    "src": "assets/samples/vectorstock_31191940.png",
+    "source": "https://www.vectorstock.com/royalty-free-vector/dessert-poster-design-with-chocolate-cake-mousses-vector-31191940",
+    "credit": "<a href=\"https://www.vectorstock.com/royalty-free-vector/dessert-poster-design-with-chocolate-cake-mousses-vector-31191940\">Vector image by VectorStock / vectorstock</a>"
+  },
+  {
+    "src": "assets/samples/angel-luciano-LATYeZyw88c-unsplash-s.jpg",
+    "source": "https://unsplash.com/photos/LATYeZyw88c",
+    "credit": "<span>Photo by <a href=\"https://unsplash.com/@roaming_angel?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText\">Angel Luciano</a> on <a href=\"https://unsplash.com/s/photos/dog?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText\">Unsplash</a></span>"
+  },
+  {
+    "src": "assets/samples/tank-unit-preview.png",
+    "source": "https://opengameart.org/content/sideview-sci-fi-patreon-collection",
+    "credit": "<span>Artwork by <a href=\"https://opengameart.org/content/sideview-sci-fi-patreon-collection\">Luis Zuno</a> on <a href=\"https://opengameart.org/\">opengameart.org</a></span>"
+  }
+]
