@@ -8,9 +8,11 @@
   </p>
 
   <h3>
-    <a href="https://www.visioncortex.org/vtracer/">Web App</a>
-    <span> | </span>
     <a href="https://github.com/visioncortex/vtracer/releases/download/1.0.0-alpha.3/VTracer_1.0.0-alpha.3_x64-setup.exe">Windows App</a>
+    <span> | </span>
+    <a href="https://github.com/visioncortex/vtracer/releases/download/1.0.0-alpha.3/VTracer_1.0.0-alpha.3_universal.dmg">macOS App</a>
+    <span> | </span>
+    <a href="https://github.com/visioncortex/vtracer/releases/download/1.0.0-alpha.3/VTracer_1.0.0-alpha.3_x64.AppImage">Linux App</a>
   </h3>
 
   <p>
@@ -109,7 +111,7 @@ Options:
       --adaptive                             Binary mode: Bradley–Roth adaptive threshold (uneven lighting)
       --adaptive-window <ADAPTIVE_WINDOW>    Adaptive window size in px (0 = auto); implies --adaptive
       --adaptive-t <ADAPTIVE_T>              Adaptive sensitivity: % below local mean (default 15)
-      --watershed-detail <WATERSHED_DETAIL>  Watershed: hierarchy cut level 0..=255 (higher = more regions)
+      --watershed-detail <WATERSHED_DETAIL>  Watershed: hierarchy cut level (default 128; higher = more regions, uncapped)
   -h, --help                                 Print help
   -V, --version                              Print version
 ```
