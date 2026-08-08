@@ -131,8 +131,9 @@ pub struct Config {
     pub binary_adaptive_window: u32,
     /// Adaptive sensitivity `t`: percent below the local mean (default 15).
     pub binary_adaptive_t: f64,
-    /// Watershed clustering: where to cut the hierarchy (0..=255). Higher
-    /// keeps more regions; 0 collapses the image to a single region.
+    /// Watershed clustering: where to cut the hierarchy. Higher keeps more
+    /// regions (each +25.5 roughly doubles the region count); 0 collapses the
+    /// image to a single region. Uncapped.
     pub watershed_detail: u32,
 }
 

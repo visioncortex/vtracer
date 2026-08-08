@@ -40,8 +40,9 @@ struct Options {
     adaptive_window: Option<u32>,
     /// Adaptive sensitivity: percent below the local mean (default 15).
     adaptive_t: Option<f64>,
-    /// Watershed clustering: hierarchy cut level (0..=255).
-    watershed_detail: Option<u8>,
+    /// Watershed clustering: hierarchy cut level (default 128; higher = more
+    /// regions, uncapped).
+    watershed_detail: Option<u32>,
     /// One of "bw" | "poster" | "photo"; applied before the other fields.
     preset: Option<String>,
 }

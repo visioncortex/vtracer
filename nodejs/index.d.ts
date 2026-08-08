@@ -30,7 +30,7 @@ export interface Options {
   adaptiveWindow?: number;
   /** Adaptive sensitivity: percent below the local mean (default 15). */
   adaptiveT?: number;
-  /** Watershed clustering: hierarchy cut level 0..=255 (higher = more regions, default 128). */
+  /** Watershed clustering: hierarchy cut level (default 128; higher = more regions, uncapped). */
   watershedDetail?: number;
 }
 

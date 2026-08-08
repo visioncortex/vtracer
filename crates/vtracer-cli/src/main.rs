@@ -120,7 +120,7 @@ struct Args {
     #[arg(long)]
     adaptive_t: Option<f64>,
 
-    /// Watershed clustering: hierarchy cut level (0..=255, higher = more regions).
+    /// Watershed clustering: hierarchy cut level (default 128; higher = more regions, uncapped).
     #[arg(long, value_parser = clap::value_parser!(u32))]
     watershed_detail: Option<u32>,
 }

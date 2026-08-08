@@ -27,7 +27,7 @@ class Config:
         adaptive: bool = False,                # bw: Bradley–Roth adaptive
         adaptive_window: int = 0,              # bw adaptive: window px (0 = auto)
         adaptive_t: float = 15.0,              # bw adaptive: % below local mean
-        watershed_detail: int = 128,           # watershed: cut level 0..=255
+        watershed_detail: int = 128,           # watershed: cut level (higher = more regions, uncapped)
     ) -> None: ...
 
     @staticmethod

@@ -74,7 +74,7 @@ for the seam-free mosaic), `mode` (`"pixel" | "polygon" | "spline"`),
 simplification tolerance in px, try 1–2.5), `pathPrecision`, `palette` (list of
 `#rrggbb`), `maxColors`, `optimize` (`0 | 1 | 2`), `binaryThreshold` /
 `adaptive` / `adaptiveWindow` / `adaptiveT` (binary mode), `watershedDetail`
-(0..=255).
+(default 128; higher = more regions, uncapped).
 
 ## Build from source
 
