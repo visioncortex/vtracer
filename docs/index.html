@@ -11,12 +11,14 @@
         <!-- UIkit JS -->
         <script src="./uikit/js/uikit.min.js"></script>
         <script src="./uikit/js/uikit-icons.min.js"></script>
-        <script type="text/javascript">
-        (function(c,l,a,r,i,t,y){
-            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-        })(window, document, "clarity", "script", "403biw7tra");
+        <!-- Google tag (gtag.js) -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-XPL1JGMDSC"></script>
+        <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-XPL1JGMDSC');
         </script>
         <style>
         html, body {
@@ -128,6 +130,35 @@
         .uk-text-meta {
             font-size: 12px;
         }
+        .desktop-banner {
+            border: 1px solid rgba(204, 151, 46, 0.55);
+            background: rgba(204, 151, 46, 0.12);
+            gap: 8px 16px;
+            padding-top: 8px;
+            padding-bottom: 8px;
+        }
+        .desktop-banner-title {
+            margin: 0;
+            font-weight: 700;
+        }
+        .desktop-banner-copy {
+            margin: 4px 0 0 0;
+        }
+        .desktop-banner .uk-button {
+            white-space: nowrap;
+        }
+        .uk-light .desktop-banner {
+            border-color: rgba(204, 151, 46, 0.7);
+            background: rgba(204, 151, 46, 0.16);
+        }
+        @media only screen and (max-width: 640px) {
+            .desktop-banner {
+                text-align: center;
+            }
+            .desktop-banner .uk-button {
+                width: 100%;
+            }
+        }
         </style>
     </head>
 
@@ -142,11 +173,19 @@
                     / VTracer
                 </div>
                 <div class="uk-navbar-right uk-padding-small">
-                    <a class="uk-button uk-button-default" href="//www.visioncortex.org/vtracer-docs">Article</a>
-                    &nbsp;&nbsp;
                     <a class="uk-button uk-button-default" href="//github.com/visioncortex/vtracer">GitHub</a>
                     &nbsp;&nbsp;
                     <a id="export" class="uk-button uk-button-primary">Download as SVG</a>    
+                </div>
+            </div>
+            <div class="uk-width-1-1">
+                <div class="desktop-banner uk-padding-small uk-flex uk-flex-middle uk-flex-between uk-flex-wrap">
+                    <div class="uk-margin-small-right">
+                        <p id="desktop-banner-copy" class="desktop-banner-title">Try the latest VTracer Desktop App for native speed, curve simplification, and higher tracing quality.</p>
+                    </div>
+                    <a id="desktop-download" class="uk-button uk-button-primary" href="https://github.com/visioncortex/vtracer/releases/latest" rel="noopener">
+                        Download Desktop App
+                    </a>
                 </div>
             </div>
             <div id="progressregion" class="uk-width-1-1 uk-padding-small" style="display: none;">
@@ -314,6 +353,110 @@
             document.body.classList.remove('uk-dark');
             document.body.classList.add('uk-light');
         }
+
+        (function() {
+            var releasesUrl = 'https://github.com/visioncortex/vtracer/releases/latest';
+            var manifestUrl = 'https://raw.githubusercontent.com/visioncortex/vtracer/desktop-updates/latest.json';
+            var downloadLink = document.getElementById('desktop-download');
+            var bannerCopy = document.getElementById('desktop-banner-copy');
+
+            function detectPlatform() {
+                var platform = navigator.userAgentData && navigator.userAgentData.platform
+                    ? navigator.userAgentData.platform
+                    : navigator.platform || '';
+                var userAgent = navigator.userAgent || '';
+                var platformText = platform + ' ' + userAgent;
+
+                if (/Windows/i.test(platformText)) {
+                    return {
+                        label: 'Windows',
+                        manifestKeys: ['windows-x86_64']
+                    };
+                }
+
+                if (/Mac|Darwin/i.test(platformText) && !/iPhone|iPad|iPod/i.test(userAgent)) {
+                    return {
+                        label: 'macOS',
+                        manifestKeys: ['macos-universal', 'darwin-universal', 'darwin-aarch64', 'darwin-x86_64']
+                    };
+                }
+
+                if (/Linux|X11/i.test(platformText) && !/Android/i.test(userAgent)) {
+                    return {
+                        label: 'Linux',
+                        manifestKeys: ['linux-x86_64']
+                    };
+                }
+
+                return {
+                    label: '',
+                    manifestKeys: []
+                };
+            }
+
+            function setFallback(platform) {
+                downloadLink.href = releasesUrl;
+                downloadLink.textContent = platform.label ? 'Download for ' + platform.label : 'View latest downloads';
+                bannerCopy.textContent = platform.label
+                    ? 'Try the latest VTracer Desktop App for ' + platform.label + ' with native speed, curve simplification, and higher tracing quality.'
+                    : 'Try the latest VTracer Desktop App for native speed, curve simplification, and higher tracing quality.';
+            }
+
+            function findPlatformDownload(platforms, platform) {
+                var keys = platform.manifestKeys || [];
+
+                for (var i = 0; i < keys.length; i++) {
+                    if (platforms[keys[i]] && platforms[keys[i]].url) {
+                        return platforms[keys[i]].url;
+                    }
+                }
+
+                return '';
+            }
+
+            var platform = detectPlatform();
+            setFallback(platform);
+
+            downloadLink.addEventListener('click', function() {
+                if (typeof gtag !== 'function') {
+                    return;
+                }
+
+                gtag('event', 'desktop_download_click', {
+                    platform: platform.label || 'unknown',
+                    source: 'docs_banner',
+                    download_url: downloadLink.href,
+                    transport_type: 'beacon'
+                });
+            });
+
+            if (!window.fetch) {
+                return;
+            }
+
+            fetch(manifestUrl)
+                .then(function(response) {
+                    if (!response.ok) {
+                        throw new Error('Desktop manifest lookup failed');
+                    }
+                    return response.json();
+                })
+                .then(function(manifest) {
+                    var downloadUrl = findPlatformDownload(manifest.platforms || {}, platform);
+
+                    if (!downloadUrl) {
+                        return;
+                    }
+
+                    downloadLink.href = downloadUrl;
+                    downloadLink.textContent = 'Download for ' + platform.label;
+
+                    bannerCopy.textContent = 'Try the latest VTracer Desktop App for ' + platform.label + ' with native speed, curve simplification, and higher tracing quality.';
+                })
+                .catch(function() {
+                    setFallback(platform);
+                });
+        })();
         </script>
         <script src="./bootstrap.js"></script>
     </body>
