@@ -39,16 +39,16 @@ Technical descriptions of the [tracing algorithm](https://www.visioncortex.org/v
 
 ![screenshot](docs/images/desktop-app.png)
 
-The familiar web-app workflow, now on the native 1.0 engine:
+VTracer App powered by the 1.0 tracing engine:
 
-+ **Native speed** — the engine runs natively, so conversions are quicker
-+ **A/B comparator** — a sliding split view to check the trace against the original
-+ **Curve inspector** — examine the fitted curves up close
-+ **Seam-free cutout** — a true gapless tessellation with shared boundaries, no seams between shapes
-+ **Watershed clustering** — content-adaptive regions that follow object shape, with one interactive detail slider
-+ **Curve simplification** — the fewest curves within a pixel tolerance, typically halving file size
-+ **Adaptive B/W thresholding** — handles scans and photos with uneven lighting
-+ **Fixed color palettes** — snap the output to your own colors
++ **Native speed**: faster conversions on large images
++ **A/B comparator**: compare the trace against the original
++ **Curve inspector**: inspect fitted curves up close
++ **Curve simplification**: fewer nodes, often half the file size
++ **Seam-free cutout**: gapless shapes with shared boundaries
++ **Watershed clustering**: edge-aware regions for sharper image traces
++ **Adaptive B/W thresholding**: cleaner traces from uneven scans and photos
++ **Fixed color palettes**: snap output to your own colors
 
 ## Console App
 
@@ -124,22 +124,22 @@ output size and smoothness.
 
 ### New in 1.0
 
-- **Positional arguments** — `vtracer in.png out.svg`.
+- **Positional arguments**: `vtracer in.png out.svg`.
 - **`--hierarchical cutout`** is now a true seam-free mosaic (a gapless
   tessellation with shared boundaries), replacing the old re-clustered cutout.
-- **`--palette` / `--palette-file`** — snap colors to a fixed palette
+- **`--palette` / `--palette-file`**: snap colors to a fixed palette
   (nearest in OKLab); **`--max-colors`** auto-quantizes the palette.
-- **Binary thresholding** — a tunable fixed cutoff (`--threshold`) or
+- **Binary thresholding**: a tunable fixed cutoff (`--threshold`) or
   **Bradley–Roth adaptive** thresholding (`--adaptive`, with `--adaptive-window`
   / `--adaptive-t`) for scans with uneven lighting.
-- **`--simplify <tolerance>`** — paper.js-style curve simplification: re-fits
+- **`--simplify <tolerance>`**: paper.js-style curve simplification: re-fits
   smooth runs with the fewest cubics that stay within the tolerance (px),
   typically halving file size; seam-free in cutout mode because shared
   boundaries are simplified once for both faces.
-- **`--clustering watershed`** — an alternative region-forming algorithm: a
+- **`--clustering watershed`**: an alternative region-forming algorithm: a
   hierarchical watershed on the pixel graph (Cousty et al., TPAMI 2009; Najman,
   Cousty & Perret, ISMM 2013), cut at `--watershed-detail`. Content-adaptive
-  regions that follow object shape — pairs beautifully with `cutout`.
+  regions that follow object shape: pairs beautifully with `cutout`.
 
 ## Programming Libraries
 
