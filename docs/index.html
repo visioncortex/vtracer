@@ -414,6 +414,22 @@
                 return '';
             }
 
+            function publicDownloadUrl(manifest, platform, updaterUrl) {
+                if (platform.label !== 'macOS') {
+                    return updaterUrl;
+                }
+
+                if (manifest.version) {
+                    return 'https://github.com/visioncortex/vtracer/releases/download/' +
+                        manifest.version +
+                        '/VTracer_' +
+                        manifest.version +
+                        '_universal.dmg';
+                }
+
+                return updaterUrl.replace(/_universal\.app\.tar\.gz$/i, '_universal.dmg');
+            }
+
             var platform = detectPlatform();
             setFallback(platform);
 
@@ -442,7 +458,8 @@
                     return response.json();
                 })
                 .then(function(manifest) {
-                    var downloadUrl = findPlatformDownload(manifest.platforms || {}, platform);
+                    var updaterUrl = findPlatformDownload(manifest.platforms || {}, platform);
+                    var downloadUrl = publicDownloadUrl(manifest, platform, updaterUrl);
 
                     if (!downloadUrl) {
                         return;
