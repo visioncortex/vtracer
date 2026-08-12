@@ -16,9 +16,9 @@
   </h3>
 
   <p>
-    <a href="https://crates.io/crates/vtracer"><img src="https://img.shields.io/crates/v/vtracer.svg?label=crates.io" alt="Rust library on crates.io"></a>
-    <a href="https://pypi.org/project/vtracer/"><img src="https://img.shields.io/pypi/v/vtracer.svg?label=PyPI" alt="Python package on PyPI"></a>
-    <a href="https://www.npmjs.com/package/@visioncortex/vtracer"><img src="https://img.shields.io/npm/v/@visioncortex/vtracer.svg?label=npm" alt="Node package on npm"></a>
+    <a href="https://crates.io/crates/vtracer"><img src="https://img.shields.io/crates/v/vtracer.svg?label=crates.io&color=blue" alt="Rust library on crates.io"></a>
+    <a href="https://pypi.org/project/vtracer/"><img src="https://img.shields.io/pypi/v/vtracer.svg?label=PyPI&color=blue" alt="Python package on PyPI"></a>
+    <a href="https://www.npmjs.com/package/@visioncortex/vtracer"><img src="https://img.shields.io/npm/v/@visioncortex/vtracer.svg?label=npm&color=blue" alt="Node package on npm"></a>
   </p>
 
 </div>
