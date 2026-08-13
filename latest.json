@@ -1,7 +1,7 @@
 {
   "version": "1.0.0-alpha.3",
   "notes": "VTracer 1.0.0-alpha.3",
-  "pub_date": "2026-08-13T15:05:29.806Z",
+  "pub_date": "2026-08-13T15:06:01.392Z",
   "platforms": {
     "windows-x86_64": {
       "url": "https://github.com/visioncortex/vtracer/releases/download/1.0.0-alpha.3/VTracer_1.0.0-alpha.3_x64-setup.exe",
@@ -9,7 +9,7 @@
     },
     "macos-universal": {
       "url": "https://github.com/visioncortex/vtracer/releases/download/1.0.0-alpha.3/VTracer_1.0.0-alpha.3_universal.app.tar.gz",
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSUENOK1VhM1NxTVNhMnlEZXFJWks4RDdONGd0WjZNeHdBWW4xODdrc0wxVXFpS1Jaa09nRGY2YUczSFQzOXR2MTRNVGxtVHpMQ0pvK1FLZzhNNncyTjFCOUt5T0VmdFFNPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg2NjI5ODc3CWZpbGU6VlRyYWNlci5hcHAudGFyLmd6CkZRcVlzNlhlRVJDRzZVTHFXZ053RTB5Y3RVSFpIZ0dJakM3Q25tY0UyZmFpWnN4YUkvbXFId2ppNEhRWWkxendGTG9CNHNnejM0WEN4dXltTFIyMkJBPT0K"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSUENOK1VhM1NxTVRWTUpkRnRWOTlZYlZHYk53cUNuTnBPdm5jcEpHTEJHTERrVG9Za05jMUVnUnVTUUFtWlZUTnZqc05yVXNuWVdPdWlOVVREcGR1aDE2KytwM2lwZUFnPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg2NjMzNTM2CWZpbGU6VlRyYWNlci5hcHAudGFyLmd6CkRCWFZMdDNqaHJPc1JqdWZNTldjR3ZUMHB1ZjJKc05HVkVJT29hVUtsQXJsOFdRbW9xSjc5MmVweEdxaTR5R2FCVW1yNWxSK2h5TEZOY0dLeGtyV0NRPT0K"
     },
     "linux-x86_64": {
       "url": "https://github.com/visioncortex/vtracer/releases/download/1.0.0-alpha.3/VTracer_1.0.0-alpha.3_x64.AppImage",
