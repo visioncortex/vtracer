@@ -2,7 +2,7 @@
 
 All notable changes to the VTracer desktop app will be documented in this file.
 
-## 1.0.0-alpha.3 - Build 58 - 2026-08-14
+## 1.0.0-alpha.3 - Build 59 - 2026-08-14
 
 ### Added
 
