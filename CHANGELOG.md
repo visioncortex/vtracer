@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+
+### Changed
+
+* Bump `visioncortex` to 0.9.3 — a minor upstream bug fix.
+
 ## 1.0.0-alpha.3 - 2026-08-01
 
 ### Added
