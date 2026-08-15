@@ -1,5 +1,8 @@
 target
+# Track the workspace lockfile (reproducible binary/CI builds); keep the
+# nested crates' lockfiles (nodejs, vtracer-py, webapp) ignored.
 Cargo.lock
+!/Cargo.lock
 *.sublime*
 .vscode
 .DS_Store
