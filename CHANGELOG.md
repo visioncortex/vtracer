@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* `--watershed-detail` (and `watershed_detail` on `Config` and in the Python and Node bindings) is no longer capped at 255 — it now accepts any value, so extremely fine segmentation is reachable past the old ceiling. The default stays 128 and each +25.5 still roughly doubles the region count.
 * Bump `visioncortex` to 0.9.3 — a minor upstream bug fix.
 
 ## 1.0.0-alpha.3 - 2026-08-01
