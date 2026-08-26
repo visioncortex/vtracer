@@ -414,20 +414,18 @@
                 return '';
             }
 
-            function publicDownloadUrl(manifest, platform, updaterUrl) {
-                if (platform.label !== 'macOS') {
+            function publicDownloadUrl(platform, updaterUrl) {
+                if (platform.label !== 'macOS' || !updaterUrl) {
                     return updaterUrl;
                 }
 
-                if (manifest.version) {
-                    return 'https://github.com/visioncortex/vtracer/releases/download/' +
-                        manifest.version +
-                        '/VTracer_' +
-                        manifest.version +
-                        '_universal.dmg';
-                }
-
-                return updaterUrl.replace(/_universal\.app\.tar\.gz$/i, '_universal.dmg');
+                // The manifest points at Tauri's updater bundle; a person wants the
+                // disk image sitting beside it. Rewrite only the filename, so the
+                // release tag comes from the URL we were handed: manifest.version
+                // carries a build suffix the tag does not, and building the URL from
+                // it 404s (version '1.0.0-alpha.3.app.59' lives under tag
+                // '1.0.0-alpha.3').
+                return updaterUrl.replace(/\.app\.tar\.gz$/i, '.dmg');
             }
 
             var platform = detectPlatform();
@@ -459,7 +457,7 @@
                 })
                 .then(function(manifest) {
                     var updaterUrl = findPlatformDownload(manifest.platforms || {}, platform);
-                    var downloadUrl = publicDownloadUrl(manifest, platform, updaterUrl);
+                    var downloadUrl = publicDownloadUrl(platform, updaterUrl);
 
                     if (!downloadUrl) {
                         return;
