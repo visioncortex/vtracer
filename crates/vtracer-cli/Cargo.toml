@@ -15,7 +15,7 @@ name = "vtracer"
 path = "src/main.rs"
 
 [dependencies]
-vtracer = { version = "1.0.0-alpha.3", path = "../vtracer" }
+vtracer = { version = "1.0.0-alpha.4", path = "../vtracer" }
 visioncortex.workspace = true
 # Decode-only: trimmed to real input formats (drops the AV1 encoder + OpenEXR).
 image = { version = "0.25", default-features = false, features = [

@@ -7,7 +7,7 @@
 //! metrics, their [0,1] subscores, the composite fidelity, and a
 //! machine-readable csv line.
 
-use vtracer_bench::{fidelity, DEFAULT_THRESH};
+use vtracer_bench::{DEFAULT_THRESH, fidelity};
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -49,11 +49,20 @@ fn main() {
     let (r, mask) = fidelity(orig.as_raw(), &cand, w, h, thresh);
 
     if let Some(out) = mask_out {
-        image::GrayImage::from_raw(w as u32, h as u32, mask).unwrap().save(&out).expect("save mask");
+        image::GrayImage::from_raw(w as u32, h as u32, mask)
+            .unwrap()
+            .save(&out)
+            .expect("save mask");
     }
 
-    println!("psnr   {:>8.2} dB (rmse {:.2}) -> {:.4}", r.psnr, r.rmse, r.s_psnr);
-    println!("ssim   {:>8.5} (dssim {:.5}) -> {:.4}", r.s_ssim, r.dssim, r.s_ssim);
+    println!(
+        "psnr   {:>8.2} dB (rmse {:.2}) -> {:.4}",
+        r.psnr, r.rmse, r.s_psnr
+    );
+    println!(
+        "ssim   {:>8.5} (dssim {:.5}) -> {:.4}",
+        r.s_ssim, r.dssim, r.s_ssim
+    );
     println!(
         "patch  {:>8.1} px rms ({} bad px, {} clusters, largest {}) -> {:.4}",
         r.patch_mass, r.bad_px, r.clusters, r.largest, r.s_patch

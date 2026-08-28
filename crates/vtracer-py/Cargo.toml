@@ -1,7 +1,7 @@
 [package]
 name = "vtracer-py"
 description = "Python bindings for the vtracer vectorization framework."
-version = "1.0.0-alpha.3"
+version = "1.0.0-alpha.4"
 authors = ["Chris Tsang <tyt2y7@gmail.com>"]
 edition = "2024"
 license = "MIT OR Apache-2.0"
@@ -19,7 +19,7 @@ name = "vtracer"
 crate-type = ["cdylib"]
 
 [dependencies]
-vtracer = { version = "1.0.0-alpha.3", path = "../vtracer" }
+vtracer = { version = "1.0.0-alpha.4", path = "../vtracer" }
 # Decode-only: trimmed to real input formats (drops the AV1 encoder + OpenEXR).
 image = { version = "0.25", default-features = false, features = [
     "png", "jpeg", "gif", "bmp", "webp", "tiff", "ico", "pnm", "tga", "qoi",

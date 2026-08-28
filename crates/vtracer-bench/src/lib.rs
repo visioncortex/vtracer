@@ -64,8 +64,13 @@ pub struct FidelityReport {
 fn dssim_score(a_rgb: &[u8], b_rgb: &[u8], w: usize, h: usize) -> f64 {
     let d = dssim_core::Dssim::new();
     let to = |buf: &[u8]| {
-        let px: Vec<rgb::RGB<u8>> =
-            (0..w * h).map(|i| rgb::RGB { r: buf[i * 3], g: buf[i * 3 + 1], b: buf[i * 3 + 2] }).collect();
+        let px: Vec<rgb::RGB<u8>> = (0..w * h)
+            .map(|i| rgb::RGB {
+                r: buf[i * 3],
+                g: buf[i * 3 + 1],
+                b: buf[i * 3 + 2],
+            })
+            .collect();
         d.create_image_rgb(&px, w, h).expect("dssim image")
     };
     let (val, _) = d.compare(&to(a_rgb), &to(b_rgb));
@@ -75,7 +80,13 @@ fn dssim_score(a_rgb: &[u8], b_rgb: &[u8], w: usize, h: usize) -> f64 {
 /// Compare an original against a candidate reconstruction, both RGB8, w×h.
 /// `thresh` is the RGB Euclidean bad-pixel gate (use [`DEFAULT_THRESH`]).
 /// Returns the report plus the bad-pixel mask (255/0, one byte per pixel).
-pub fn fidelity(orig_rgb: &[u8], cand_rgb: &[u8], w: usize, h: usize, thresh: f64) -> (FidelityReport, Vec<u8>) {
+pub fn fidelity(
+    orig_rgb: &[u8],
+    cand_rgb: &[u8],
+    w: usize,
+    h: usize,
+    thresh: f64,
+) -> (FidelityReport, Vec<u8>) {
     assert_eq!(orig_rgb.len(), w * h * 3);
     assert_eq!(cand_rgb.len(), w * h * 3);
 
@@ -108,7 +119,11 @@ pub fn fidelity(orig_rgb: &[u8], cand_rgb: &[u8], w: usize, h: usize, thresh: f6
     // the signature of a slightly blurred/compressed source) vanish; genuine
     // missing patches survive. The reported mask keeps the raw bad pixels.
     let at = |m: &[u8], x: i64, y: i64| {
-        x >= 0 && y >= 0 && (x as usize) < w && (y as usize) < h && m[y as usize * w + x as usize] != 0
+        x >= 0
+            && y >= 0
+            && (x as usize) < w
+            && (y as usize) < h
+            && m[y as usize * w + x as usize] != 0
     };
     let mut eroded = vec![0u8; w * h];
     for y in 0..h as i64 {
@@ -142,7 +157,11 @@ pub fn fidelity(orig_rgb: &[u8], cand_rgb: &[u8], w: usize, h: usize, thresh: f6
     let patch_mass = if sizes.is_empty() {
         0.0
     } else {
-        sizes.iter().map(|&a| (a as f64) * (a as f64)).sum::<f64>().sqrt()
+        sizes
+            .iter()
+            .map(|&a| (a as f64) * (a as f64))
+            .sum::<f64>()
+            .sqrt()
     };
     let p_frac = patch_mass / (w * h) as f64;
 
@@ -212,7 +231,12 @@ mod tests {
         assert!((rd.s_patch - 1.0).abs() < 1e-9);
         // identical PSNR/RMSE by construction; the patch axis must separate them
         assert!((rb.rmse - rd.rmse).abs() < 1e-9);
-        assert!(rb.s_patch < rd.s_patch * 0.25, "blob {} dust {}", rb.s_patch, rd.s_patch);
+        assert!(
+            rb.s_patch < rd.s_patch * 0.25,
+            "blob {} dust {}",
+            rb.s_patch,
+            rd.s_patch
+        );
         assert!(rb.fidelity < rd.fidelity);
     }
 
@@ -231,7 +255,10 @@ mod tests {
         let (rf, _) = fidelity(&clean, &fil, 64, 64, DEFAULT_THRESH);
         assert_eq!(rf.bad_px, 128);
         assert_eq!(rf.clusters, 0);
-        assert!((rf.s_patch - 1.0).abs() < 1e-9, "filament must not count as a patch");
+        assert!(
+            (rf.s_patch - 1.0).abs() < 1e-9,
+            "filament must not count as a patch"
+        );
     }
 
     #[test]

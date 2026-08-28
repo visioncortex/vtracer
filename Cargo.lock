@@ -984,7 +984,7 @@ dependencies = [
 
 [[package]]
 name = "vtracer"
-version = "1.0.0-alpha.3"
+version = "1.0.0-alpha.4"
 dependencies = [
  "flo_curves 0.8.0",
  "image",
@@ -994,7 +994,7 @@ dependencies = [
 
 [[package]]
 name = "vtracer-bench"
-version = "1.0.0-alpha.3"
+version = "1.0.0-alpha.4"
 dependencies = [
  "dssim-core",
  "image",
@@ -1004,7 +1004,7 @@ dependencies = [
 
 [[package]]
 name = "vtracer-cli"
-version = "1.0.0-alpha.3"
+version = "1.0.0-alpha.4"
 dependencies = [
  "clap",
  "image",

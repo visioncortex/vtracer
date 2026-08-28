@@ -155,7 +155,7 @@ VTracer 1.0 is a vectorization framework with pluggable stages: segmentation, cu
 ### Rust Library
 
 ```sh
-cargo add vtracer@1.0.0-alpha.3
+cargo add vtracer@1.0.0-alpha.4
 ```
 
 ```rust
@@ -185,12 +185,12 @@ let seg = pipeline.segment(&img)?;        // the expensive part
 let doc = pipeline.finish(&seg)?;         // VectorDoc, ready to serialize
 ```
 
-See [docs.rs/vtracer](https://docs.rs/vtracer/1.0.0-alpha.3/vtracer/) for the full API.
+See [docs.rs/vtracer](https://docs.rs/vtracer/1.0.0-alpha.4/vtracer/) for the full API.
 
 ### Python Library
 
 ```sh
-pip install vtracer==1.0.0a3
+pip install vtracer==1.0.0a4
 ```
 
 ```python
@@ -222,7 +222,7 @@ See [`crates/vtracer-py`](crates/vtracer-py/README.md) for the full API.
 [`@visioncortex/vtracer`](https://www.npmjs.com/package/@visioncortex/vtracer) is available for Node as a WebAssembly build (from the [`nodejs`](nodejs/README.md) package) — image decoding and vectorization both run in wasm, so there is **no native dependency**. Decodes PNG, JPEG, GIF, BMP, and WebP; for other formats, decode yourself and pass raw RGBA to `convertPixels`.
 
 ```sh
-npm install @visioncortex/vtracer@1.0.0-alpha.3
+npm install @visioncortex/vtracer@1.0.0-alpha.4
 ```
 
 ```js

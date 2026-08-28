@@ -19,7 +19,7 @@ exclude = [
 resolver = "2"
 
 [workspace.package]
-version = "1.0.0-alpha.3"
+version = "1.0.0-alpha.4"
 authors = ["Chris Tsang <chris.2y3@outlook.com>"]
 edition = "2024"
 license = "MIT OR Apache-2.0"

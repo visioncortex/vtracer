@@ -36,7 +36,7 @@ Technical descriptions of the [tracing algorithm](https://www.visioncortex.org/v
 ## Install
 
 ```sh
-pip install vtracer==1.0.0a3
+pip install vtracer==1.0.0a4
 ```
 
 ## Usage
