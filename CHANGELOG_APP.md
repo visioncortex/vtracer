@@ -2,6 +2,20 @@
 
 All notable changes to the VTracer desktop app will be documented in this file.
 
+## 1.0.0-alpha.4 - Build 116 - 2026-08-29
+
+### Added
+
+* VTracer 2 preview. Trial license can be activated in app.
+* SVG saving without a dialog. A preferred save folder can be set in Preferences, or the app can keep asking each time.
+* A source image display preference, choosing smooth or pixelated scaling for the source image.
+* Selected SVG shapes now show their bounds, and can be dragged around the canvas to inspect what sits beneath them.
+* A configurable disk cache limit for VTracer 2, defaulting to 2 GB. Lowering it reclaims space immediately.
+
+### Fixed
+
+* Pasting an image now works consistently across the app rather than only when the canvas held focus.
+
 ## 1.0.0-alpha.3 - Build 59 - 2026-08-14
 
 ### Added
