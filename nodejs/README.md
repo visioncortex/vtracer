@@ -8,9 +8,11 @@
   </p>
 
   <h3>
-    <a href="https://www.visioncortex.org/vtracer/">Web App</a>
+    <a href="https://github.com/visioncortex/vtracer/releases/download/1.0.0-alpha.4/VTracer_1.0.0-alpha.4_x64-setup.exe">Windows App</a>
     <span> | </span>
-    <a href="https://github.com/visioncortex/vtracer/releases/download/1.0.0-alpha.3/VTracer_1.0.0-alpha.3_x64-setup.exe">Windows App</a>
+    <a href="https://github.com/visioncortex/vtracer/releases/download/1.0.0-alpha.4/VTracer_1.0.0-alpha.4_universal.dmg">macOS App</a>
+    <span> | </span>
+    <a href="https://github.com/visioncortex/vtracer/releases/download/1.0.0-alpha.4/VTracer_1.0.0-alpha.4_x64.AppImage">Linux App</a>
   </h3>
 
 </div>
