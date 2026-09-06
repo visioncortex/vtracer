@@ -37,22 +37,13 @@ fn main() {
     }
 
     let orig = image::open(&args[1]).expect("open original").to_rgb8();
-    let (w, h) = (orig.width() as usize, orig.height() as usize);
-    let img = image::open(&args[2]).expect("open candidate").to_rgb8();
-    assert_eq!(
-        (img.width() as usize, img.height() as usize),
-        (w, h),
-        "candidate raster must match original dimensions"
-    );
-    let cand: Vec<u8> = img.into_raw();
+    let cand = image::open(&args[2]).expect("open candidate").to_rgb8();
+    assert_eq!(cand.dimensions(), orig.dimensions(), "candidate raster must match original dimensions");
 
-    let (r, mask) = fidelity(orig.as_raw(), &cand, w, h, thresh);
+    let (r, mask) = fidelity(&orig, &cand, thresh);
 
     if let Some(out) = mask_out {
-        image::GrayImage::from_raw(w as u32, h as u32, mask)
-            .unwrap()
-            .save(&out)
-            .expect("save mask");
+        mask.save(&out).expect("save mask");
     }
 
     println!(

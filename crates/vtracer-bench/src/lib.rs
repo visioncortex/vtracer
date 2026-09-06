@@ -26,6 +26,7 @@
 //! weight: it tracks visual accuracy best and is the axis most robust to a
 //! mildly compressed or blurred source.
 
+use image::{GrayImage, RgbImage};
 use visioncortex::BinaryImage;
 
 /// Patch mass fraction that halves the patch subscore.
@@ -77,18 +78,14 @@ fn dssim_score(a_rgb: &[u8], b_rgb: &[u8], w: usize, h: usize) -> f64 {
     val.into()
 }
 
-/// Compare an original against a candidate reconstruction, both RGB8, w×h.
-/// `thresh` is the RGB Euclidean bad-pixel gate (use [`DEFAULT_THRESH`]).
-/// Returns the report plus the bad-pixel mask (255/0, one byte per pixel).
-pub fn fidelity(
-    orig_rgb: &[u8],
-    cand_rgb: &[u8],
-    w: usize,
-    h: usize,
-    thresh: f64,
-) -> (FidelityReport, Vec<u8>) {
-    assert_eq!(orig_rgb.len(), w * h * 3);
-    assert_eq!(cand_rgb.len(), w * h * 3);
+/// Compare an original against a candidate reconstruction (same
+/// dimensions). `thresh` is the RGB Euclidean bad-pixel gate (use
+/// [`DEFAULT_THRESH`]). Returns the report plus the raw bad-pixel mask
+/// (255 = bad).
+pub fn fidelity(orig: &RgbImage, cand: &RgbImage, thresh: f64) -> (FidelityReport, GrayImage) {
+    assert_eq!(orig.dimensions(), cand.dimensions(), "rasters must match in size");
+    let (w, h) = (orig.width() as usize, orig.height() as usize);
+    let (orig_rgb, cand_rgb) = (orig.as_raw().as_slice(), cand.as_raw().as_slice());
 
     // PSNR + RMSE + bad-pixel binarization in one pass
     let mut sse = 0f64;
@@ -185,7 +182,7 @@ pub fn fidelity(
             s_patch,
             fidelity,
         },
-        mask,
+        GrayImage::from_raw(w as u32, h as u32, mask).expect("mask dims"),
     )
 }
 
@@ -197,12 +194,16 @@ mod tests {
         (0..w * h).flat_map(|_| c).collect()
     }
 
+    fn img(w: usize, h: usize, px: &[u8]) -> RgbImage {
+        RgbImage::from_raw(w as u32, h as u32, px.to_vec()).unwrap()
+    }
+
     #[test]
     fn identical_is_one() {
         let a = flat(64, 64, [120, 90, 200]);
-        let (r, mask) = fidelity(&a, &a, 64, 64, DEFAULT_THRESH);
+        let (r, mask) = fidelity(&img(64, 64, &a), &img(64, 64, &a), DEFAULT_THRESH);
         assert_eq!(r.bad_px, 0);
-        assert!(mask.iter().all(|&m| m == 0));
+        assert!(mask.as_raw().iter().all(|&m| m == 0));
         assert!((r.fidelity - 1.0).abs() < 1e-9, "fidelity {}", r.fidelity);
     }
 
@@ -221,8 +222,8 @@ mod tests {
             let (x, y) = ((k % 16) * 4, (k / 16) * 4); // 4px spacing: 256 singleton clusters
             dust[(y * 64 + x) * 3..(y * 64 + x) * 3 + 3].fill(0);
         }
-        let (rb, _) = fidelity(&clean, &blob, 64, 64, DEFAULT_THRESH);
-        let (rd, _) = fidelity(&clean, &dust, 64, 64, DEFAULT_THRESH);
+        let (rb, _) = fidelity(&img(64, 64, &clean), &img(64, 64, &blob), DEFAULT_THRESH);
+        let (rd, _) = fidelity(&img(64, 64, &clean), &img(64, 64, &dust), DEFAULT_THRESH);
         assert_eq!(rb.bad_px, 256);
         assert_eq!(rd.bad_px, 256);
         // dust vanishes under the opening entirely; the blob survives
@@ -252,7 +253,7 @@ mod tests {
                 fil[(y * 64 + x) * 3..(y * 64 + x) * 3 + 3].fill(0);
             }
         }
-        let (rf, _) = fidelity(&clean, &fil, 64, 64, DEFAULT_THRESH);
+        let (rf, _) = fidelity(&img(64, 64, &clean), &img(64, 64, &fil), DEFAULT_THRESH);
         assert_eq!(rf.bad_px, 128);
         assert_eq!(rf.clusters, 0);
         assert!(
@@ -266,8 +267,8 @@ mod tests {
         let a = flat(32, 32, [100, 100, 100]);
         let mild: Vec<u8> = a.iter().map(|&v| v + 4).collect();
         let harsh: Vec<u8> = a.iter().map(|&v| v + 60).collect();
-        let (rm, _) = fidelity(&a, &mild, 32, 32, DEFAULT_THRESH);
-        let (rh, _) = fidelity(&a, &harsh, 32, 32, DEFAULT_THRESH);
+        let (rm, _) = fidelity(&img(32, 32, &a), &img(32, 32, &mild), DEFAULT_THRESH);
+        let (rh, _) = fidelity(&img(32, 32, &a), &img(32, 32, &harsh), DEFAULT_THRESH);
         assert!(rm.fidelity > rh.fidelity);
         assert!(rh.fidelity < 0.4, "harsh {}", rh.fidelity);
     }
