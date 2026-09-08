@@ -2,6 +2,15 @@
 
 All notable changes to the VTracer desktop app will be documented in this file.
 
+## 1.0.0-alpha.4 - Build 143 - 2026-09-08
+
+### Added (Gen AI)
+
+* The FLUX model family, alongside the Stable Diffusion models
+* Art styles for the FLUX models
+* Starring a round in the left panel, each round also shows the model
+* Gradient Step is now determined dynamically, picking the optimal value per artwork
+
 ## 1.0.0-alpha.4 - Build 133 - 2026-09-07
 
 ### Added
