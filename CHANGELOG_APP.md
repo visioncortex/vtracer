@@ -2,6 +2,17 @@
 
 All notable changes to the VTracer desktop app will be documented in this file.
 
+## 1.0.0-alpha.4 - Build 151 - 2026-09-09
+
+### Added
+
+* An model manager to install/uninstall VTracer 2 engine versions
+* Factory Reset under Settings > Application. It removes everything VTracer 2 and Gen AI keep on the device
+
+### Fixed
+
+* Trial activation issues
+
 ## 1.0.0-alpha.4 - Build 143 - 2026-09-08
 
 ### Added (Gen AI)
@@ -26,7 +37,7 @@ All notable changes to the VTracer desktop app will be documented in this file.
 ### Fixed
 
 * Retrying VTracer 2 setup after an interrupted install no longer asks for a second device seat for the same machine.
-* A trace with its background removed now sits on a light chequerboard in dark mode.
+* A trace with its background removed now sits on a light checkerboard in dark mode.
 
 ## 1.0.0-alpha.4 - Build 116 - 2026-08-29
 
