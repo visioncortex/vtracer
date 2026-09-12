@@ -10,6 +10,10 @@
     "macos-universal": {
       "url": "https://github.com/visioncortex/vtracer/releases/download/1.0.0-alpha.4/VTracer_1.0.0-alpha.4_universal.app.tar.gz",
       "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSUENOK1VhM1NxTVNIT2I0UnF0QUV3TzJUNGlDTHc0Qm9wckYrY3FEREtxaVBvNlhTVmRmamxpSytRQVROVjJNTnJpVGRabml3ei9zSnhJMG5nOFNEZHdoMFpNWWVLM3dBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg5NDA3MDY3CWZpbGU6VlRyYWNlci5hcHAudGFyLmd6Cm92WVpCMkJ3VE5kZE55b003emdIMjhCR1FDU0hJcEJnY0xlOFVyeXlSVXNCTjFuZEI3MDNCekxMUFYzeEJDSUlub1diS1hjbDF0T01HT2pCdW1OS0NBPT0K"
+    },
+    "linux-x86_64": {
+      "url": "https://github.com/visioncortex/vtracer/releases/download/1.0.0-alpha.4/VTracer_1.0.0-alpha.4_x64.AppImage",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSUENOK1VhM1NxTVcyazd3K2c4c1FFWFlCWXR5djMxbEFMWVdrTVNlSUNsN0RkcDhGeWxFZzNmQ2ZTYjFIcktLUmpvSU95VXVCWE9lbmxsLzZqREpLUHdCUWZBaCt1U3dZPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg5MjI0Mzc1CWZpbGU6VlRyYWNlcl8xLjAuMC1hbHBoYS40LmFwcC4xNjNfYW1kNjQuQXBwSW1hZ2UKbnhFZGxscEFBakFqWlhqemVuZThEL3dhRHVyZW9GNE51Qmh2SUVZWTE3V2gzdlFRMjlrRkxIMjZRTlFRemttREt4Q0ZESVlvZ2tnQnFvOVBMY09kQkE9PQo="
     }
   }
 }
