@@ -2,6 +2,17 @@
 
 All notable changes to the VTracer desktop app will be documented in this file.
 
+## 1.0.0-alpha.4 - Build 161 - 2026-09-12
+
+### Added
+
+* 简体中文 for UI display language.
+
+### Added (Gen AI)
+
+* Generation on your own sd-server
+* Inked, an art style for SDXL-Turbo
+
 ## 1.0.0-alpha.4 - Build 151 - 2026-09-09
 
 ### Added
