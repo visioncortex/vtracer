@@ -1,19 +1,11 @@
 {
-  "version": "1.0.0-alpha.4.app.151",
-  "notes": "VTracer 1.0.0-alpha.4 - Build 151 (b8bcabc6)",
-  "pub_date": "2026-09-09T21:32:04.887Z",
+  "version": "1.0.0-alpha.4.app.161",
+  "notes": "VTracer 1.0.0-alpha.4 - Build 161 (c796a1d0)",
+  "pub_date": "2026-09-12T14:23:11.940Z",
   "platforms": {
-    "macos-universal": {
-      "url": "https://github.com/visioncortex/vtracer/releases/download/1.0.0-alpha.4/VTracer_1.0.0-alpha.4_universal.app.tar.gz",
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSUENOK1VhM1NxTVlYOC9hZGs3V3lpeWxpYnVBOEVNbFZXVWZ1YSthY3pBdXJZdG80MHJMYWZxL24xaVNhc2lRQnlPK3FDN09mbUxrVURsa2FCTGZIZFpuNmw3SlY3emc0PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg4OTg3MDc3CWZpbGU6VlRyYWNlci5hcHAudGFyLmd6CjIyL250TEk3VnlVUmVmWktkT0laU1E1bzNhQ0dJSVkwNWtNOFNNRUU1VmRMY3pPN252cGRiWHJUSGJwRHoyN2lZM01MS0JhcjFwZ2FQdFJESGllWkF3PT0K"
-    },
     "windows-x86_64": {
       "url": "https://github.com/visioncortex/vtracer/releases/download/1.0.0-alpha.4/VTracer_1.0.0-alpha.4_x64-setup.exe",
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSUENOK1VhM1NxTWQ2WGpRRE9VTjdxcE9uaGhPSHBUUWVtYi82Si9JeHN2ZDN1TkUxRnY3V0ZPL3VIeGJsM1dSV2ZFRDlOZmhSMWh2WEdRZ3JiOXdXNnRLNHFtT1Y5d3dnPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg4OTg3MjUxCWZpbGU6VlRyYWNlcl8xLjAuMC1hbHBoYS40LmFwcC4xNTFfeDY0LXNldHVwLmV4ZQpMR0pvNkVGWm42YTlzMU1nSVlYeDlCV0NZb1hHR0dIOTdMRTdkSXpxTTFlcmlZWGVkcVZzdmhmTDBsQTBUUHBCL3ptdk82OExPV0NwYUMwY1RQc21Cdz09Cg=="
-    },
-    "linux-x86_64": {
-      "url": "https://github.com/visioncortex/vtracer/releases/download/1.0.0-alpha.4/VTracer_1.0.0-alpha.4_x64.AppImage",
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSUENOK1VhM1NxTVVhRjErZk5oVWQvdWRmMndzalNVYWNBQzN0emRVM1kvMWw5KzZjcUFCS0s2TFI4Ymc1Ynl2cWtNcmJDMFBvbU9IT0VYekQzc3VsQUlLdWdHMWFzK2dNPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg4MDIyMjUzCWZpbGU6VlRyYWNlcl8xLjAuMC1hbHBoYS40LmFwcC4xMTFfYW1kNjQuQXBwSW1hZ2UKT0RzUkx4azJqTmJvN3AvVFlIQUZZakVHTVFUalVWU2prajhvakp6eHRzTHVNZU5OVUV3WEZCWDd3QkY4YStqSDFqb0Qyam5XU1ZrdWVzK2JjUTI1RGc9PQo="
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSUENOK1VhM1NxTVpVdi9xMXYzaU85YmlwODJ4aVY3TVVaUkRhNWg4NTVqUWs4VGFyMzZDRTY5VHBUdHNwcHFTSUVXN2RqTGNyYjZKdmVKVHFoT2RSZEZMWnJGTHZxOVFFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg5MjIyNDgxCWZpbGU6VlRyYWNlcl8xLjAuMC1hbHBoYS40LmFwcC4xNjFfeDY0LXNldHVwLmV4ZQpBa2ltZ3F2UEVrclRXaUhBR09IUDJ3ckp4UEFXNlF1aWsya3VTYkJIdFZrSEloWU5lYVdXSE1MazFzQnBUWFhBSmx1V2R2bHN4QkNiZlkvSlU2bmxDZz09Cg=="
     }
   }
 }
