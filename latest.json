@@ -5,7 +5,7 @@
   "platforms": {
     "windows-x86_64": {
       "url": "https://github.com/visioncortex/vtracer/releases/download/1.0.0-alpha.4/VTracer_1.0.0-alpha.4_x64-setup.exe",
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSUENOK1VhM1NxTVZPQTNiNHFnemVsNk8zU3JFYXkwb04wMmNIV1lJdExvWW95aVJ5RDYzOC9mN2ZYNklXcjJ3bHZpT0Z1K3FpcjIzdXovMnZ0bXovUjNCMGlObVIyN0FVPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg5NTEzNDAyCWZpbGU6VlRyYWNlcl8xLjAuMC1hbHBoYS40LmFwcC4xNjZfeDY0LXNldHVwLmV4ZQo2SzU3Y0dFVHZQSi9jd0hSWjdjUkg3NFB1ZFhZMVdyZ1h0ZDNaVzlqQnE1c3d0KzlJZW5mQTFYR1hmQkdXU0lwQ2YzZTRJYXpNdzNESUVqckJ6WFZBZz09Cg=="
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSUENOK1VhM1NxTWFLdmZESUpTUVpQUktkUjFGRVI0QVJNdDdmNFB1TlJhbVY2TjFUclh6R2lwZXFCMTVlRUM4SERnNHZvd1RlS3dqUmdoY01NLzJ3dCtwTVRqWnNGSEE0PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg5NTUyMjM5CWZpbGU6VlRyYWNlcl8xLjAuMC1hbHBoYS40LmFwcC4xNjdfeDY0LXNldHVwLmV4ZQo2cC9mZXpjRlc3aU9hZFEwZmMyS04zbUlKbkVRQjMzNmhJU1lENXFUZDZScEgvSHZPTnF2eEh1VWVFVXZYZ2x6S0JjSTFJYkZadndsaXhsYzNhSGpDZz09Cg=="
     },
     "macos-universal": {
       "url": "https://github.com/visioncortex/vtracer/releases/download/1.0.0-alpha.4/VTracer_1.0.0-alpha.4_universal.app.tar.gz",
