@@ -2,6 +2,19 @@
 
 All notable changes to the VTracer desktop app will be documented in this file.
 
+## 1.0.0-alpha.4 - Build 180 - 2026-09-19
+
+### Added
+
+* Help > Give Feedback. Report an issue, ask for a feature, or give us testimonial. We welcome your feedback.
+
+### Fixed (Gen AI)
+
+* All eight art styles now work with OpenAI Codex.
+* The art style picker was missing from the prompt panel.
+* Highlighting the wrong round as running.
+* Switching to the tab now restores the correct model and art style.
+
 ## 1.0.0-alpha.4 - Build 173 - 2026-09-17
 
 ### Added (Gen AI)
