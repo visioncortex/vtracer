@@ -2,6 +2,10 @@
 
 All notable changes to the VTracer 2 engine will be documented in this file.
 
+## 2.0.5 - 2026-09-20
+
+* Engine improvement. Traces inked graphics better
+
 ## 2.0.4 - 2026-09-07
 
 * Engine improvement. Traces small circles better
