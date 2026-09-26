@@ -2,6 +2,12 @@
 
 All notable changes to the VTracer desktop app will be documented in this file.
 
+## 1.0.0-alpha.4 - Build 188 - 2026-09-28
+
+### Added (Gen AI)
+
+* Support image-to-image generation. You can now provide a pencil sketch in Gen AI, together with a prompt.
+
 ## 1.0.0-alpha.4 - Build 180 - 2026-09-19
 
 ### Added

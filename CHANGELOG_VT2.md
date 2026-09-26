@@ -2,6 +2,13 @@
 
 All notable changes to the VTracer 2 engine will be documented in this file.
 
+## 2.0.6 - 2026-09-24
+
+Requires Build 181+ onwards
+
+* Pencil sketch clean up model
+* Engine improvement on background separation
+
 ## 2.0.5 - 2026-09-20
 
 * Engine improvement. Traces inked graphics better
