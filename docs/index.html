@@ -181,7 +181,7 @@
             <div class="uk-width-1-1">
                 <div class="desktop-banner uk-padding-small uk-flex uk-flex-middle uk-flex-between uk-flex-wrap">
                     <div class="uk-margin-small-right">
-                        <p id="desktop-banner-copy" class="desktop-banner-title">Try the latest VTracer Desktop App for native speed, curve simplification, and higher tracing quality.</p>
+                        <p class="desktop-banner-title">Try the latest <a href="https://vtracer.visioncortex.org/" rel="noopener">VTracer Desktop App</a><span id="desktop-banner-copy"> for native speed, curve simplification, and higher tracing quality.</span></p>
                     </div>
                     <a id="desktop-download" class="uk-button uk-button-primary" href="https://github.com/visioncortex/vtracer/releases/latest" rel="noopener">
                         Download Desktop App
@@ -398,8 +398,8 @@
                 downloadLink.href = releasesUrl;
                 downloadLink.textContent = platform.label ? 'Download for ' + platform.label : 'View latest downloads';
                 bannerCopy.textContent = platform.label
-                    ? 'Try the latest VTracer Desktop App for ' + platform.label + ' with native speed, curve simplification, and higher tracing quality.'
-                    : 'Try the latest VTracer Desktop App for native speed, curve simplification, and higher tracing quality.';
+                    ? ' for ' + platform.label + ' with native speed, curve simplification, and higher tracing quality.'
+                    : ' for native speed, curve simplification, and higher tracing quality.';
             }
 
             function findPlatformDownload(platforms, platform) {
@@ -466,7 +466,7 @@
                     downloadLink.href = downloadUrl;
                     downloadLink.textContent = 'Download for ' + platform.label;
 
-                    bannerCopy.textContent = 'Try the latest VTracer Desktop App for ' + platform.label + ' with native speed, curve simplification, and higher tracing quality.';
+                    bannerCopy.textContent = ' for ' + platform.label + ' with native speed, curve simplification, and higher tracing quality.';
                 })
                 .catch(function() {
                     setFallback(platform);
