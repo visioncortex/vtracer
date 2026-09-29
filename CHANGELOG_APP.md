@@ -2,6 +2,12 @@
 
 All notable changes to the VTracer desktop app will be documented in this file.
 
+## 1.0.0-alpha.4 - Build 201 - 2026-09-29
+
+### Added
+
+* Support sign in with Microsoft account
+
 ## 1.0.0-alpha.4 - Build 197 - 2026-09-28
 
 ### Added
