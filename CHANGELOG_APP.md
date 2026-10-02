@@ -2,6 +2,16 @@
 
 All notable changes to the VTracer desktop app will be documented in this file.
 
+## 1.0.0-alpha.4 - Build 208 - 2026-10-02
+
+### Added
+
+* Fact sheet now translated to Chinese
+
+### Added (Gen AI)
+
+* Added reference image mode for FLUX 2
+
 ## 1.0.0-alpha.4 - Build 201 - 2026-09-29
 
 ### Added
