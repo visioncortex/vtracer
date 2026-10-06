@@ -35,9 +35,9 @@ VTracer is originally designed for processing high resolution scans of historic 
 
 Technical descriptions of the [tracing algorithm](https://www.visioncortex.org/vtracer-docs) and [clustering algorithm](https://www.visioncortex.org/impression-docs).
 
-## Desktop App
+## [Desktop App](https://vtracer.visioncortex.org/)
 
-![screenshot](docs/images/desktop-app.png)
+[![screenshot](docs/images/desktop-app.png)](https://vtracer.visioncortex.org/)
 
 VTracer App powered by the 1.0 tracing engine:
 
