@@ -2,6 +2,25 @@
 
 All notable changes to the VTracer desktop app will be documented in this file.
 
+## 1.0.0-alpha.4 - Build 225 - 2026-10-09
+
+### Added
+
+* 日本語 for UI display language.
+* Mesh Gradient option, for smooth shading.
+* Save as [XSVG](https://xsvg.visioncortex.org/), from the dropdown below Save as SVG.
+
+### Added (Gen AI)
+
+* Prompts written in Chinese, Japanese or Korean are translated to English on your machine for models that only read English. The translation model can be downloaded from the Language tab.
+* Art style names and model notes are shown in the app's language.
+* Mesh Gradient option in Tracing options.
+
+### Fixed (Gen AI)
+
+* A starred round can no longer be deleted.
+* Better stray decoration removal.
+
 ## 1.0.0-alpha.4 - Build 208 - 2026-10-02
 
 ### Added

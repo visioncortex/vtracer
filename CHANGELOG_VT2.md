@@ -2,6 +2,10 @@
 
 All notable changes to the VTracer 2 engine will be documented in this file.
 
+## 2.0.9 - 2026-10-09
+
+* Engine improvement. Improved ink fragment merging. Better mesh gradient output.
+
 ## 2.0.8 - 2026-10-02
 
 * Pencil sketch model improvement. Removes grid and rules better. Also better color blobs.
