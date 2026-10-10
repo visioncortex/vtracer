@@ -1,3 +1,13 @@
-Copyright (c) 2024 TSANG, Hao Fung
+Copyright (c) 2026 Seafire Software Limited. All rights reserved.
 
-The content in the /docs directory is for GitHub pages, and is not covered under open source licenses.
+This application, including its source code, assets, build configuration,
+documentation, and distributed binaries, is proprietary software.
+
+No license is granted to copy, modify, merge, publish, distribute, sublicense,
+sell, host, or otherwise make this application available to any third party,
+except with prior written permission from the copyright holder.
+
+This repository is not open source. Possession of a copy of this repository or
+application does not grant any redistribution rights.
+
+Third-party dependencies remain governed by their own license terms.
