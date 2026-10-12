@@ -2,11 +2,12 @@
 
 All notable changes to the VTracer desktop app will be documented in this file.
 
-## 1.0.0-alpha.4 - Build 234 - 2026-10-12
+## 1.0.0-alpha.4 - Build 235 - 2026-10-12
 
 ### Fixed
 
 * Allow installing older VTracer engine versions.
+* (macOS) VT2 runs CPU fallback on Metal failure.
 
 ## 1.0.0-alpha.4 - Build 225 - 2026-10-09
 
