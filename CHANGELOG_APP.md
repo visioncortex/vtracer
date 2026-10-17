@@ -2,6 +2,16 @@
 
 All notable changes to the VTracer desktop app will be documented in this file.
 
+## 1.0.0-alpha.4 - Build 238 - 2026-10-12
+
+### Fixed
+
+* Confirm before delete generation and trace history.
+
+### Added (Gen AI)
+
+* Use another round's generated output as reference image. Pick "Use as reference image" from a round's 3 dot menu.
+
 ## 1.0.0-alpha.4 - Build 235 - 2026-10-12
 
 ### Fixed

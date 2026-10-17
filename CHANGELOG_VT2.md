@@ -2,6 +2,10 @@
 
 All notable changes to the VTracer 2 engine will be documented in this file.
 
+## 2.0.10 - 2026-10-16
+
+* Fixed Metal issue on macOS.
+
 ## 2.0.9 - 2026-10-09
 
 * Engine improvement. Improved ink fragment merging. Better mesh gradient output.
