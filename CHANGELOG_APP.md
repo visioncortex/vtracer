@@ -6,6 +6,16 @@ All notable changes to the VTracer desktop app will be documented in this file.
 
 ### Fixed
 
+* Confirm before delete generation and trace history.
+
+### Added (Gen AI)
+
+* Use another round's generated output as reference image. Pick "Use as reference image" from a round's 3 dot menu.
+
+## 1.0.0-alpha.4 - Build 235 - 2026-10-12
+
+### Fixed
+
 * Allow installing older VTracer engine versions.
 * (macOS) VT2 runs CPU fallback on Metal failure.
 
