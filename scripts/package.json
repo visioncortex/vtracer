@@ -1,0 +1,15 @@
+{
+  "name": "vtracer-benchmark-tools",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "@tsconfig/svelte": "5.0.8",
+    "playwright-core": "1.56.1",
+    "pngjs": "7.0.0",
+    "typescript": "5.8.3",
+    "vite": "6.4.5"
+  }
+}
