@@ -110,6 +110,11 @@ pub struct Segmentation {
     pub height: u32,
     /// Bottom-to-top paint order.
     pub layers: Vec<Layer>,
+    /// Optional precomputed flat partition (`u32::MAX` = uncovered, otherwise
+    /// index into `layers`) when the frontend already knows the top-most layer
+    /// per pixel (e.g. watershed). Invalidated automatically if layers are
+    /// reordered or merged in [`crate::colorfit::MergeAdjacent`].
+    pub(crate) flat_labels: Option<Vec<u32>>,
 }
 
 impl Segmentation {
@@ -118,6 +123,7 @@ impl Segmentation {
             width,
             height,
             layers: Vec::new(),
+            flat_labels: None,
         }
     }
 }

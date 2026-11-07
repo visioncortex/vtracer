@@ -41,6 +41,8 @@ use visioncortex::{BinaryImage, Color, ColorImage, PointI32};
 
 use crate::error::Error;
 use crate::ir::{Layer, Paint, RegionMask, Segmentation};
+#[cfg(not(target_arch = "wasm32"))]
+use rayon::prelude::*;
 
 use super::Frontend;
 
@@ -256,7 +258,7 @@ impl WatershedHierarchy {
         }
 
         let mut order: Vec<u32> = (0..(n - 1) as u32).collect();
-        order.sort_by_key(|&k| (pers[k as usize], k));
+        order.sort_unstable_by_key(|&k| pers[k as usize]);
 
         Ok(Self {
             width: w,
@@ -332,12 +334,16 @@ impl WatershedHierarchy {
         for i in 0..n {
             let a = pre[i];
             if i % w + 1 < w && pre[i + 1] != a {
-                pairs.push((a, pre[i + 1]));
+                let b = pre[i + 1];
+                pairs.push((a.min(b), a.max(b)));
             }
             if i / w + 1 < h && pre[i + w] != a {
-                pairs.push((a, pre[i + w]));
+                let b = pre[i + w];
+                pairs.push((a.min(b), a.max(b)));
             }
         }
+        pairs.sort_unstable();
+        pairs.dedup();
 
         // --- Small-basin absorption on the region graph ----------------------
         let mut uf_r = Uf::new(kp);
@@ -369,6 +375,7 @@ impl WatershedHierarchy {
                 paint: Paint::Solid(mean(&sum[r], area[r])),
                 mask: full_canvas(w, h),
             });
+            seg.flat_labels = Some(ids);
             return seg;
         }
 
@@ -432,12 +439,22 @@ impl WatershedHierarchy {
             fill[id as usize] += 1;
         }
 
+        // Bounding box per leaf region, computed once in O(n) so ancestor
+        // bboxes can be derived in O(leaves) without scanning pixels twice.
+        let mut leaf_bbox = vec![[i32::MAX, i32::MAX, i32::MIN, i32::MIN]; k];
+        for i in 0..n {
+            let t = ids[i] as usize;
+            let (x, y) = ((i % w) as i32, (i / w) as i32);
+            let b = &mut leaf_bbox[t];
+            b[0] = b[0].min(x);
+            b[1] = b[1].min(y);
+            b[2] = b[2].max(x);
+            b[3] = b[3].max(y);
+        }
+
         // --- Emit: root, ancestors (budgeted), then the final regions --------
         let root = n_tree - 1;
-        seg.layers.push(Layer {
-            paint: Paint::Solid(mean(&tree_sum[root], tree_area[root])),
-            mask: full_canvas(w, h),
-        });
+        let mut nodes_to_emit: Vec<usize> = Vec::with_capacity(2 * k);
         let mut budget = ANCESTOR_AREA_BUDGET * n;
         for node in (k..root).rev() {
             let node_area = tree_area[node] as usize;
@@ -445,17 +462,33 @@ impl WatershedHierarchy {
                 continue;
             }
             budget -= node_area;
-            seg.layers.push(Layer {
-                paint: Paint::Solid(mean(&tree_sum[node], tree_area[node])),
-                mask: node_mask(node, k, &tree_child, &leaf_start, &leaf_px, w),
-            });
+            nodes_to_emit.push(node);
         }
-        for t in 0..k {
-            seg.layers.push(Layer {
-                paint: Paint::Solid(mean(&tree_sum[t], tree_area[t])),
-                mask: node_mask(t, k, &tree_child, &leaf_start, &leaf_px, w),
-            });
+        let first_leaf_layer = (1 + nodes_to_emit.len()) as u32;
+        nodes_to_emit.extend(0..k);
+
+        let build_node = |&node: &usize| Layer {
+            paint: Paint::Solid(mean(&tree_sum[node], tree_area[node])),
+            mask: node_mask(node, k, &tree_child, &leaf_start, &leaf_px, &leaf_bbox, w),
+        };
+        #[cfg(not(target_arch = "wasm32"))]
+        let built: Vec<Layer> = nodes_to_emit.par_iter().map(build_node).collect();
+        #[cfg(target_arch = "wasm32")]
+        let built: Vec<Layer> = nodes_to_emit.iter().map(build_node).collect();
+
+        seg.layers.reserve(1 + built.len());
+        seg.layers.push(Layer {
+            paint: Paint::Solid(mean(&tree_sum[root], tree_area[root])),
+            mask: full_canvas(w, h),
+        });
+        seg.layers.extend(built);
+
+        if first_leaf_layer > 0 {
+            for id in &mut ids {
+                *id += first_leaf_layer;
+            }
         }
+        seg.flat_labels = Some(ids);
         seg
     }
 }
@@ -478,37 +511,34 @@ fn node_mask(
     tree_child: &[[u32; 2]],
     leaf_start: &[usize],
     leaf_px: &[u32],
+    leaf_bbox: &[[i32; 4]],
     w: usize,
 ) -> RegionMask {
-    // Collect the node's leaves.
+    // Collect the node's leaves and union their precomputed bounding boxes.
     let mut leaves: Vec<usize> = Vec::new();
+    let (mut x0, mut y0, mut x1, mut y1) = (i32::MAX, i32::MAX, i32::MIN, i32::MIN);
     let mut stack = vec![node];
     while let Some(t) = stack.pop() {
         if t < k {
             leaves.push(t);
+            let b = &leaf_bbox[t];
+            x0 = x0.min(b[0]);
+            y0 = y0.min(b[1]);
+            x1 = x1.max(b[2]);
+            y1 = y1.max(b[3]);
         } else {
             let [a, b] = tree_child[t - k];
             stack.push(a as usize);
             stack.push(b as usize);
         }
     }
-    // Bounding box over all member pixels.
-    let (mut x0, mut y0, mut x1, mut y1) = (i32::MAX, i32::MAX, i32::MIN, i32::MIN);
-    for &t in &leaves {
-        for &p in &leaf_px[leaf_start[t]..leaf_start[t + 1]] {
-            let (x, y) = ((p as usize % w) as i32, (p as usize / w) as i32);
-            x0 = x0.min(x);
-            y0 = y0.min(y);
-            x1 = x1.max(x);
-            y1 = y1.max(y);
-        }
-    }
     let (bw, bh) = ((x1 - x0 + 1) as usize, (y1 - y0 + 1) as usize);
     let mut image = BinaryImage::new_w_h(bw, bh);
+    let (ox, oy) = (x0 as usize, y0 as usize);
     for &t in &leaves {
         for &p in &leaf_px[leaf_start[t]..leaf_start[t + 1]] {
             let (x, y) = (p as usize % w, p as usize / w);
-            image.set_pixel(x - x0 as usize, y - y0 as usize, true);
+            image.set_pixel(x - ox, y - oy, true);
         }
     }
     RegionMask::new(image, PointI32 { x: x0, y: y0 })

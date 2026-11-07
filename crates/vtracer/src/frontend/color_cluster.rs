@@ -1,5 +1,5 @@
 use visioncortex::color_clusters::{
-    Clusters, KeyingAction, Runner, RunnerConfig, HIERARCHICAL_MAX,
+    ClusterIndex, Clusters, KeyingAction, Runner, RunnerConfig, HIERARCHICAL_MAX,
 };
 use visioncortex::{Color, ColorImage, PointI32};
 
@@ -9,6 +9,8 @@ use visioncortex::{Color, ColorImage, PointI32};
 use crate::error::Error;
 use crate::ir::{Layer, Paint, RegionMask, Segmentation};
 use crate::progress::{Ctx, Phase};
+#[cfg(not(target_arch = "wasm32"))]
+use rayon::prelude::*;
 
 use super::keying::{apply_key, find_unused_color, should_key_image};
 use super::Frontend;
@@ -55,16 +57,16 @@ impl ColorClusterFrontend {
 
         let width = img.width;
         let height = img.height;
-        let mut img = img.clone();
 
         // Transparency keying (stacked mode discards the keyed background).
-        let key_color = if should_key_image(&img) {
-            let key = find_unused_color(&img)?;
+        let (img, key_color) = if should_key_image(img) {
+            let key = find_unused_color(img)?;
+            let mut img = img.clone();
             apply_key(&mut img, key);
-            key
+            (img, key)
         } else {
             // All-zero is the sentinel understood by visioncortex as "no keying".
-            Color::default()
+            (img.clone(), Color::default())
         };
 
         let config = RunnerConfig {
@@ -88,9 +90,18 @@ impl ColorClusterFrontend {
     fn segmentation_from_clusters(clusters: &Clusters, width: usize, height: usize) -> Segmentation {
         let view = clusters.view();
         let mut seg = Segmentation::new(width as u32, height as u32);
+        let mut flat_labels = vec![u32::MAX; width * height];
         // `clusters_output` is top-to-bottom; reverse to get bottom-to-top
         // paint order for the layer stack.
-        for &cluster_index in view.clusters_output.iter().rev() {
+        let ordered: Vec<ClusterIndex> = view.clusters_output.iter().rev().copied().collect();
+        for (layer_idx, &cluster_index) in ordered.iter().enumerate() {
+            let cluster = view.get_cluster(cluster_index);
+            let lid = layer_idx as u32;
+            for &p in &cluster.indices {
+                flat_labels[p as usize] = lid;
+            }
+        }
+        let build_layer = |&cluster_index: &ClusterIndex| {
             let cluster = view.get_cluster(cluster_index);
             // Solid cluster masks (no holes punched): stacked mode relies on
             // paint-order overdraw for occlusion, matching 0.6.x. Punching
@@ -105,11 +116,20 @@ impl ColorClusterFrontend {
                     y: cluster.rect.top,
                 },
             );
-            seg.layers.push(Layer {
+            Layer {
                 paint: Paint::Solid(cluster.residue_color()),
                 mask,
-            });
+            }
+        };
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            seg.layers = ordered.par_iter().map(build_layer).collect();
         }
+        #[cfg(target_arch = "wasm32")]
+        {
+            seg.layers = ordered.iter().map(build_layer).collect();
+        }
+        seg.flat_labels = Some(flat_labels);
         seg
     }
 }

@@ -67,7 +67,7 @@ impl Default for FitParams {
 
 /// A curve fitter traces a region mask into closed vector outlines, one
 /// [`FittedGeom`] per contour (outer ring or hole).
-pub trait CurveFitter {
+pub trait CurveFitter: Send + Sync {
     fn fit_region(&self, mask: &RegionMask) -> Vec<FittedGeom>;
 }
 

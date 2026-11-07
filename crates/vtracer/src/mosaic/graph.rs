@@ -84,6 +84,8 @@ struct Extractor<'a> {
     map: &'a LabelMap,
     w: i32,
     h: i32,
+    /// Precomputed 4-bit edge mask per lattice corner. Size (W+1)(H+1).
+    corner_masks: Vec<u8>,
     /// NodeId per lattice corner, `u32::MAX` if not a node. Size (W+1)(H+1).
     node_at: Vec<NodeId>,
     /// Visited flags for undirected unit edges.
@@ -103,6 +105,7 @@ impl<'a> Extractor<'a> {
             map,
             w,
             h,
+            corner_masks: vec![0u8; cw * ch],
             node_at: vec![u32::MAX; cw * ch],
             visited_v: vec![false; (map.width as usize + 1) * map.height as usize],
             visited_h: vec![false; map.width as usize * (map.height as usize + 1)],
@@ -117,7 +120,8 @@ impl<'a> Extractor<'a> {
     }
 
     /// 4-bit edge mask (N,E,S,W) present at corner `(x,y)`.
-    fn edge_mask(&self, x: i32, y: i32) -> u8 {
+    #[inline]
+    fn compute_edge_mask(&self, x: i32, y: i32) -> u8 {
         let nw = self.map.label(x - 1, y - 1);
         let ne = self.map.label(x, y - 1);
         let sw = self.map.label(x - 1, y);
@@ -136,6 +140,11 @@ impl<'a> Extractor<'a> {
             m |= 1 << W;
         }
         m
+    }
+
+    #[inline]
+    fn edge_mask(&self, x: i32, y: i32) -> u8 {
+        self.corner_masks[self.corner_index(x, y)]
     }
 
     /// (left, right) regions flanking the directed edge leaving `(x,y)` in `d`.
@@ -185,16 +194,19 @@ impl<'a> Extractor<'a> {
 
     /// Pass A — classify corners and allocate node ids for degree ≥ 3.
     fn classify(&mut self) {
+        let cw = (self.w + 1) as usize;
         for y in 0..=self.h {
+            let row = y as usize * cw;
             for x in 0..=self.w {
-                let deg = self.edge_mask(x, y).count_ones();
-                if deg >= 3 {
+                let ci = row + x as usize;
+                let mask = self.compute_edge_mask(x, y);
+                self.corner_masks[ci] = mask;
+                if mask.count_ones() >= 3 {
                     let id = self.nodes.len() as NodeId;
                     self.nodes.push(Node {
                         corner: PointI32 { x, y },
                         out: [None; 4],
                     });
-                    let ci = self.corner_index(x, y);
                     self.node_at[ci] = id;
                 }
             }
@@ -291,6 +303,9 @@ impl<'a> Extractor<'a> {
         for y in 0..=self.h {
             for x in 0..=self.w {
                 let mask = self.edge_mask(x, y);
+                if mask == 0 {
+                    continue;
+                }
                 for d in 0..4u8 {
                     if (mask & (1 << d)) == 0 || self.is_visited(x, y, d) {
                         continue;

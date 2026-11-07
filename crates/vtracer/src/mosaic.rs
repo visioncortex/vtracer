@@ -53,8 +53,20 @@ impl LabelMap {
     pub fn from_segmentation(seg: &Segmentation) -> Self {
         let w = seg.width as usize;
         let h = seg.height as usize;
-        let mut labels = vec![OUTSIDE; w * h];
         let paints: Vec<Paint> = seg.layers.iter().map(|l| l.paint).collect();
+
+        if let Some(flat) = &seg.flat_labels {
+            if flat.len() == w * h {
+                return LabelMap {
+                    width: seg.width,
+                    height: seg.height,
+                    labels: flat.clone(),
+                    paints,
+                };
+            }
+        }
+
+        let mut labels = vec![OUTSIDE; w * h];
 
         for (i, layer) in seg.layers.iter().enumerate() {
             let mask = &layer.mask;
@@ -130,27 +142,33 @@ impl LabelMap {
             .collect();
 
         // Adjacency pairs (right/down scan covers 4-connectivity once).
-        let (w, h) = (self.width as i32, self.height as i32);
+        let w = self.width as usize;
+        let h = self.height as usize;
         let mut pairs: Vec<(RegionId, RegionId)> = Vec::new();
-        let mut seen = std::collections::HashSet::new();
         for y in 0..h {
+            let row = y * w;
             for x in 0..w {
-                let a = self.label(x, y);
+                let i = row + x;
+                let a = self.labels[i];
                 if a == OUTSIDE {
                     continue;
                 }
-                for (nx, ny) in [(x + 1, y), (x, y + 1)] {
-                    let b = self.label(nx, ny);
-                    if b == OUTSIDE || b == a {
-                        continue;
+                if x + 1 < w {
+                    let b = self.labels[i + 1];
+                    if b != OUTSIDE && b != a {
+                        pairs.push((a.min(b), a.max(b)));
                     }
-                    let key = (a.min(b), a.max(b));
-                    if seen.insert(key) {
-                        pairs.push(key);
+                }
+                if y + 1 < h {
+                    let b = self.labels[i + w];
+                    if b != OUTSIDE && b != a {
+                        pairs.push((a.min(b), a.max(b)));
                     }
                 }
             }
         }
+        pairs.sort_unstable();
+        pairs.dedup();
 
         let diff = |sa: &[u64; 3], aa: u64, sb: &[u64; 3], ab: u64| -> i32 {
             let mut d = 0i64;

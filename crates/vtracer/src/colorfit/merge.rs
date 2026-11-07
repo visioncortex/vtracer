@@ -32,6 +32,7 @@ impl ColorFitter for MergeAdjacent {
         if seg.layers.len() < 2 {
             return;
         }
+        seg.flat_labels = None;
         let mut merged: Vec<Layer> = Vec::with_capacity(seg.layers.len());
         let mut run: Vec<Layer> = Vec::new();
         for layer in seg.layers.drain(..) {

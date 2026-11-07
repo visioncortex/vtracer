@@ -20,7 +20,7 @@ pub use quantize::AutoQuantize;
 use crate::ir::Segmentation;
 
 /// A color fitter rewrites the paints of a segmentation in place.
-pub trait ColorFitter {
+pub trait ColorFitter: Send + Sync {
     fn fit(&self, seg: &mut Segmentation);
 }
 

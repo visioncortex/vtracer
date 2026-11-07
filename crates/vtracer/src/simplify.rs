@@ -19,7 +19,7 @@ use crate::fitter::FittedGeom;
 /// A geometry pass over one fitted contour, run between curve fitting and
 /// composition. Implementations must keep an open chain's endpoints exactly
 /// (mosaic junction nodes must not move) and keep a ring closed.
-pub trait CurvePass {
+pub trait CurvePass: Send + Sync {
     /// Transform an open chain; both endpoints are pinned.
     fn open(&self, geom: FittedGeom) -> FittedGeom;
     /// Transform a closed ring.
