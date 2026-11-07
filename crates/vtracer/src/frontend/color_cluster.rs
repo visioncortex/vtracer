@@ -262,18 +262,33 @@ impl FastRunner {
         let len = self.cluster_indices.len() as u32;
         let end = (self.iteration + batch_size).min(len);
 
+        let mut carry_left: Option<Color> = None;
+        let mut carry_upleft: Option<Color> = None;
+        let mut first_in_batch = true;
+
         for i in self.iteration..end {
             let x = i % w;
             let y = i / w;
 
             let c = self.get_pixel(i);
             let up = if y > 0 { Some(self.get_pixel(i - w)) } else { None };
-            let left = if x > 0 { Some(self.get_pixel(i - 1)) } else { None };
-            let upleft = if x > 0 && y > 0 {
-                Some(self.get_pixel(i - w - 1))
+            let (left, upleft) = if x == 0 {
+                (None, None)
+            } else if first_in_batch {
+                (
+                    Some(self.get_pixel(i - 1)),
+                    if y > 0 {
+                        Some(self.get_pixel(i - w - 1))
+                    } else {
+                        None
+                    },
+                )
             } else {
-                None
+                (carry_left, carry_upleft)
             };
+            first_in_batch = false;
+            carry_left = Some(c);
+            carry_upleft = up;
 
             let mut cluster_up = if y > 0 {
                 self.cluster_indices[(i - w) as usize]
@@ -375,7 +390,7 @@ impl FastRunner {
         self.stamp.resize(self.clusters.len(), 0);
     }
 
-    /// Collect sorted unique neighbour cluster indices of `index` in O(cluster_area)
+    /// Collect unique neighbour cluster indices of `index` in O(cluster_area)
     /// without allocating a `HashSet`.
     fn collect_neighbours(&mut self, index: u32, out: &mut Vec<u32>) {
         out.clear();
@@ -425,7 +440,6 @@ impl FastRunner {
                 }
             }
         }
-        out.sort_unstable();
     }
 
     /// Exact equivalent of `visioncortex::Cluster::perimeter` (`Shape::image_boundary_list(&self.to_image(parent)).len()`)
@@ -509,7 +523,6 @@ impl FastRunner {
         let is_last_area = self.area_buckets.is_empty();
         let can_discard_pixels = self.has_key;
         let mut raw_nbs: Vec<u32> = Vec::new();
-        let mut infos: Vec<(i32, u32)> = Vec::new(); // (diff, index)
 
         let mut bi = 0;
         while bi < bucket.len() {
@@ -523,26 +536,36 @@ impl FastRunner {
             let mycolor = self.clusters[index as usize].color();
             self.collect_neighbours(index, &mut raw_nbs);
 
-            infos.clear();
+            // Single O(k) min-scan for the closest neighbour, using the exact
+            // composite key `(diff * 65535 + other)` of visioncortex so even
+            // when `other >= 65535` on 24 MP images, tie-breaking is 100%
+            // byte-identical without needing `raw_nbs.sort_unstable()`!
+            let mut n_live = 0usize;
+            let mut best_key = i64::MAX;
+            let mut best_diff = i32::MAX;
+            let mut target = ZERO;
             for &other in &raw_nbs {
                 if self.clusters[other as usize].sum.counter > 0 {
+                    n_live += 1;
                     let d = color_diff(mycolor, self.clusters[other as usize].color());
-                    infos.push((d, other));
+                    let key = (d as i64) * 65535 + (other as i64);
+                    if key < best_key {
+                        best_key = key;
+                        best_diff = d;
+                        target = other;
+                    }
                 }
             }
 
-            if infos.is_empty() {
+            if n_live == 0 {
                 if is_last_area && bi == bucket.len() || can_discard_pixels {
                     self.clusters_output.push(index);
                 }
                 continue;
             }
 
-            infos.sort_unstable_by_key(|&(d, idx)| (d as i64) * 65535 + idx as i64);
-            let (best_diff, target) = infos[0];
-
             let deepen = best_diff > self.deepen_diff && self.patch_good(index);
-            let hollow = infos.len() <= self.hollow_neighbours;
+            let hollow = n_live <= self.hollow_neighbours;
 
             if deepen {
                 self.clusters_output.push(index);
