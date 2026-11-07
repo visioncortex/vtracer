@@ -1,16 +1,14 @@
-use visioncortex::{BinaryImage, Color, ColorImage, PointI32, SummedAreaTable};
+use visioncortex::{BinaryImage, Color, ColorImage, PointI32};
 
 use crate::error::Error;
 use crate::ir::{Layer, Paint, RegionMask, Segmentation};
 
 use super::Frontend;
 
-/// Grayscale intensity (0..=255) used by every thresholding method. Matches the
-/// metric `SummedAreaTable::from_color_image` sums, so fixed and adaptive
-/// thresholds agree on what "dark" means.
+/// Grayscale intensity (0..=255) used by every thresholding method.
 #[inline]
-fn intensity(c: Color) -> u32 {
-    (c.r as u32 + c.g as u32 + c.b as u32) / 3
+fn intensity_rgb(r: u8, g: u8, b: u8) -> u32 {
+    (r as u32 + g as u32 + b as u32) / 3
 }
 
 /// How the binary frontend separates foreground (dark) from background pixels.
@@ -85,22 +83,48 @@ impl BinaryFrontend {
     fn binarize(&self, img: &ColorImage) -> BinaryImage {
         match self.threshold {
             Threshold::Fixed(value) => {
+                let (w, h) = (img.width, img.height);
                 let value = value as u32;
-                img.to_binary_image(|c| intensity(c) < value)
+                let raw = &img.pixels;
+                let mut out = BinaryImage::new_w_h(w, h);
+                for i in 0..w * h {
+                    let b = i * 4;
+                    if intensity_rgb(raw[b], raw[b + 1], raw[b + 2]) < value {
+                        out.set_pixel_index(i, true);
+                    }
+                }
+                out
             }
             Threshold::Adaptive { window, t } => adaptive_bradley_roth(img, window, t),
         }
     }
 }
 
-/// Bradley–Roth adaptive thresholding via a summed-area table.
+/// Bradley–Roth adaptive thresholding via a zero-padded `(w+1)×(h+1)`
+/// summed-area table (`u64` to prevent overflow on >16 MP images).
 ///
 /// For each pixel, compare its intensity to the mean of a surrounding window:
 /// it is foreground when `value <= mean * (1 - t/100)`, i.e. more than `t`
 /// percent darker than its neighborhood.
 fn adaptive_bradley_roth(img: &ColorImage, window: u32, t: f64) -> BinaryImage {
     let (w, h) = (img.width, img.height);
-    let sat = SummedAreaTable::from_color_image(img);
+    let raw = &img.pixels;
+    let sw = w + 1;
+    let mut sat = vec![0u64; sw * (h + 1)];
+
+    // Build zero-padded SAT in one branchless pass over `raw`.
+    for y in 0..h {
+        let mut row_sum = 0u64;
+        let prev_row = y * sw;
+        let cur_row = (y + 1) * sw;
+        let px_row = y * w;
+        for x in 0..w {
+            let b = (px_row + x) * 4;
+            let v = intensity_rgb(raw[b], raw[b + 1], raw[b + 2]) as u64;
+            row_sum += v;
+            sat[cur_row + x + 1] = sat[prev_row + x + 1] + row_sum;
+        }
+    }
 
     // Window: 0 => auto (~1/8 of the shorter side, per the paper), min 1.
     let side = if window == 0 {
@@ -114,17 +138,24 @@ fn adaptive_bradley_roth(img: &ColorImage, window: u32, t: f64) -> BinaryImage {
     let mut out = BinaryImage::new_w_h(w, h);
     for y in 0..h {
         let y0 = y.saturating_sub(half);
-        let y1 = (y + half).min(h - 1);
+        let y1 = (y + half).min(h - 1) + 1;
+        let r0 = y0 * sw;
+        let r1 = y1 * sw;
+        let dy = y1 - y0;
+        let px_row = y * w;
         for x in 0..w {
             let x0 = x.saturating_sub(half);
-            let x1 = (x + half).min(w - 1);
+            let x1 = (x + half).min(w - 1) + 1;
 
-            let count = ((x1 - x0 + 1) * (y1 - y0 + 1)) as f64;
-            let sum = sat.get_region_sum_x_y_w_h(x0, y0, x1 - x0 + 1, y1 - y0 + 1) as f64;
-            let value = intensity(img.get_pixel(x, y)) as f64;
+            let count = ((x1 - x0) * dy) as f64;
+            let sum = (sat[r1 + x1] + sat[r0 + x0] - sat[r0 + x1] - sat[r1 + x0]) as f64;
+            let b = (px_row + x) * 4;
+            let value = intensity_rgb(raw[b], raw[b + 1], raw[b + 2]) as f64;
 
             // value <= mean * factor  ⇔  value * count <= sum * factor
-            out.set_pixel(x, y, value * count <= sum * factor);
+            if value * count <= sum * factor {
+                out.set_pixel_index(px_row + x, true);
+            }
         }
     }
     out

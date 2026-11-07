@@ -22,6 +22,11 @@ use crate::ir::Segmentation;
 /// A color fitter rewrites the paints of a segmentation in place.
 pub trait ColorFitter: Send + Sync {
     fn fit(&self, seg: &mut Segmentation);
+
+    /// Whether this fitter is guaranteed to leave `seg` untouched.
+    fn is_noop(&self) -> bool {
+        false
+    }
 }
 
 /// No-op fitter: paints keep the frontend's mean cluster colors.
@@ -30,6 +35,10 @@ pub struct Identity;
 
 impl ColorFitter for Identity {
     fn fit(&self, _seg: &mut Segmentation) {}
+
+    fn is_noop(&self) -> bool {
+        true
+    }
 }
 
 #[cfg(test)]

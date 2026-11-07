@@ -29,15 +29,12 @@ impl RegionMask {
 
     /// Number of foreground pixels.
     pub fn area(&self) -> usize {
-        let mut count = 0;
-        for y in 0..self.image.height {
-            for x in 0..self.image.width {
-                if self.image.get_pixel(x, y) {
-                    count += 1;
-                }
-            }
-        }
-        count
+        // `BitVec::blocks()` sums popcount in 32-bit words instead of bit-by-bit.
+        self.image
+            .pixels
+            .blocks()
+            .map(|b| b.count_ones() as usize)
+            .sum()
     }
 
     /// Combine two masks into one covering the union of their bounding boxes.

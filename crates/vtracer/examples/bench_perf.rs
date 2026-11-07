@@ -135,4 +135,30 @@ fn main() {
         );
     }
     println!("\n>>> GRAND TOTAL ACROSS ALL BENCHMARKS: {:.1} ms <<<", grand_total);
+
+    let (desc24, img24) = load_sample("angel-luciano-LATYeZyw88c-unsplash.jpg");
+    println!("\n=== 24 MP STRESS TEST: {desc24} ===");
+    bench_case(
+        "ColorCluster(Photo) + Stacked + Spline",
+        &img24,
+        &Config::from_preset(vtracer::Preset::Photo),
+    );
+    bench_case(
+        "ColorCluster(Default) + Cutout + Spline",
+        &img24,
+        &Config {
+            hierarchical: Hierarchical::Cutout,
+            ..Config::default()
+        },
+    );
+    bench_case(
+        "Watershed(128) + Cutout + Simplify(1.5)",
+        &img24,
+        &Config {
+            clustering: Clustering::Watershed,
+            hierarchical: Hierarchical::Cutout,
+            simplify: Some(1.5),
+            ..Config::default()
+        },
+    );
 }

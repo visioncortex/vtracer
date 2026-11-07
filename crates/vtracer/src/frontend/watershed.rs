@@ -41,8 +41,6 @@ use visioncortex::{BinaryImage, Color, ColorImage, PointI32};
 
 use crate::error::Error;
 use crate::ir::{Layer, Paint, RegionMask, Segmentation};
-#[cfg(not(target_arch = "wasm32"))]
-use rayon::prelude::*;
 
 use super::Frontend;
 
@@ -145,20 +143,29 @@ impl WatershedHierarchy {
         // Edge id encodes (pixel, direction): 2*p = right, 2*p+1 = down.
         // The per-bucket fill preserves edge-id order, so the sort is stable
         // and the whole construction is deterministic.
-        let px = |i: usize| img.get_pixel(i % w, i / w);
+        let raw = &img.pixels;
+        #[inline(always)]
+        fn px_raw(raw: &[u8], i: usize) -> Color {
+            let b = i * 4;
+            Color::new(raw[b], raw[b + 1], raw[b + 2])
+        }
         let mut counts = [0u32; 256];
         let mut weight_of = vec![0u8; 2 * n];
-        for i in 0..n {
-            let c = px(i);
-            if i % w + 1 < w {
-                let wgt = edge_weight(c, px(i + 1));
-                weight_of[2 * i] = wgt;
-                counts[wgt as usize] += 1;
-            }
-            if i / w + 1 < h {
-                let wgt = edge_weight(c, px(i + w));
-                weight_of[2 * i + 1] = wgt;
-                counts[wgt as usize] += 1;
+        for y in 0..h {
+            let row = y * w;
+            for x in 0..w {
+                let i = row + x;
+                let c = px_raw(raw, i);
+                if x + 1 < w {
+                    let wgt = edge_weight(c, px_raw(raw, i + 1));
+                    weight_of[2 * i] = wgt;
+                    counts[wgt as usize] += 1;
+                }
+                if y + 1 < h {
+                    let wgt = edge_weight(c, px_raw(raw, i + w));
+                    weight_of[2 * i + 1] = wgt;
+                    counts[wgt as usize] += 1;
+                }
             }
         }
         let n_edges = counts.iter().map(|&c| c as usize).sum::<usize>();
@@ -170,18 +177,22 @@ impl WatershedHierarchy {
         }
         let mut sorted = vec![0u32; n_edges];
         let mut fill = start;
-        for i in 0..n {
-            if i % w + 1 < w {
-                let e = 2 * i;
-                let b = weight_of[e] as usize;
-                sorted[fill[b]] = e as u32;
-                fill[b] += 1;
-            }
-            if i / w + 1 < h {
-                let e = 2 * i + 1;
-                let b = weight_of[e] as usize;
-                sorted[fill[b]] = e as u32;
-                fill[b] += 1;
+        for y in 0..h {
+            let row = y * w;
+            for x in 0..w {
+                let i = row + x;
+                if x + 1 < w {
+                    let e = 2 * i;
+                    let b = weight_of[e] as usize;
+                    sorted[fill[b]] = e as u32;
+                    fill[b] += 1;
+                }
+                if y + 1 < h {
+                    let e = 2 * i + 1;
+                    let b = weight_of[e] as usize;
+                    sorted[fill[b]] = e as u32;
+                    fill[b] += 1;
+                }
             }
         }
 
@@ -251,14 +262,32 @@ impl WatershedHierarchy {
         }
         // Persistence of a merge = the volume of the smaller side: the level
         // at which that basin stops existing on its own.
+        // Note: most internal nodes (flat runs inside regions) have persistence 0!
+        // Partitioning `0`s first in O(n) avoids sorting 70-90% of the array.
         let mut pers = vec![0u64; n - 1];
+        let mut zero_count = 0usize;
         for k in 0..n - 1 {
             let [c0, c1] = child[k];
-            pers[k] = corrected[c0 as usize].min(corrected[c1 as usize]);
+            let p = corrected[c0 as usize].min(corrected[c1 as usize]);
+            pers[k] = p;
+            if p == 0 {
+                zero_count += 1;
+            }
         }
 
-        let mut order: Vec<u32> = (0..(n - 1) as u32).collect();
-        order.sort_unstable_by_key(|&k| pers[k as usize]);
+        let mut order = vec![0u32; n - 1];
+        let mut z_pos = 0usize;
+        let mut nz_pos = zero_count;
+        for (k, &p) in pers.iter().enumerate() {
+            if p == 0 {
+                order[z_pos] = k as u32;
+                z_pos += 1;
+            } else {
+                order[nz_pos] = k as u32;
+                nz_pos += 1;
+            }
+        }
+        order[zero_count..].sort_unstable_by_key(|&k| pers[k as usize]);
 
         Ok(Self {
             width: w,
@@ -319,27 +348,40 @@ impl WatershedHierarchy {
         }
         let mut area = vec![0u64; kp];
         let mut sum = vec![[0u64; 3]; kp];
+        let raw = &img.pixels;
         for i in 0..n {
             let a = pre[i] as usize;
-            let c = img.get_pixel(i % w, i / w);
+            let b = i * 4;
             area[a] += 1;
-            sum[a][0] += c.r as u64;
-            sum[a][1] += c.g as u64;
-            sum[a][2] += c.b as u64;
+            sum[a][0] += raw[b] as u64;
+            sum[a][1] += raw[b + 1] as u64;
+            sum[a][2] += raw[b + 2] as u64;
         }
 
-        // --- Boundary snap, then boundary adjacency ---------------------------
+        // --- boundary adjacency (collected during snap's final state) --------
+        // After snapping, only adjacent pairs of distinct labels can participate
+        // in `absorb_small`, and the same region adjacencies (weighted by the
+        // smallest MST persistence connecting them) build the merge tree above
+        // the cut without re-scanning all `n - 1` MST edges!
         snap_boundaries(img, w, h, &mut pre, &mut area, &mut sum);
         let mut pairs: Vec<(u32, u32)> = Vec::new();
-        for i in 0..n {
-            let a = pre[i];
-            if i % w + 1 < w && pre[i + 1] != a {
-                let b = pre[i + 1];
-                pairs.push((a.min(b), a.max(b)));
-            }
-            if i / w + 1 < h && pre[i + w] != a {
-                let b = pre[i + w];
-                pairs.push((a.min(b), a.max(b)));
+        for y in 0..h {
+            let row = y * w;
+            for x in 0..w {
+                let i = row + x;
+                let a = pre[i];
+                if x + 1 < w {
+                    let b = pre[i + 1];
+                    if b != a {
+                        pairs.push((a.min(b), a.max(b)));
+                    }
+                }
+                if y + 1 < h {
+                    let b = pre[i + w];
+                    if b != a {
+                        pairs.push((a.min(b), a.max(b)));
+                    }
+                }
             }
         }
         pairs.sort_unstable();
@@ -399,6 +441,7 @@ impl WatershedHierarchy {
         let mut uf2 = Uf::new(k);
         let mut node_rep: Vec<u32> = (0..k as u32).collect();
         let mut next = k as u32;
+        let mut merges_rem = k - 1;
         for &e in &self.order {
             let (p, q) = self.mst[e as usize];
             let (lp, lq) = (ids[p as usize], ids[q as usize]);
@@ -420,10 +463,14 @@ impl WatershedHierarchy {
             uf2.link(a, b);
             node_rep[a as usize] = next;
             next += 1;
+            merges_rem -= 1;
+            if merges_rem == 0 {
+                break;
+            }
         }
         debug_assert_eq!(next as usize, n_tree);
 
-        // Per-leaf pixel lists, for painting ancestor masks.
+        // Per-leaf pixel lists and bounding boxes in a single O(n) pass.
         let mut leaf_len = vec![0u32; k];
         for &id in &ids {
             leaf_len[id as usize] += 1;
@@ -434,22 +481,30 @@ impl WatershedHierarchy {
         }
         let mut leaf_px = vec![0u32; n];
         let mut fill = leaf_start.clone();
-        for (i, &id) in ids.iter().enumerate() {
-            leaf_px[fill[id as usize]] = i as u32;
-            fill[id as usize] += 1;
-        }
-
-        // Bounding box per leaf region, computed once in O(n) so ancestor
-        // bboxes can be derived in O(leaves) without scanning pixels twice.
         let mut leaf_bbox = vec![[i32::MAX, i32::MAX, i32::MIN, i32::MIN]; k];
-        for i in 0..n {
-            let t = ids[i] as usize;
-            let (x, y) = ((i % w) as i32, (i / w) as i32);
-            let b = &mut leaf_bbox[t];
-            b[0] = b[0].min(x);
-            b[1] = b[1].min(y);
-            b[2] = b[2].max(x);
-            b[3] = b[3].max(y);
+        for y in 0..h {
+            let row = y * w;
+            let yi = y as i32;
+            for x in 0..w {
+                let i = row + x;
+                let t = ids[i] as usize;
+                leaf_px[fill[t]] = i as u32;
+                fill[t] += 1;
+                let xi = x as i32;
+                let b = &mut leaf_bbox[t];
+                if xi < b[0] {
+                    b[0] = xi;
+                }
+                if yi < b[1] {
+                    b[1] = yi;
+                }
+                if xi > b[2] {
+                    b[2] = xi;
+                }
+                if yi > b[3] {
+                    b[3] = yi;
+                }
+            }
         }
 
         // --- Emit: root, ancestors (budgeted), then the final regions --------
@@ -471,9 +526,6 @@ impl WatershedHierarchy {
             paint: Paint::Solid(mean(&tree_sum[node], tree_area[node])),
             mask: node_mask(node, k, &tree_child, &leaf_start, &leaf_px, &leaf_bbox, w),
         };
-        #[cfg(not(target_arch = "wasm32"))]
-        let built: Vec<Layer> = nodes_to_emit.par_iter().map(build_node).collect();
-        #[cfg(target_arch = "wasm32")]
         let built: Vec<Layer> = nodes_to_emit.iter().map(build_node).collect();
 
         seg.layers.reserve(1 + built.len());
@@ -494,12 +546,11 @@ impl WatershedHierarchy {
 }
 
 fn full_canvas(w: usize, h: usize) -> RegionMask {
-    let mut image = BinaryImage::new_w_h(w, h);
-    for y in 0..h {
-        for x in 0..w {
-            image.set_pixel(x, y, true);
-        }
-    }
+    let image = BinaryImage {
+        pixels: visioncortex::BitVec::from_elem(w * h, true),
+        width: w,
+        height: h,
+    };
     RegionMask::new(image, PointI32 { x: 0, y: 0 })
 }
 
@@ -597,24 +648,17 @@ fn snap_boundaries(
         return;
     }
     // Where a boundary pixel should move, if anywhere: strict improvement
+    let raw = &img.pixels;
+    // Where a boundary pixel should move, if anywhere: strict improvement
     // only, gated on the mixture test; the first of the fixed neighbour
     // order wins ties, keeping the sweep deterministic.
-    let snap_target = |i: usize, labels: &[u32], mean: &[[i32; 3]]| -> Option<u32> {
+    let snap_target = |i: usize, nb: [usize; 4], labels: &[u32], mean: &[[i32; 3]]| -> Option<u32> {
         let a = labels[i] as usize;
-        // Neighbour labels, replicated at the canvas border (a no-op
-        // candidate) so the hot path below stays branch-light.
-        let (x, y) = (i % w, i / w);
-        let nb = [
-            labels[if x > 0 { i - 1 } else { i }] as usize,
-            labels[if x + 1 < w { i + 1 } else { i }] as usize,
-            labels[if y > 0 { i - w } else { i }] as usize,
-            labels[if y + 1 < h { i + w } else { i }] as usize,
-        ];
         if nb == [a; 4] {
             return None; // interior pixel — the overwhelmingly common case
         }
-        let c = img.get_pixel(x, y);
-        let cv = [c.r as i32, c.g as i32, c.b as i32];
+        let pb = i * 4;
+        let cv = [raw[pb] as i32, raw[pb + 1] as i32, raw[pb + 2] as i32];
         let dist = |m: &[i32; 3]| {
             (cv[0] - m[0]).abs() + (cv[1] - m[1]).abs() + (cv[2] - m[2]).abs()
         };
@@ -641,6 +685,17 @@ fn snap_boundaries(
         (best.1 != a).then_some(best.1 as u32)
     };
 
+    let snap_target_border = |i: usize, labels: &[u32], mean: &[[i32; 3]]| -> Option<u32> {
+        let (x, y) = (i % w, i / w);
+        let nb = [
+            labels[if x > 0 { i - 1 } else { i }] as usize,
+            labels[if x + 1 < w { i + 1 } else { i }] as usize,
+            labels[if y > 0 { i - w } else { i }] as usize,
+            labels[if y + 1 < h { i + w } else { i }] as usize,
+        ];
+        snap_target(i, nb, labels, mean)
+    };
+
     let mut mean = vec![[0i32; 3]; k];
     let mut flips: Vec<(u32, u32)> = Vec::new(); // (pixel, new label)
     let mut front: Vec<u32> = Vec::new(); // pixels to rescan; sweep 0 scans all
@@ -659,14 +714,15 @@ fn snap_boundaries(
             for y in 1..h.saturating_sub(1) {
                 for i in y * w + 1..y * w + w.saturating_sub(1) {
                     let a = labels[i];
-                    if labels[i - 1] == a
-                        && labels[i + 1] == a
-                        && labels[i - w] == a
-                        && labels[i + w] == a
-                    {
+                    let l_left = labels[i - 1];
+                    let l_right = labels[i + 1];
+                    let l_up = labels[i - w];
+                    let l_down = labels[i + w];
+                    if l_left == a && l_right == a && l_up == a && l_down == a {
                         continue;
                     }
-                    if let Some(b) = snap_target(i, labels, &mean) {
+                    let nb = [l_left as usize, l_right as usize, l_up as usize, l_down as usize];
+                    if let Some(b) = snap_target(i, nb, labels, &mean) {
                         flips.push((i as u32, b));
                     }
                 }
@@ -677,13 +733,13 @@ fn snap_boundaries(
                 .chain((1..h1).map(|y| y * w + w - 1).filter(|_| w > 1))
                 .chain(if h > 1 { h1 * w..n } else { 0..0 });
             for i in rim {
-                if let Some(b) = snap_target(i, labels, &mean) {
+                if let Some(b) = snap_target_border(i, labels, &mean) {
                     flips.push((i as u32, b));
                 }
             }
         } else {
             for &i in &front {
-                if let Some(b) = snap_target(i as usize, labels, &mean) {
+                if let Some(b) = snap_target_border(i as usize, labels, &mean) {
                     flips.push((i, b));
                 }
             }
@@ -697,11 +753,11 @@ fn snap_boundaries(
             if area[a] <= 1 {
                 continue; // never empty a region
             }
-            let c = img.get_pixel(i % w, i / w);
+            let pb = i * 4;
             labels[i] = b as u32;
             area[a] -= 1;
             area[b] += 1;
-            for (ch, v) in [c.r, c.g, c.b].into_iter().enumerate() {
+            for (ch, v) in [raw[pb], raw[pb + 1], raw[pb + 2]].into_iter().enumerate() {
                 sum[a][ch] -= v as u64;
                 sum[b][ch] += v as u64;
             }

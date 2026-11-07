@@ -72,44 +72,47 @@ impl SimplifyCurves {
         if self.tolerance <= 0.0 || chain.len() < 2 {
             return chain;
         }
+        let cos_threshold = self.corner_threshold.cos();
 
         if closed {
             // The re-fit pins run endpoints, so a ring needs a seam. Put it at
-            // the sharpest junction (wraparound included): a corner the fit
-            // would keep anyway, or the least-smooth anchor when the ring has
-            // none, so any residual tangent break lands where it hides best.
-            let angles: Vec<f64> = (0..chain.len())
-                .map(|k| {
-                    let prev = if k == 0 { chain.len() - 1 } else { k - 1 };
-                    break_angle(&chain[prev], &chain[k])
-                })
-                .collect();
-            let seam = angles
-                .iter()
-                .enumerate()
-                .max_by(|a, b| a.1.partial_cmp(b.1).unwrap_or(std::cmp::Ordering::Equal))
-                .map(|(i, _)| i)
-                .unwrap_or(0);
-            chain.rotate_left(seam);
+            // the sharpest junction (wraparound included): smallest cosine of
+            // turn angle corresponds to largest angle in [0, PI].
+            let mut seam = 0usize;
+            let mut min_cos = f64::INFINITY;
+            for k in 0..chain.len() {
+                let prev = if k == 0 { chain.len() - 1 } else { k - 1 };
+                let c = break_cos(&chain[prev], &chain[k]);
+                if c < min_cos {
+                    min_cos = c;
+                    seam = k;
+                }
+            }
+            if seam > 0 {
+                chain.rotate_left(seam);
+            }
         }
 
         // Cut into smooth runs at corner anchors (chain ends are always cuts).
-        let mut cuts: Vec<usize> = vec![0];
+        // `angle >= corner_threshold` ⇔ `cos(angle) <= cos(corner_threshold)` on [0, PI].
+        let mut cuts: Vec<usize> = Vec::with_capacity(chain.len() + 1);
+        cuts.push(0);
         for i in 1..chain.len() {
-            if break_angle(&chain[i - 1], &chain[i]) >= self.corner_threshold {
+            if break_cos(&chain[i - 1], &chain[i]) <= cos_threshold {
                 cuts.push(i);
             }
         }
         cuts.push(chain.len());
 
         let mut out: Vec<[PointF64; 4]> = Vec::with_capacity(chain.len());
+        let mut samples_buf: Vec<Coord2> = Vec::new();
         for w in cuts.windows(2) {
             let run = &chain[w[0]..w[1]];
             if run.len() < 2 {
                 out.extend_from_slice(run);
                 continue;
             }
-            match refit_run(run, self.tolerance) {
+            match refit_run(run, self.tolerance, &mut samples_buf) {
                 Some(refit) if refit.len() < run.len() => out.extend(refit),
                 _ => out.extend_from_slice(run),
             }
@@ -123,16 +126,17 @@ impl SimplifyCurves {
 /// The recursion splits at sample points, so consecutive fitted cubics share
 /// endpoints exactly; the outer endpoints are pinned to the run's, bit for
 /// bit. Returns `None` for degenerate (point-like) runs.
-fn refit_run(run: &[[PointF64; 4]], tolerance: f64) -> Option<Vec<[PointF64; 4]>> {
+fn refit_run(
+    run: &[[PointF64; 4]],
+    tolerance: f64,
+    samples: &mut Vec<Coord2>,
+) -> Option<Vec<[PointF64; 4]>> {
     let start_tan = tangent_out(run.first()?)?;
     let end_tan = tangent_in(run.last()?)?;
-    let samples: Vec<Coord2> = sample_run(run, tolerance)
-        .into_iter()
-        .map(|p| Coord2(p.x, p.y))
-        .collect();
+    sample_run_into(run, tolerance, samples);
 
     let fitted: Vec<Curve<Coord2>> = fit_curve_cubic(
-        &samples,
+        samples,
         &Coord2(start_tan.0, start_tan.1),
         &Coord2(-end_tan.0, -end_tan.1),
         tolerance,
@@ -176,12 +180,13 @@ fn tangent_out(c: &[PointF64; 4]) -> Option<(f64, f64)> {
     dir(c[0], c[1]).or_else(|| dir(c[0], c[2])).or_else(|| dir(c[0], c[3]))
 }
 
-/// Turn angle at the junction of two consecutive cubics. A fully degenerate
-/// (point-like) neighbour counts as a corner so it is never smoothed across.
-fn break_angle(prev: &[PointF64; 4], next: &[PointF64; 4]) -> f64 {
+/// Cosine of the turn angle at the junction of two consecutive cubics
+/// (`1.0` = straight, `-1.0` = 180° turn). Avoids `acos()` in the inner loop.
+#[inline]
+fn break_cos(prev: &[PointF64; 4], next: &[PointF64; 4]) -> f64 {
     match (tangent_in(prev), tangent_out(next)) {
-        (Some(a), Some(b)) => (a.0 * b.0 + a.1 * b.1).clamp(-1.0, 1.0).acos(),
-        _ => std::f64::consts::PI,
+        (Some(a), Some(b)) => (a.0 * b.0 + a.1 * b.1).clamp(-1.0, 1.0),
+        _ => -1.0,
     }
 }
 
@@ -194,22 +199,21 @@ fn cubic_at(c: &[PointF64; 4], t: f64) -> PointF64 {
     }
 }
 
-/// Sample a run of cubics at roughly 1 px spacing (by control-polygon length),
-/// tighter when the tolerance is sub-pixel — the fit measures its error at
-/// the samples, so their spacing is the fidelity guard. The first and last
-/// samples are the run's endpoints, exactly: `cubic_at` with `t = 1` returns
-/// `c[3]` bit for bit.
-fn sample_run(run: &[[PointF64; 4]], tolerance: f64) -> Vec<PointF64> {
+/// Sample a run of cubics at roughly 1 px spacing (by control-polygon length)
+/// directly into `samples` as `Coord2` without intermediate `Vec<PointF64>` allocations.
+fn sample_run_into(run: &[[PointF64; 4]], tolerance: f64, samples: &mut Vec<Coord2>) {
     let spacing = tolerance.clamp(0.25, 1.0);
-    let mut samples = vec![run[0][0]];
+    samples.clear();
+    samples.push(Coord2(run[0][0].x, run[0][0].y));
     for c in run {
         let len = dist(c[0], c[1]) + dist(c[1], c[2]) + dist(c[2], c[3]);
         let n = ((len / spacing).ceil() as usize).clamp(1, 512);
+        let inv_n = 1.0 / n as f64;
         for k in 1..=n {
-            samples.push(cubic_at(c, k as f64 / n as f64));
+            let p = cubic_at(c, k as f64 * inv_n);
+            samples.push(Coord2(p.x, p.y));
         }
     }
-    samples
 }
 
 #[cfg(test)]
