@@ -2,6 +2,11 @@
 
 All notable changes to the VTracer 2 engine will be documented in this file.
 
+## 2.0.11 - 2026-11-08
+
+* Support running on Linux.
+* Better multi-threaded processing (runs faster) on CPU.
+
 ## 2.0.10 - 2026-10-16
 
 * Fixed Metal issue on macOS.
