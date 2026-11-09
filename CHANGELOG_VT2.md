@@ -2,6 +2,10 @@
 
 All notable changes to the VTracer 2 engine will be documented in this file.
 
+## 2.0.12 - 2026-11-09
+
+* Support vulkan on Linux for GPU acceleration. If you run into errors, please uncheck "Use GPU acceleration" under Settings > Tracing.
+
 ## 2.0.11 - 2026-11-08
 
 * Support running on Linux.
