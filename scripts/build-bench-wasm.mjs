@@ -146,7 +146,7 @@ function main() {
     browserGlueSha256: fileHash(join(browser, 'pkg', 'vtracer1.js')),
     wasmPackVersion: capture(wasmPack, ['--version'], output, env),
     wasmOpt: (() => {
-      const binary = (env.PATH ?? '').split(delimiter)
+      const binary = (env.PATH ?? env.Path ?? '').split(delimiter)
         .map((directory) => join(directory, process.platform === 'win32' ? 'wasm-opt.exe' : 'wasm-opt'))
         .find((path) => existsSync(path))
       return binary
