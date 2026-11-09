@@ -284,6 +284,33 @@ provenance. Memory observations are not peak WASM memory, and five-run p95 is
 the largest sample. Results from the limited local corpus are exploratory, not
 a general performance claim.
 
+### Comparing native CLI performance
+
+The paired native benchmark measures the release CLI end-to-end for the same
+options and inputs on two builds. It includes process startup, PNG decoding,
+tracing, SVG serialization, and writing the SVG. The baseline and optimized
+samples alternate order per image to reduce systematic timing drift. Build the
+two binaries from clean, pinned checkouts, then run:
+
+```powershell
+npm ci --prefix scripts
+cargo build --release --manifest-path C:\path\to\vtracer-baseline\Cargo.toml -p vtracer-cli
+Copy-Item C:\path\to\vtracer-baseline\target\release\vtracer.exe C:\path\to\baseline-vtracer.exe
+cargo build --release --manifest-path C:\path\to\vtracer-optimized\Cargo.toml -p vtracer-cli
+Copy-Item C:\path\to\vtracer-optimized\target\release\vtracer.exe C:\path\to\optimized-vtracer.exe
+node scripts\bench-native.mjs --baseline C:\path\to\baseline-vtracer.exe `
+  --baseline-commit <commit> --optimized C:\path\to\optimized-vtracer.exe `
+  --optimized-commit <commit> --assets C:\path\to\assets `
+  --output bench-results\native.json --warmup 3 --runs 7
+```
+
+Use a fresh output path and the same image directory for each comparison. The
+default corpus is every PNG directly under `--assets`; `--images` selects a
+comma-separated subset. The JSON records individual samples, median and p95,
+input and binary hashes, output SVG hashes, and a geometric-mean speedup across
+images. Output hash equality is a byte-level check, not a substitute for visual
+fidelity metrics.
+
 ## Citations
 
 VTracer has since been cited by a few academic papers in computer graphics / vision research. Please kindly let us know if you have cited our work:
