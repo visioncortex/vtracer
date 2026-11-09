@@ -2,6 +2,19 @@
 
 All notable changes to the VTracer desktop app will be documented in this file.
 
+## 1.0.0-alpha.4 - Build 247 - 2026-11-08
+
+### Added
+
+* (Linux) VTracer 2 now runs on Linux x86_64, shipped as .deb and .rpm. (.appimage does not support VTracer 2 yet)
+* Help > Diagnostics, to copy into a support request.
+
+### Fixed
+
+* Paste an image into the Gen AI tab.
+* (Linux) Undo, Redo and the Edit menu, and pasting images with Ctrl+V.
+* An activation on an ended trial now shows as Expired.
+
 ## 1.0.0-alpha.4 - Build 238 - 2026-10-12
 
 ### Fixed
