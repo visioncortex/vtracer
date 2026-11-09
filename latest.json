@@ -1,7 +1,7 @@
 {
   "version": "1.0.0-alpha.4.app.257",
   "notes": "VTracer 1.0.0-alpha.4 - Build 257 (526235ef)",
-  "pub_date": "2026-11-09T23:33:22.270Z",
+  "pub_date": "2026-11-09T23:34:09.181Z",
   "platforms": {
     "macos-universal": {
       "url": "https://github.com/visioncortex/vtracer/releases/download/1.0.0-alpha.4/VTracer_1.0.0-alpha.4_universal.app.tar.gz",
@@ -10,6 +10,18 @@
     "windows-x86_64": {
       "url": "https://github.com/visioncortex/vtracer/releases/download/1.0.0-alpha.4/VTracer_1.0.0-alpha.4_x64-setup.exe",
       "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSUENOK1VhM1NxTVMySjVuMEZOVTg0Z3VkcUNZcEZBUDFRZVcxbWVjbm1oVm8zN2dYbDJEM0xPMlNUNmJzRFdISnF2cFRpRUIrOXBRbnFnV2JTclJBQnpFTEp0VVQvbVFnPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzk0MjY3MTkyCWZpbGU6VlRyYWNlcl8xLjAuMC1hbHBoYS40LmFwcC4yNTdfeDY0LXNldHVwLmV4ZQpGUnpnbjRUMnN3bERjUnpQYTB1WUs0VHg1dXNJQ1A5MFpQNU9BVGw1anNLWG1jb3lmZEVYaDBrd3Y2Q3UxcVRKbFJwZjJ2ekEyYXYwMmg0aVNCRXJEZz09Cg=="
+    },
+    "linux-x86_64": {
+      "url": "https://github.com/visioncortex/vtracer/releases/download/1.0.0-alpha.4/VTracer_1.0.0-alpha.4_x64.AppImage",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSUENOK1VhM1NxTVRhWjI5dkdNMi9GZU9tWTRRTGtDZ1ZJTEpScGIwRTlmZytsYzVoMUdvM2xWRVJOWXYyTEVGVkZjcXlTTk5sdElSbVpBRlVrMTN6MTVjMFVGOFQ5Q2dvPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzk0MjY3MjE1CWZpbGU6dnRyYWNlcl8xLjAuMC1hbHBoYS40LmFwcC4yNTdfYW1kNjQuQXBwSW1hZ2UKaGJ0VFBrOGdUUUZwcUNrZkhLWk5JclExRi83T3ZFZ3dLT0JuL3dUUG5jaUtTdVRKSnBaa2NVUnkvSzRzMlRQTXFzdkxTMExYSi96cWRudkVUUlMrQ2c9PQo="
+    },
+    "linux-x86_64-deb": {
+      "url": "https://github.com/visioncortex/vtracer/releases/download/1.0.0-alpha.4/VTracer_1.0.0-alpha.4_amd64.deb",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSUENOK1VhM1NxTWFvcTFXeittNFdBbHUrdjB0cTBCYnVvT05ab0tHZzRxRENqVGgwUHdselhnQ1JkTVpJQnJCWGRwVmg5YTdlaHM4YnZHM1I0V1UzSjliKzZuV0lYa3dBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzk0MjY3MjE2CWZpbGU6dnRyYWNlcl8xLjAuMC1hbHBoYS40LmFwcC4yNTdfYW1kNjQuZGViCmlFYU55RVFvQmMwOGNzdEQzZThmRUxtWGw2dG96OFJ4NFNQUFlUR3ZOYWZMVWUyTWNEbWtienVUVkNEQUNrbFo3YkovMXhCSktaZkVHcmVsZFZGQkRRPT0K"
+    },
+    "linux-x86_64-rpm": {
+      "url": "https://github.com/visioncortex/vtracer/releases/download/1.0.0-alpha.4/VTracer_1.0.0-alpha.4_x86_64.rpm",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSUENOK1VhM1NxTWJNYWRPeVJMMnhhSTFiSG0yOWo3ZUEwL0hKRnJ3bWU0ZDRIRnlmcTZ0cGZ6N1RZMFYwUmNDbEFHc3Npd29KM2hvTFRtYVdkUmFUOERGM1YvRHBtVEFJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzk0MjY3MjE3CWZpbGU6dnRyYWNlci0xLjAuMC1hbHBoYS40LmFwcC4yNTctMS54ODZfNjQucnBtCnM3cEJ2MllFTmhpR2FDZEZuRmYrRjR6R1doSmFDMmZoL0NQcjVZQ2Nndjc4NldLMHByT1RPY2tLS3ZTeTFOZkoyVU5vL2xkTlhqazFFYURKT3cwWkR3PT0K"
     }
   }
 }
