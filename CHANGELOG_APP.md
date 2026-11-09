@@ -2,6 +2,13 @@
 
 All notable changes to the VTracer desktop app will be documented in this file.
 
+## 1.0.0-alpha.4 - Build 253 - 2026-11-09
+
+### Added
+
+* Settings > Tracing > VTracer 2 Engine: "Use GPU acceleration where available". Turn it off to run the engine on CPU only.
+* (Linux) Gen AI local models can now be installed. Requires Vulkan support.
+
 ## 1.0.0-alpha.4 - Build 247 - 2026-11-08
 
 ### Added
