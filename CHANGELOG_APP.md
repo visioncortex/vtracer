@@ -2,6 +2,20 @@
 
 All notable changes to the VTracer desktop app will be documented in this file.
 
+## 1.0.0-alpha.4 - Build 257 - 2026-11-10
+
+### Changed
+
+* (Linux) The package is now named `vtracer`, and replaces the old `v-tracer` package on update.
+
+### Fixed
+
+* A long error message can be expanded with "More", and its text can be selected and copied.
+
+### Fixed (Gen AI)
+
+* (Windows/Linux) A round that runs out of GPU memory is retried with the model in system memory, instead of failing.
+
 ## 1.0.0-alpha.4 - Build 253 - 2026-11-09
 
 ### Added
