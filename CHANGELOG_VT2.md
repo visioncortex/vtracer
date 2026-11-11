@@ -2,6 +2,11 @@
 
 All notable changes to the VTracer 2 engine will be documented in this file.
 
+## 2.0.14 - 2026-11-11
+
+* Support vulkan on Windows for GPU acceleration.
+* Engine performance improvement. Now uses 50% less memory and runs up to 2x faster on integrated GPUs.
+
 ## 2.0.12 - 2026-11-09
 
 * Support vulkan on Linux for GPU acceleration. If you run into errors, please uncheck "Use GPU acceleration" under Settings > Tracing.
@@ -17,7 +22,7 @@ All notable changes to the VTracer 2 engine will be documented in this file.
 
 ## 2.0.9 - 2026-10-09
 
-* Engine improvement. Improved ink fragment merging. Better mesh gradient output.
+* Tracing quality improvement. Improved ink fragment merging. Better mesh gradient output.
 
 ## 2.0.8 - 2026-10-02
 
@@ -28,15 +33,15 @@ All notable changes to the VTracer 2 engine will be documented in this file.
 Requires Build 181+ onwards
 
 * Pencil sketch clean up model
-* Engine improvement on background separation
+* Tracing quality improvement on background separation
 
 ## 2.0.5 - 2026-09-20
 
-* Engine improvement. Traces inked graphics better
+* Tracing quality improvement. Traces inked graphics better
 
 ## 2.0.4 - 2026-09-07
 
-* Engine improvement. Traces small circles better
+* Tracing quality improvement. Traces small circles better
 * Gradient step now allow app to pick optimal value
 
 ## 2.0.3 - 2026-08-29
