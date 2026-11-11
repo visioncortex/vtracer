@@ -2,6 +2,13 @@
 
 All notable changes to the VTracer desktop app will be documented in this file.
 
+## 1.0.0-alpha.4 - Build 261 - 2026-11-11
+
+### Fixed
+
+* VTracer 2 now shows Rendering while a very large image (over 16 megapixels) is traced, instead of looking stalled.
+* (Windows) Installing a VTracer engine no longer fails when antivirus software is scanning the download.
+
 ## 1.0.0-alpha.4 - Build 257 - 2026-11-10
 
 ### Changed
