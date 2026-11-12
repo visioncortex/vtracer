@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## Unreleased
+
+### Changed
+
+* `vtracer-bench` 1.0.0-alpha.7: the patch axis reads a **grayscale** miss mask instead of a binary one. A pixel weighs 0 up to an RGB distance of `--thresh` (24) and 1 from the new `--thresh-high` (64) on, linear in between; the opening is the grayscale one and a cluster's mass is the sum of its weights, in integer math. A region that misses by a hair now counts by a hair — a trace whose outlines came out a shade off-black used to have every outline pixel flagged, joined into one network and the score zeroed. Scores of traces that were not near zero rise a little; `fidelity_ramp(orig, cand, t, t)` (CLI `--thresh-high` equal to `--thresh`) is the old binary gate. `fidelity()` keeps its signature; the returned mask is now grayscale. The crate no longer depends on `visioncortex`.
+
 ## 1.0.0-alpha.4 - 2026-08-29
 
 ### Changed

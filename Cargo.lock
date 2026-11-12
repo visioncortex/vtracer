@@ -948,12 +948,11 @@ dependencies = [
 
 [[package]]
 name = "vtracer-bench"
-version = "1.0.0-alpha.6"
+version = "1.0.0-alpha.7"
 dependencies = [
  "dssim-core",
  "image",
  "rgb",
- "visioncortex",
 ]
 
 [[package]]

@@ -1,21 +1,22 @@
 //! Blind fidelity benchmark for raster-to-vector tracers.
 //!
-//!   vtracer-bench <original> <candidate> [--thresh N] [--mask out.png]
+//!   vtracer-bench <original> <candidate> [--thresh N] [--thresh-high N] [--mask out.png]
 //!
 //! Both arguments are rasters of identical dimensions — rendering a vector
 //! reconstruction to pixels is the caller's responsibility. Prints the raw
 //! metrics, their [0,1] subscores, the composite fidelity, and a
 //! machine-readable csv line.
 
-use vtracer_bench::{DEFAULT_THRESH, fidelity};
+use vtracer_bench::{DEFAULT_THRESH_HIGH, DEFAULT_THRESH, fidelity_ramp};
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     if args.len() < 3 {
-        eprintln!("usage: vtracer-bench <original> <candidate> [--thresh N] [--mask out.png]");
+        eprintln!("usage: vtracer-bench <original> <candidate> [--thresh N] [--thresh-high N] [--mask out.png]");
         std::process::exit(2);
     }
     let mut thresh = DEFAULT_THRESH;
+    let mut thresh_high: Option<f64> = None;
     let mut mask_out: Option<String> = None;
     let mut i = 3;
     while i < args.len() {
@@ -23,6 +24,10 @@ fn main() {
             "--thresh" => {
                 i += 1;
                 thresh = args[i].parse().expect("--thresh N");
+            }
+            "--thresh-high" => {
+                i += 1;
+                thresh_high = Some(args[i].parse().expect("--thresh-high N"));
             }
             "--mask" => {
                 i += 1;
@@ -40,7 +45,9 @@ fn main() {
     let cand = image::open(&args[2]).expect("open candidate").to_rgb8();
     assert_eq!(cand.dimensions(), orig.dimensions(), "candidate raster must match original dimensions");
 
-    let (r, mask) = fidelity(&orig, &cand, thresh);
+    // --thresh alone slides the default-width ramp
+    let thresh_high = thresh_high.unwrap_or(thresh + (DEFAULT_THRESH_HIGH - DEFAULT_THRESH));
+    let (r, mask) = fidelity_ramp(&orig, &cand, thresh, thresh_high);
 
     if let Some(out) = mask_out {
         mask.save(&out).expect("save mask");
@@ -55,7 +62,7 @@ fn main() {
         r.s_ssim, r.dssim, r.s_ssim
     );
     println!(
-        "patch  {:>8.1} px rms ({} bad px, {} clusters, largest {}) -> {:.4}",
+        "patch  {:>8.1} px rms ({} missed px, {} clusters, largest {}) -> {:.4}",
         r.patch_mass, r.bad_px, r.clusters, r.largest, r.s_patch
     );
     println!("fidelity {:.4}", r.fidelity);

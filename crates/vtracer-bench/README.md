@@ -8,7 +8,7 @@ It compares an **original raster** with a **rendered reconstruction** and report
 $ vtracer-bench original.png reconstruction.png
 psnr      34.77 dB (rmse 4.66) -> 0.6875
 ssim    0.99541 (dssim 0.00461) -> 0.9954
-patch     157.8 px rms (14503 bad px, 74 clusters, largest 73) -> 0.9726
+patch     157.8 px rms (14503 missed px, 74 clusters, largest 73) -> 0.9726
 fidelity 0.9022
 [csv] 0.9022,34.77,0.00461,4.66,157.8,0.6875,0.9954,0.9726
 ```
@@ -50,9 +50,9 @@ For `rmse ≫ 1` it equals `psnr / 48.13 dB`, i.e. it stays linear in decibels, 
 
 This is the axis PSNR and SSIM both lack:
 
-1. A pixel is **bad** iff its RGB Euclidean distance to the original exceeds `--thresh` (default 24 — roughly 14 per channel).
-2. The bad mask is **opened** (one round of 4-connected erode + dilate). A slightly blurred or recompressed *source* shifts every edge and paints ≤2 px filaments along all boundaries; those vanish under the opening, while genuine missing patches survive. This is what makes the benchmark tolerant of mildly compressed or blurred originals.
-3. The surviving mask is clustered (4-connected). With cluster areas `aᵢ`, the **patch mass** is `√(Σ aᵢ²)` — a sum of *squares*, so one coherent blob dominates any amount of scattered dust of equal total area.
+1. Every pixel gets a **miss weight** from its RGB Euclidean distance to the original: 0 up to `--thresh` (default 24 — roughly 14 per channel), 1 from `--thresh-high` (default 64) on, linear in between. The mask is grayscale, not binary, so a region that misses by a hair counts by a hair: an outline traced as `(15,15,14)` for `(2,2,2)` is invisible to the eye and weighs nothing, where a binary gate would flag every outline pixel, join them into one network and zero an excellent trace. The weight is quantised to 0..255 and everything after it is integer math, so the mass is exact.
+2. The mask is **opened** (one round of 4-connected grayscale erode + dilate). A slightly blurred or recompressed *source* shifts every edge and paints ≤2 px filaments along all boundaries; those vanish under the opening, while genuine missing patches survive. This is what makes the benchmark tolerant of mildly compressed or blurred originals.
+3. The surviving mask is clustered (4-connected support). A cluster's mass `aᵢ` is the sum of its weights, and the **patch mass** is `√(Σ aᵢ²)` — a sum of *squares*, so one coherent blob dominates any amount of scattered dust of equal total mass.
 4. With `P = patch mass / (w·h)`, the subscore is `2^(−P/0.005)`: a single coherent blob at 0.5 % of image mass halves the score; scattered dust barely dents it.
 
 ## Calibration
@@ -73,12 +73,13 @@ Rule of thumb: **≥ 0.95** is visually indistinguishable, **≥ 0.90** is a fai
 ### CLI
 
 ```console
-vtracer-bench <original> <candidate> [--thresh N] [--mask out.png]
+vtracer-bench <original> <candidate> [--thresh N] [--thresh-high N] [--mask out.png]
 ```
 
 - `original`, `candidate` — rasters of identical dimensions (any format `image` decodes). Rendering an SVG to pixels is deliberately out of scope: use the renderer whose output you actually ship (resvg, Chromium, librsvg, …) so the benchmark judges what users see.
-- `--thresh N` — RGB Euclidean bad-pixel gate for the patch axis (default 24).
-- `--mask out.png` — write the raw bad-pixel mask (before the opening) for visual inspection.
+- `--thresh N` — foot of the patch axis's soft ramp: the RGB Euclidean distance up to which a pixel is no miss at all (default 24). On its own it slides the default-width ramp.
+- `--thresh-high N` — top of the ramp: the distance from which a pixel is a full miss (default 64). `--thresh-high` equal to `--thresh` is a binary gate, the metric before 1.0.0-alpha.7.
+- `--mask out.png` — write the raw grayscale miss mask (before the opening) for visual inspection.
 
 The last stdout line is machine-readable:
 
@@ -93,12 +94,12 @@ The last stdout line is machine-readable:
 ```rust
 use vtracer_bench::{fidelity, DEFAULT_THRESH};
 
-// orig and cand are interleaved RGB8, both w×h
-let (report, bad_mask) = fidelity(&orig, &cand, w, h, DEFAULT_THRESH);
+// orig and cand are `image::RgbImage`s of the same size
+let (report, miss_mask) = fidelity(&orig, &cand, DEFAULT_THRESH);
 println!("fidelity {:.4} (psnr {:.2} dB, dssim {:.5})",
     report.fidelity, report.psnr, report.dssim);
 ```
 
-`FidelityReport` exposes every raw metric and subscore; the tuning constants (`PATCH_HALF`, `DEFAULT_THRESH`, and the `W_PSNR`/`W_SSIM`/`W_PATCH` weights) are public and documented in `lib.rs`.
+`FidelityReport` exposes every raw metric and subscore; the tuning constants (`PATCH_HALF`, `DEFAULT_THRESH`, `DEFAULT_THRESH_HIGH`, and the `W_PSNR`/`W_SSIM`/`W_PATCH` weights) are public and documented in `lib.rs`.
 
 The benchmark is fully deterministic: identical inputs produce byte-identical output.
