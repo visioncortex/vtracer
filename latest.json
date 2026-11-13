@@ -1,11 +1,15 @@
 {
   "version": "1.0.0-alpha.4.app.263",
   "notes": "VTracer 1.0.0-alpha.4 - Build 263 (931f7c84)",
-  "pub_date": "2026-11-13T10:38:28.223Z",
+  "pub_date": "2026-11-13T10:38:53.714Z",
   "platforms": {
     "macos-universal": {
       "url": "https://github.com/visioncortex/vtracer/releases/download/1.0.0-alpha.4/VTracer_1.0.0-alpha.4_universal.app.tar.gz",
       "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSUENOK1VhM1NxTWNXWlp1MU11bEwzTlFhNjBUQ3R2eFVKNzlWQVRMbWp2S29UbHVPQ2NmRnVJUnBGRTlQTS9xanQ2TUJMY1lCd2QzOFhQWFNlTjVpNDhqc1AxQStVWkFFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzk0NTMwNTAwCWZpbGU6VlRyYWNlci5hcHAudGFyLmd6Cmx5bFhXN0hVb2tzZ2tFblZhQkZqb2hhYU1PdXdkU3NIOUFza0RGUDVnQlVjYmtLN3NOTWNCblkyLzlUcllLb0ZHYTBRajVJaENmYjJrQzJIQ0JOa0JnPT0K"
+    },
+    "windows-x86_64": {
+      "url": "https://github.com/visioncortex/vtracer/releases/download/1.0.0-alpha.4/VTracer_1.0.0-alpha.4_x64-setup.exe",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSUENOK1VhM1NxTWR6TjJyNkVTSUQya0YyNWd2Q1c3QkpyckttN2d6STBMR3g0djFvbDA2MWkwbEhpMnEwckNXZlpRTGgrYlJpZncxdUh5TVBVRFBJVG9ZRzVoQTU4QmdRPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzk0NTMyNzI0CWZpbGU6VlRyYWNlcl8xLjAuMC1hbHBoYS40LmFwcC4yNjNfeDY0LXNldHVwLmV4ZQppNjk0a051U3ZWejZYSDB4VE5BSzVsNWRTaGFnNUdRVEpsbGc1SXlhN1BoNVNJcXprN2QxbHdHNjdnM2owRjROekRFMnNwNklmOXB2OCtZcnR6K2pEUT09Cg=="
     }
   }
 }
