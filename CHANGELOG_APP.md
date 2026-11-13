@@ -2,6 +2,10 @@
 
 All notable changes to the VTracer desktop app will be documented in this file.
 
+## 1.0.0-alpha.4 - Build 263 - 2026-11-12
+
+* Small UI improvements
+
 ## 1.0.0-alpha.4 - Build 261 - 2026-11-11
 
 ### Fixed
