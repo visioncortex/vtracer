@@ -16,6 +16,8 @@ use crate::ir::{MultiPath, RegionMask, Segmentation, Shape, VectorDoc};
 use crate::mosaic::{compose_mosaic, SegmentFitter};
 use crate::progress::{Ctx, Phase};
 use crate::simplify::CurvePass;
+#[cfg(not(target_arch = "wasm32"))]
+use rayon::prelude::*;
 
 /// Which compositing strategy the pipeline uses. Each variant owns its fitter.
 pub enum Compositing {
@@ -87,8 +89,8 @@ fn fit_region(
     path
 }
 
-/// Progress-aware [`compose_stacked`]: reports after each layer and checks for
-/// cancellation between them.
+/// Progress-aware [`compose_stacked`]: reports after each batch of layers and
+/// checks for cancellation between them.
 fn compose_stacked_with(
     seg: &Segmentation,
     fitter: &dyn CurveFitter,
@@ -96,19 +98,48 @@ fn compose_stacked_with(
     ctx: &mut Ctx,
 ) -> Result<VectorDoc, Error> {
     let mut doc = VectorDoc::new(seg.width, seg.height);
-    let total = seg.layers.len().max(1);
-    for (i, layer) in seg.layers.iter().enumerate() {
-        ctx.check()?;
-        let path = fit_region(fitter, &layer.mask, passes);
-        if !path.is_empty() {
-            doc.shapes.push(Shape {
-                paint: layer.paint,
-                path,
-            });
-        }
-        ctx.report(Phase::Compose, (i + 1) as f32 / total as f32);
+    if seg.layers.is_empty() {
+        ctx.report(Phase::Compose, 1.0);
+        return Ok(doc);
     }
-    Ok(doc)
+    let total = seg.layers.len();
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        let chunk_size = (total / 8).clamp(8, 256);
+        let mut done = 0usize;
+        for chunk in seg.layers.chunks(chunk_size) {
+            ctx.check()?;
+            let shapes: Vec<Option<Shape>> = chunk
+                .par_iter()
+                .map(|layer| {
+                    let path = fit_region(fitter, &layer.mask, passes);
+                    (!path.is_empty()).then_some(Shape {
+                        paint: layer.paint,
+                        path,
+                    })
+                })
+                .collect();
+            doc.shapes.extend(shapes.into_iter().flatten());
+            done += chunk.len();
+            ctx.report(Phase::Compose, done as f32 / total as f32);
+        }
+        return Ok(doc);
+    }
+    #[cfg(target_arch = "wasm32")]
+    {
+        for (i, layer) in seg.layers.iter().enumerate() {
+            ctx.check()?;
+            let path = fit_region(fitter, &layer.mask, passes);
+            if !path.is_empty() {
+                doc.shapes.push(Shape {
+                    paint: layer.paint,
+                    path,
+                });
+            }
+            ctx.report(Phase::Compose, (i + 1) as f32 / total as f32);
+        }
+        Ok(doc)
+    }
 }
 
 /// Trace every layer's closed outline and stack the shapes in paint order.
@@ -118,13 +149,30 @@ pub fn compose_stacked(
     passes: &[Box<dyn CurvePass>],
 ) -> VectorDoc {
     let mut doc = VectorDoc::new(seg.width, seg.height);
-    for layer in &seg.layers {
-        let path = fit_region(fitter, &layer.mask, passes);
-        if !path.is_empty() {
-            doc.shapes.push(Shape {
-                paint: layer.paint,
-                path,
-            });
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        doc.shapes = seg
+            .layers
+            .par_iter()
+            .filter_map(|layer| {
+                let path = fit_region(fitter, &layer.mask, passes);
+                (!path.is_empty()).then_some(Shape {
+                    paint: layer.paint,
+                    path,
+                })
+            })
+            .collect();
+    }
+    #[cfg(target_arch = "wasm32")]
+    {
+        for layer in &seg.layers {
+            let path = fit_region(fitter, &layer.mask, passes);
+            if !path.is_empty() {
+                doc.shapes.push(Shape {
+                    paint: layer.paint,
+                    path,
+                });
+            }
         }
     }
     doc

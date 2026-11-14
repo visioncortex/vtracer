@@ -29,15 +29,12 @@ impl RegionMask {
 
     /// Number of foreground pixels.
     pub fn area(&self) -> usize {
-        let mut count = 0;
-        for y in 0..self.image.height {
-            for x in 0..self.image.width {
-                if self.image.get_pixel(x, y) {
-                    count += 1;
-                }
-            }
-        }
-        count
+        // `BitVec::blocks()` sums popcount in 32-bit words instead of bit-by-bit.
+        self.image
+            .pixels
+            .blocks()
+            .map(|b| b.count_ones() as usize)
+            .sum()
     }
 
     /// Combine two masks into one covering the union of their bounding boxes.
@@ -110,6 +107,11 @@ pub struct Segmentation {
     pub height: u32,
     /// Bottom-to-top paint order.
     pub layers: Vec<Layer>,
+    /// Optional precomputed flat partition (`u32::MAX` = uncovered, otherwise
+    /// index into `layers`) when the frontend already knows the top-most layer
+    /// per pixel (e.g. watershed). Invalidated automatically if layers are
+    /// reordered or merged in [`crate::colorfit::MergeAdjacent`].
+    pub(crate) flat_labels: Option<Vec<u32>>,
 }
 
 impl Segmentation {
@@ -118,6 +120,7 @@ impl Segmentation {
             width,
             height,
             layers: Vec::new(),
+            flat_labels: None,
         }
     }
 }

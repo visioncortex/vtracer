@@ -99,7 +99,12 @@ impl Pipeline {
         on_progress: &mut dyn FnMut(Progress),
     ) -> Result<VectorDoc, Error> {
         let mut ctx = Ctx::new(cancel, on_progress);
-        self.finish_ctx(seg.clone(), &mut ctx)
+        if self.color_fitters.iter().all(|f| f.is_noop()) {
+            ctx.check()?;
+            self.compose_and_optimize(seg, &mut ctx)
+        } else {
+            self.finish_ctx(seg.clone(), &mut ctx)
+        }
     }
 
     /// Downstream stages (color fit → compose → optimize) over an owned
@@ -110,8 +115,15 @@ impl Pipeline {
             fitter.fit(&mut seg);
             ctx.check()?;
         }
+        self.compose_and_optimize(&seg, ctx)
+    }
 
-        let mut doc = self.compositing.compose_with(&seg, &self.curve_passes, ctx)?;
+    fn compose_and_optimize(
+        &self,
+        seg: &Segmentation,
+        ctx: &mut Ctx,
+    ) -> Result<VectorDoc, Error> {
+        let mut doc = self.compositing.compose_with(seg, &self.curve_passes, ctx)?;
 
         let total = self.optimizers.len().max(1);
         for (i, pass) in self.optimizers.iter().enumerate() {

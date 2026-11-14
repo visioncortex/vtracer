@@ -8,7 +8,8 @@
 
 use crate::ir::{MultiPath, PathCmd, Shape, SubPath, VectorDoc};
 use crate::simplify::CurvePass;
-use visioncortex::PointF64;
+#[cfg(not(target_arch = "wasm32"))]
+use rayon::prelude::*;
 
 use super::face::{assemble, Contour, Face};
 use super::fit::{FittedGeom, FittedSegment, SegmentFitter};
@@ -38,25 +39,27 @@ pub fn compose_mosaic(
     let graph = BoundaryGraph::extract(&map);
     let faces = assemble(&graph, &map);
 
+    let fit_one = |s: &super::graph::Segment| {
+        let ring = s.is_ring();
+        let mut geom = if ring {
+            fitter.fit_ring(s).geom
+        } else {
+            fitter.fit_open(s).geom
+        };
+        for pass in passes {
+            geom = if ring { pass.ring(geom) } else { pass.open(geom) };
+        }
+        FittedSegment { geom }
+    };
+
     // Fit every segment exactly once; both adjacent faces share the result.
-    let fitted: Vec<FittedSegment> = graph
-        .segments
-        .iter()
-        .map(|s| {
-            let ring = s.is_ring();
-            let mut geom = if ring {
-                fitter.fit_ring(s).geom
-            } else {
-                fitter.fit_open(s).geom
-            };
-            for pass in passes {
-                geom = if ring { pass.ring(geom) } else { pass.open(geom) };
-            }
-            FittedSegment { geom }
-        })
-        .collect();
+    #[cfg(not(target_arch = "wasm32"))]
+    let fitted: Vec<FittedSegment> = graph.segments.par_iter().map(fit_one).collect();
+    #[cfg(target_arch = "wasm32")]
+    let fitted: Vec<FittedSegment> = graph.segments.iter().map(fit_one).collect();
 
     let mut doc = VectorDoc::new(seg.width, seg.height);
+    doc.shapes.reserve(faces.len());
     for face in &faces {
         let path = build_path(face, &fitted, &graph);
         if !path.is_empty() {
@@ -97,16 +100,20 @@ fn emit_segment(geom: &FittedGeom, forward: bool, first: bool, sub: &mut SubPath
             if pts.len() < 2 {
                 return;
             }
-            let ordered: Vec<PointF64> = if forward {
-                pts.clone()
+            if forward {
+                if first {
+                    sub.commands.push(PathCmd::MoveTo(pts[0]));
+                }
+                for p in &pts[1..] {
+                    sub.commands.push(PathCmd::LineTo(*p));
+                }
             } else {
-                pts.iter().rev().copied().collect()
-            };
-            if first {
-                sub.commands.push(PathCmd::MoveTo(ordered[0]));
-            }
-            for p in &ordered[1..] {
-                sub.commands.push(PathCmd::LineTo(*p));
+                if first {
+                    sub.commands.push(PathCmd::MoveTo(pts[pts.len() - 1]));
+                }
+                for p in pts[..pts.len() - 1].iter().rev() {
+                    sub.commands.push(PathCmd::LineTo(*p));
+                }
             }
         }
         FittedGeom::Beziers(curves) => {
@@ -115,20 +122,20 @@ fn emit_segment(geom: &FittedGeom, forward: bool, first: bool, sub: &mut SubPath
             }
             // Reversing a cubic is exact: [p0,p1,p2,p3] -> [p3,p2,p1,p0], and
             // the whole chain reverses in order too.
-            let ordered: Vec<[PointF64; 4]> = if forward {
-                curves.clone()
+            if forward {
+                if first {
+                    sub.commands.push(PathCmd::MoveTo(curves[0][0]));
+                }
+                for c in curves {
+                    sub.commands.push(PathCmd::CubicTo(c[1], c[2], c[3]));
+                }
             } else {
-                curves
-                    .iter()
-                    .rev()
-                    .map(|c| [c[3], c[2], c[1], c[0]])
-                    .collect()
-            };
-            if first {
-                sub.commands.push(PathCmd::MoveTo(ordered[0][0]));
-            }
-            for c in &ordered {
-                sub.commands.push(PathCmd::CubicTo(c[1], c[2], c[3]));
+                if first {
+                    sub.commands.push(PathCmd::MoveTo(curves[curves.len() - 1][3]));
+                }
+                for c in curves.iter().rev() {
+                    sub.commands.push(PathCmd::CubicTo(c[2], c[1], c[0]));
+                }
             }
         }
     }
