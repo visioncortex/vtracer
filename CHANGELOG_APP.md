@@ -2,6 +2,21 @@
 
 All notable changes to the VTracer desktop app will be documented in this file.
 
+## 1.0.0-alpha.4 - Build 266 - 2026-11-17
+
+### Changed
+
+* Save as XSVG writes an artboard with both background and foreground layers.
+* Saving a very large trace with Remove Background on is much faster.
+
+### Fixed
+
+* The Account page now updates its license and devices when a trial renewal completes.
+
+### Fixed (Gen AI)
+
+* An OpenAI Codex round no longer fails with "provider produced no output" when Codex could not copy the generated image.
+
 ## 1.0.0-alpha.4 - Build 263 - 2026-11-12
 
 * Small UI improvements
