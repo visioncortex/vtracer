@@ -2,6 +2,12 @@
 
 All notable changes to the VTracer desktop app will be documented in this file.
 
+## 1.0.0-alpha.4 - Build 267 - 2026-11-20
+
+### Changed
+
+* Upgraded XSVG to 0.3
+
 ## 1.0.0-alpha.4 - Build 266 - 2026-11-17
 
 ### Changed
