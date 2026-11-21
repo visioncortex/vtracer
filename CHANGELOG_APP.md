@@ -2,6 +2,20 @@
 
 All notable changes to the VTracer desktop app will be documented in this file.
 
+## 1.0.0-alpha.4 - Build 273 - 2026-11-21
+
+### Added
+
+* (Linux) The AppImage is no longer offered. Arch Linux and Manjaro users please download the Arch package from the release, unpack it, and run `makepkg -si`.
+
+### Fixed
+
+* (Linux) Signing in works when the login keyring was still locked when VTracer started.
+
+### Added (Gen AI)
+
+* A sketch round can start from extracted ink (B/W), shaded (Color), or the original.
+
 ## 1.0.0-alpha.4 - Build 267 - 2026-11-20
 
 ### Changed
