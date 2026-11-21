@@ -2,6 +2,11 @@
 
 All notable changes to the VTracer 2 engine will be documented in this file.
 
+## 2.0.15 - 2026-11-21
+
+* Upgrade XSVG to 0.3.0 with optimized mesh gradient output. Mesh PNGs are now compressed.
+* Now support Arch Linux.
+
 ## 2.0.14 - 2026-11-11
 
 * Support vulkan on Windows for GPU acceleration.
