@@ -236,6 +236,81 @@ const svg2 = vtracer.convertPixels(rgba, width, height, { clustering: 'bw' });
 const bw = vtracer.convertBuffer(buffer, { clustering: 'bw', adaptive: true });
 ```
 
+### Comparing WebAssembly performance
+
+The benchmark in `scripts/` builds separate release WASM artifacts for the
+Node wrapper and the RastaVec browser adapter. It requires Rust with the
+`wasm32-unknown-unknown` target, `wasm-pack`, `wasm-opt`, Node.js 18+, Chrome, and a
+local RastaVec checkout. The isolated benchmark Vite, TypeScript, and Svelte
+tsconfig versions must match the application's lockfile. Install the benchmark
+dependencies and build against a clean, pinned VTracer checkout:
+
+```powershell
+npm ci --prefix scripts
+node scripts\build-bench-wasm.mjs --checkout C:\path\to\vtracer `
+  --expected-commit <commit> --app C:\path\to\svg-studio `
+  --output C:\path\to\build-output
+node scripts\bench-wasm.mjs --build C:\path\to\build-output `
+  --app C:\path\to\svg-studio --output bench-results\result.json `
+  --warmup 3 --runs 5
+```
+
+Use a fresh build directory and output file for each run. To build the JohnQH
+fork with its intended sibling VisionCortex rather than the published crate,
+also pass `--visioncortex C:\path\to\visioncortex --visioncortex-commit <commit>`
+to the build command. The helper patches the isolated adapter manifests and
+verifies which dependency Cargo actually resolved. Without this option it
+requires published VisionCortex 0.9.3 at its verified source revision. Put
+the same `wasm-opt` version on `PATH` for each build so its version and hash
+are recorded.
+
+The default corpus is the PNG files directly under the application's `assets`
+directory; `--assets` selects another directory, and `--images` takes a
+comma-separated list of PNG filenames. `--workload engine` selects the Node
+`convertPixels`, Node `convertBuffer`, and browser RGBA measurements;
+`--workload auto` selects the actual application Auto workflow; the default
+`all` runs both. Set `--browser` or `CHROME_PATH` if Chrome is not installed
+at the default Windows location. Run `node --test scripts\bench-utils.test.mjs`
+to check the benchmark utilities.
+
+The browser runs headless Chrome, not WebView2. Auto timing includes analysis,
+tracing, rasterization, metrics, and candidate selection, but not image
+decoding. PNG input is decoded once with `pngjs` and shared as RGBA; this does
+not reproduce browser canvas decoding or color management. Node `convertBuffer`
+includes its own WASM decode, while `convertPixels` and browser RGBA timings
+include JS/WASM transfer and SVG creation. The JSON preserves samples, median,
+nearest-rank p95, output fidelity, engine-call counts, source hashes and build
+provenance. Memory observations are not peak WASM memory, and five-run p95 is
+the largest sample. Results from the limited local corpus are exploratory, not
+a general performance claim.
+
+### Comparing native CLI performance
+
+The paired native benchmark measures the release CLI end-to-end for the same
+options and inputs on two builds. It includes process startup, PNG decoding,
+tracing, SVG serialization, and writing the SVG. The baseline and optimized
+samples alternate order per image to reduce systematic timing drift. Build the
+two binaries from clean, pinned checkouts, then run:
+
+```powershell
+npm ci --prefix scripts
+cargo build --release --manifest-path C:\path\to\vtracer-baseline\Cargo.toml -p vtracer-cli
+Copy-Item C:\path\to\vtracer-baseline\target\release\vtracer.exe C:\path\to\baseline-vtracer.exe
+cargo build --release --manifest-path C:\path\to\vtracer-optimized\Cargo.toml -p vtracer-cli
+Copy-Item C:\path\to\vtracer-optimized\target\release\vtracer.exe C:\path\to\optimized-vtracer.exe
+node scripts\bench-native.mjs --baseline C:\path\to\baseline-vtracer.exe `
+  --baseline-commit <commit> --optimized C:\path\to\optimized-vtracer.exe `
+  --optimized-commit <commit> --assets C:\path\to\assets `
+  --output bench-results\native.json --warmup 3 --runs 7
+```
+
+Use a fresh output path and the same image directory for each comparison. The
+default corpus is every PNG directly under `--assets`; `--images` selects a
+comma-separated subset. The JSON records individual samples, median and p95,
+input and binary hashes, output SVG hashes, and a geometric-mean speedup across
+images. Output hash equality is a byte-level check, not a substitute for visual
+fidelity metrics.
+
 ## Citations
 
 VTracer has since been cited by a few academic papers in computer graphics / vision research. Please kindly let us know if you have cited our work:

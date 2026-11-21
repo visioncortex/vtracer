@@ -14,7 +14,7 @@ use visioncortex::PointF64;
 use crate::ir::{MultiPath, PathCmd, SubPath, VectorDoc};
 
 /// An optimizer pass rewrites the document in place.
-pub trait OptimizerPass {
+pub trait OptimizerPass: Send + Sync {
     fn run(&self, doc: &mut VectorDoc);
 }
 
@@ -29,31 +29,33 @@ impl QuantizePass {
         Self { precision }
     }
 
-    fn round(&self, v: f64) -> f64 {
-        let factor = 10f64.powi(self.precision as i32);
+    #[inline]
+    fn round_with(v: f64, factor: f64) -> f64 {
         (v * factor).round() / factor
     }
 
-    fn round_pt(&self, p: PointF64) -> PointF64 {
+    #[inline]
+    fn round_pt(p: PointF64, factor: f64) -> PointF64 {
         PointF64 {
-            x: self.round(p.x),
-            y: self.round(p.y),
+            x: Self::round_with(p.x, factor),
+            y: Self::round_with(p.y, factor),
         }
     }
 }
 
 impl OptimizerPass for QuantizePass {
     fn run(&self, doc: &mut VectorDoc) {
+        let factor = 10f64.powi(self.precision as i32);
         for shape in &mut doc.shapes {
             for sub in &mut shape.path.subpaths {
                 for cmd in &mut sub.commands {
                     *cmd = match *cmd {
-                        PathCmd::MoveTo(p) => PathCmd::MoveTo(self.round_pt(p)),
-                        PathCmd::LineTo(p) => PathCmd::LineTo(self.round_pt(p)),
+                        PathCmd::MoveTo(p) => PathCmd::MoveTo(Self::round_pt(p, factor)),
+                        PathCmd::LineTo(p) => PathCmd::LineTo(Self::round_pt(p, factor)),
                         PathCmd::CubicTo(c1, c2, e) => PathCmd::CubicTo(
-                            self.round_pt(c1),
-                            self.round_pt(c2),
-                            self.round_pt(e),
+                            Self::round_pt(c1, factor),
+                            Self::round_pt(c2, factor),
+                            Self::round_pt(e, factor),
                         ),
                         PathCmd::Close => PathCmd::Close,
                     };
@@ -77,17 +79,20 @@ fn approx_eq(a: PointF64, b: PointF64) -> bool {
 }
 
 /// Perpendicular distance of `b` from the line through `a` and `c`.
+#[inline]
 fn collinear(a: PointF64, b: PointF64, c: PointF64) -> bool {
     let cross = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
-    let base = ((c.x - a.x).powi(2) + (c.y - a.y).powi(2)).sqrt();
-    if base < COINCIDENT_EPS {
+    let base_sq = (c.x - a.x).powi(2) + (c.y - a.y).powi(2);
+    if base_sq < COINCIDENT_EPS * COINCIDENT_EPS {
         return true;
     }
-    (cross.abs() / base) < COLLINEAR_EPS
+    (cross * cross) < (COLLINEAR_EPS * COLLINEAR_EPS) * base_sq
 }
 
 fn cleanup_subpath(sub: &SubPath) -> SubPath {
-    let mut out = SubPath::new();
+    let mut out = SubPath {
+        commands: Vec::with_capacity(sub.commands.len()),
+    };
     // `prev` is the point active before the last emitted command; `last` is the
     // current point after it. Both are needed to test collinearity of a run.
     let mut prev = PointF64::default();

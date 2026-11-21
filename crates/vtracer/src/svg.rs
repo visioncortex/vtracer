@@ -43,7 +43,14 @@ impl Default for SvgWriter {
 
 impl SvgWriter {
     pub fn write(&self, doc: &VectorDoc) -> String {
-        let mut out = String::new();
+        // Pre-size output buffer roughly from command count to avoid repeated reallocs.
+        let est_cmds: usize = doc
+            .shapes
+            .iter()
+            .flat_map(|s| &s.path.subpaths)
+            .map(|sp| sp.commands.len())
+            .sum();
+        let mut out = String::with_capacity(256 + est_cmds * 18);
         out.push_str("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
         let _ = writeln!(
             out,
@@ -56,11 +63,12 @@ impl SvgWriter {
             doc.width, doc.height
         );
 
+        let mut emitter = Emitter::new(self.relative, self.shorthands, self.precision);
         if self.shorthands {
-            self.write_grouped(&mut out, &doc.shapes);
+            self.write_grouped(&mut out, &mut emitter, &doc.shapes);
         } else {
             for shape in &doc.shapes {
-                self.write_path(&mut out, shape, true);
+                self.write_path(&mut out, &mut emitter, shape, true);
             }
         }
 
@@ -70,45 +78,50 @@ impl SvgWriter {
 
     /// Emit shapes, grouping maximal runs of consecutive same-fill shapes into
     /// a single `<g fill>` (preserving paint order).
-    fn write_grouped(&self, out: &mut String, shapes: &[Shape]) {
+    fn write_grouped(&self, out: &mut String, emitter: &mut Emitter, shapes: &[Shape]) {
         let mut i = 0;
         while i < shapes.len() {
-            let fill = shape_fill(&shapes[i]);
+            let paint = shapes[i].paint;
             let mut j = i + 1;
-            while j < shapes.len() && shape_fill(&shapes[j]) == fill {
+            while j < shapes.len() && shapes[j].paint == paint {
                 j += 1;
             }
             let run = &shapes[i..j];
             if run.len() > 1 {
-                let _ = writeln!(out, "<g fill=\"{}\">", fill);
+                out.push_str("<g fill=\"");
+                write_paint_hex(out, paint);
+                out.push_str("\">\n");
                 for shape in run {
-                    self.write_path(out, shape, false);
+                    self.write_path(out, emitter, shape, false);
                 }
                 out.push_str("</g>\n");
             } else {
-                self.write_path(out, &run[0], true);
+                self.write_path(out, emitter, &run[0], true);
             }
             i = j;
         }
     }
 
-    fn write_path(&self, out: &mut String, shape: &Shape, with_fill: bool) {
-        let d = self.encode_path(shape);
-        if d.is_empty() {
+    fn write_path(&self, out: &mut String, emitter: &mut Emitter, shape: &Shape, with_fill: bool) {
+        emitter.reset();
+        for sub in &shape.path.subpaths {
+            emitter.subpath(sub);
+        }
+        if emitter.out.is_empty() {
             return;
         }
+        out.push_str("<path d=\"");
+        out.push_str(&emitter.out);
         if with_fill {
-            let _ = writeln!(
-                out,
-                "<path d=\"{}\" fill=\"{}\"/>",
-                d,
-                shape_fill(shape)
-            );
+            out.push_str("\" fill=\"");
+            write_paint_hex(out, shape.paint);
+            out.push_str("\"/>\n");
         } else {
-            let _ = writeln!(out, "<path d=\"{}\"/>", d);
+            out.push_str("\"/>\n");
         }
     }
 
+    #[cfg(test)]
     fn encode_path(&self, shape: &Shape) -> String {
         let mut emitter = Emitter::new(self.relative, self.shorthands, self.precision);
         for sub in &shape.path.subpaths {
@@ -118,13 +131,96 @@ impl SvgWriter {
     }
 }
 
-fn shape_fill(shape: &Shape) -> String {
-    match shape.paint {
-        Paint::Solid(c) => c.to_hex_string(),
+#[inline]
+fn write_paint_hex(out: &mut String, paint: Paint) {
+    match paint {
+        Paint::Solid(c) => {
+            const HEX: &[u8; 16] = b"0123456789abcdef";
+            let buf = [
+                b'#',
+                HEX[(c.r >> 4) as usize],
+                HEX[(c.r & 0x0f) as usize],
+                HEX[(c.g >> 4) as usize],
+                HEX[(c.g & 0x0f) as usize],
+                HEX[(c.b >> 4) as usize],
+                HEX[(c.b & 0x0f) as usize],
+            ];
+            // SAFETY: buf only contains valid ASCII bytes.
+            out.push_str(unsafe { std::str::from_utf8_unchecked(&buf) });
+        }
     }
 }
 
-/// Streaming SVG-path encoder that tracks the current point.
+/// Fixed-capacity stack buffer for formatting a single SVG command candidate
+/// without heap allocation. A cubic command has at most 1 + 6 * 24 + 5 = 150 bytes.
+struct SmallBuf {
+    bytes: [u8; 256],
+    len: usize,
+}
+
+impl SmallBuf {
+    #[inline]
+    fn new(op: u8) -> Self {
+        let mut bytes = [0u8; 256];
+        bytes[0] = op;
+        Self { bytes, len: 1 }
+    }
+
+    #[inline]
+    fn as_str(&self) -> &str {
+        // SAFETY: only ASCII characters are ever written into `bytes`.
+        unsafe { std::str::from_utf8_unchecked(&self.bytes[..self.len]) }
+    }
+
+    #[inline]
+    fn push_byte(&mut self, b: u8) {
+        self.bytes[self.len] = b;
+        self.len += 1;
+    }
+
+    #[inline]
+    fn push_slice(&mut self, s: &[u8]) {
+        self.bytes[self.len..self.len + s.len()].copy_from_slice(s);
+        self.len += s.len();
+    }
+
+    /// Append a formatted number, inserting a `,` separator if `not_first` is
+    /// true and the formatted number does not start with `-`.
+    #[inline]
+    fn push_num(&mut self, v: f64, precision: Option<u32>, not_first: bool) {
+        let mut nbuf = [0u8; 64];
+        let nslice = fmt_num_into(v, precision, &mut nbuf);
+        if not_first && nslice.first() != Some(&b'-') {
+            self.push_byte(b',');
+        }
+        self.push_slice(nslice);
+    }
+
+    #[inline]
+    fn push_coord(&mut self, p: PointF64, precision: Option<u32>) {
+        self.push_num(p.x, precision, false);
+        self.push_num(p.y, precision, true);
+    }
+
+    #[inline]
+    fn push_coord_list(&mut self, pts: &[PointF64], precision: Option<u32>) {
+        for (i, p) in pts.iter().enumerate() {
+            self.push_num(p.x, precision, i > 0);
+            self.push_num(p.y, precision, true);
+        }
+    }
+
+    #[inline]
+    fn push_delta_list(&mut self, pts: &[PointF64], cur: PointF64, precision: Option<u32>) {
+        for (i, p) in pts.iter().enumerate() {
+            self.push_num(p.x - cur.x, precision, i > 0);
+            self.push_num(p.y - cur.y, precision, true);
+        }
+    }
+}
+
+/// Streaming SVG-path encoder that tracks the current point and reuses its
+/// output buffer across shapes.
 struct Emitter {
     relative: bool,
     shorthands: bool,
@@ -144,7 +240,7 @@ impl Emitter {
             relative,
             shorthands,
             precision,
-            out: String::new(),
+            out: String::with_capacity(512),
             cur: PointF64::default(),
             subpath_start: PointF64::default(),
             started: false,
@@ -152,6 +248,16 @@ impl Emitter {
         }
     }
 
+    #[inline]
+    fn reset(&mut self) {
+        self.out.clear();
+        self.cur = PointF64::default();
+        self.subpath_start = PointF64::default();
+        self.started = false;
+        self.prev_cubic_c2 = None;
+    }
+
+    #[cfg(test)]
     fn finish(self) -> String {
         self.out
     }
@@ -174,20 +280,25 @@ impl Emitter {
     }
 
     fn move_to(&mut self, p: PointF64) {
-        if !self.started {
-            // First move is always absolute.
-            let token = format!("M{}", self.coord(p));
-            self.out.push_str(&token);
+        let mut abs = SmallBuf::new(b'M');
+        abs.push_coord(p, self.precision);
+        if !self.started || !self.relative {
+            self.out.push_str(abs.as_str());
             self.started = true;
         } else {
-            let abs = format!("M{}", self.coord(p));
-            let token = if self.relative {
-                let rel = format!("m{}", self.coord_delta(p));
-                shorter(abs, rel)
+            let mut rel = SmallBuf::new(b'm');
+            rel.push_coord(
+                PointF64 {
+                    x: p.x - self.cur.x,
+                    y: p.y - self.cur.y,
+                },
+                self.precision,
+            );
+            if rel.len < abs.len {
+                self.out.push_str(rel.as_str());
             } else {
-                abs
-            };
-            self.out.push_str(&token);
+                self.out.push_str(abs.as_str());
+            }
         }
         self.cur = p;
         self.subpath_start = p;
@@ -195,36 +306,66 @@ impl Emitter {
     }
 
     fn line_to(&mut self, p: PointF64) {
-        let mut candidates: Vec<String> = Vec::new();
+        let mut best: Option<SmallBuf> = None;
+        let mut consider = |cand: SmallBuf| {
+            if best.as_ref().map_or(true, |b| cand.len < b.len) {
+                best = Some(cand);
+            }
+        };
 
         // Axis-aligned shorthands.
         if self.shorthands {
             if p.y == self.cur.y {
-                candidates.push(format!("H{}", self.num(p.x)));
+                let mut c = SmallBuf::new(b'H');
+                c.push_num(p.x, self.precision, false);
+                consider(c);
                 if self.relative {
-                    candidates.push(format!("h{}", self.num(p.x - self.cur.x)));
+                    let mut c = SmallBuf::new(b'h');
+                    c.push_num(p.x - self.cur.x, self.precision, false);
+                    consider(c);
                 }
             }
             if p.x == self.cur.x {
-                candidates.push(format!("V{}", self.num(p.y)));
+                let mut c = SmallBuf::new(b'V');
+                c.push_num(p.y, self.precision, false);
+                consider(c);
                 if self.relative {
-                    candidates.push(format!("v{}", self.num(p.y - self.cur.y)));
+                    let mut c = SmallBuf::new(b'v');
+                    c.push_num(p.y - self.cur.y, self.precision, false);
+                    consider(c);
                 }
             }
         }
 
-        candidates.push(format!("L{}", self.coord(p)));
+        let mut c = SmallBuf::new(b'L');
+        c.push_coord(p, self.precision);
+        consider(c);
         if self.relative {
-            candidates.push(format!("l{}", self.coord_delta(p)));
+            let mut c = SmallBuf::new(b'l');
+            c.push_coord(
+                PointF64 {
+                    x: p.x - self.cur.x,
+                    y: p.y - self.cur.y,
+                },
+                self.precision,
+            );
+            consider(c);
         }
 
-        self.out.push_str(&shortest(candidates));
+        if let Some(b) = best {
+            self.out.push_str(b.as_str());
+        }
         self.cur = p;
         self.prev_cubic_c2 = None;
     }
 
     fn cubic_to(&mut self, c1: PointF64, c2: PointF64, e: PointF64) {
-        let mut candidates: Vec<String> = Vec::new();
+        let mut best: Option<SmallBuf> = None;
+        let mut consider = |cand: SmallBuf| {
+            if best.as_ref().map_or(true, |b| cand.len < b.len) {
+                best = Some(cand);
+            }
+        };
 
         // Smooth continuation: c1 is the reflection of the previous cubic's c2.
         if self.shorthands {
@@ -234,65 +375,32 @@ impl Emitter {
                     y: 2.0 * self.cur.y - prev_c2.y,
                 };
                 if approx(reflection, c1) {
-                    candidates.push(format!(
-                        "S{}",
-                        self.coord_list(&[c2, e])
-                    ));
+                    let mut c = SmallBuf::new(b'S');
+                    c.push_coord_list(&[c2, e], self.precision);
+                    consider(c);
                     if self.relative {
-                        candidates.push(format!(
-                            "s{}",
-                            self.delta_list(&[c2, e])
-                        ));
+                        let mut c = SmallBuf::new(b's');
+                        c.push_delta_list(&[c2, e], self.cur, self.precision);
+                        consider(c);
                     }
                 }
             }
         }
 
-        candidates.push(format!("C{}", self.coord_list(&[c1, c2, e])));
+        let mut c = SmallBuf::new(b'C');
+        c.push_coord_list(&[c1, c2, e], self.precision);
+        consider(c);
         if self.relative {
-            candidates.push(format!("c{}", self.delta_list(&[c1, c2, e])));
+            let mut c = SmallBuf::new(b'c');
+            c.push_delta_list(&[c1, c2, e], self.cur, self.precision);
+            consider(c);
         }
 
-        self.out.push_str(&shortest(candidates));
+        if let Some(b) = best {
+            self.out.push_str(b.as_str());
+        }
         self.cur = e;
         self.prev_cubic_c2 = Some(c2);
-    }
-
-    // --- number/coordinate formatting -------------------------------------
-
-    fn num(&self, v: f64) -> String {
-        fmt_num(v, self.precision)
-    }
-
-    /// Absolute coordinate pair.
-    fn coord(&self, p: PointF64) -> String {
-        join_nums(&[self.num(p.x), self.num(p.y)])
-    }
-
-    /// Delta coordinate pair relative to the current point.
-    fn coord_delta(&self, p: PointF64) -> String {
-        join_nums(&[self.num(p.x - self.cur.x), self.num(p.y - self.cur.y)])
-    }
-
-    /// Absolute list of points, flattened.
-    fn coord_list(&self, pts: &[PointF64]) -> String {
-        let mut nums = Vec::with_capacity(pts.len() * 2);
-        for p in pts {
-            nums.push(self.num(p.x));
-            nums.push(self.num(p.y));
-        }
-        join_nums(&nums)
-    }
-
-    /// Delta list of points relative to the current point (all deltas are from
-    /// `cur`, matching SVG's relative-command semantics for multi-point ops).
-    fn delta_list(&self, pts: &[PointF64]) -> String {
-        let mut nums = Vec::with_capacity(pts.len() * 2);
-        for p in pts {
-            nums.push(self.num(p.x - self.cur.x));
-            nums.push(self.num(p.y - self.cur.y));
-        }
-        join_nums(&nums)
     }
 }
 
@@ -300,23 +408,9 @@ fn approx(a: PointF64, b: PointF64) -> bool {
     (a.x - b.x).abs() < 1e-6 && (a.y - b.y).abs() < 1e-6
 }
 
-fn shorter(a: String, b: String) -> String {
-    if b.len() < a.len() {
-        b
-    } else {
-        a
-    }
-}
-
-fn shortest(candidates: Vec<String>) -> String {
-    candidates
-        .into_iter()
-        .min_by_key(|s| s.len())
-        .unwrap_or_default()
-}
-
 /// Join formatted numbers with the minimal separators SVG allows: a comma,
 /// except that a leading `-` is self-separating.
+#[cfg(test)]
 fn join_nums(nums: &[String]) -> String {
     let mut s = String::new();
     for (i, n) in nums.iter().enumerate() {
@@ -328,9 +422,95 @@ fn join_nums(nums: &[String]) -> String {
     s
 }
 
-/// Compact number formatting: round to precision, trim trailing zeros, use a
-/// leading-dot for magnitudes below 1.
-fn fmt_num(v: f64, precision: Option<u32>) -> String {
+/// Format an integer `u64` in base 10 into `buf` starting at `pos`, returning
+/// the new position.
+#[inline]
+fn write_u64(mut n: u64, buf: &mut [u8], mut pos: usize) -> usize {
+    if n == 0 {
+        buf[pos] = b'0';
+        return pos + 1;
+    }
+    let start = pos;
+    while n > 0 {
+        buf[pos] = b'0' + (n % 10) as u8;
+        n /= 10;
+        pos += 1;
+    }
+    buf[start..pos].reverse();
+    pos
+}
+
+/// Zero-allocation compact number formatter into a stack buffer `buf`.
+///
+/// Matches the exact behavior of `fmt_num`: rounds to `precision` decimal
+/// places, trims trailing zeros, and strips leading `0` before `.` for
+/// magnitudes below 1 (`0.5` -> `.5`, `-0.5` -> `-.5`).
+#[inline]
+fn fmt_num_into(v: f64, precision: Option<u32>, buf: &mut [u8; 64]) -> &[u8] {
+    const POW10: [u64; 10] = [
+        1,
+        10,
+        100,
+        1_000,
+        10_000,
+        100_000,
+        1_000_000,
+        10_000_000,
+        100_000_000,
+        1_000_000_000,
+    ];
+
+    // Fast integer-scaled path for the common case: `Some(p)` with `p <= 9`
+    // and values that fit comfortably in a scaled `i64`.
+    if let Some(p) = precision {
+        if (p as usize) < POW10.len() {
+            let scale = POW10[p as usize];
+            let scaled_f = (v * scale as f64).round();
+            if scaled_f.is_finite() && scaled_f.abs() < (i64::MAX / 2) as f64 {
+                let scaled = scaled_f as i64;
+                if scaled == 0 {
+                    buf[0] = b'0';
+                    return &buf[..1];
+                }
+                let neg = scaled < 0;
+                let abs = scaled.unsigned_abs();
+                let int_part = abs / scale;
+                let mut frac_part = abs % scale;
+
+                let mut pos = 0;
+                if neg {
+                    buf[pos] = b'-';
+                    pos += 1;
+                }
+                if frac_part == 0 {
+                    pos = write_u64(int_part, buf, pos);
+                    return &buf[..pos];
+                }
+                if int_part > 0 {
+                    pos = write_u64(int_part, buf, pos);
+                }
+                buf[pos] = b'.';
+                pos += 1;
+
+                // Emit exactly `p` fractional digits, then strip trailing zeros.
+                let mut width = p as usize;
+                while frac_part % 10 == 0 && width > 0 {
+                    frac_part /= 10;
+                    width -= 1;
+                }
+                let frac_end = pos + width;
+                let mut cur = frac_end;
+                while cur > pos {
+                    cur -= 1;
+                    buf[cur] = b'0' + (frac_part % 10) as u8;
+                    frac_part /= 10;
+                }
+                return &buf[..frac_end];
+            }
+        }
+    }
+
+    // Fallback path for `precision = None` or extreme exponents.
     let v = match precision {
         Some(p) => {
             let factor = 10f64.powi(p as i32);
@@ -338,32 +518,58 @@ fn fmt_num(v: f64, precision: Option<u32>) -> String {
         }
         None => v,
     };
-    // Normalize -0.0 to 0.
     if v == 0.0 {
-        return "0".to_string();
+        buf[0] = b'0';
+        return &buf[..1];
     }
 
-    let mut s = match precision {
-        Some(p) => format!("{:.*}", p as usize, v),
-        None => format!("{v}"),
-    };
-
-    if s.contains('.') {
-        while s.ends_with('0') {
-            s.pop();
+    struct SliceWriter<'a> {
+        buf: &'a mut [u8],
+        pos: usize,
+    }
+    impl std::fmt::Write for SliceWriter<'_> {
+        fn write_str(&mut self, s: &str) -> std::fmt::Result {
+            let b = s.as_bytes();
+            self.buf[self.pos..self.pos + b.len()].copy_from_slice(b);
+            self.pos += b.len();
+            Ok(())
         }
-        if s.ends_with('.') {
-            s.pop();
+    }
+    let mut w = SliceWriter { buf, pos: 0 };
+    match precision {
+        Some(p) => {
+            let _ = write!(w, "{:.*}", p as usize, v);
+        }
+        None => {
+            let _ = write!(w, "{v}");
         }
     }
-
-    if let Some(rest) = s.strip_prefix("0.") {
-        s = format!(".{rest}");
-    } else if let Some(rest) = s.strip_prefix("-0.") {
-        s = format!("-.{rest}");
+    let mut len = w.pos;
+    if buf[..len].contains(&b'.') {
+        while len > 0 && buf[len - 1] == b'0' {
+            len -= 1;
+        }
+        if len > 0 && buf[len - 1] == b'.' {
+            len -= 1;
+        }
     }
+    if len >= 2 && &buf[..2] == b"0." {
+        buf.copy_within(1..len, 0);
+        len -= 1;
+    } else if len >= 3 && &buf[..3] == b"-0." {
+        buf.copy_within(2..len, 1);
+        len -= 1;
+    }
+    &buf[..len]
+}
 
-    s
+/// Compact number formatting: round to precision, trim trailing zeros, use a
+/// leading-dot for magnitudes below 1.
+#[cfg(test)]
+fn fmt_num(v: f64, precision: Option<u32>) -> String {
+    let mut buf = [0u8; 64];
+    let slice = fmt_num_into(v, precision, &mut buf);
+    std::str::from_utf8(slice).unwrap().to_string()
 }
 
 #[cfg(test)]

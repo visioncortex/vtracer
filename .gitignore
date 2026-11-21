@@ -6,3 +6,5 @@ Cargo.lock
 *.sublime*
 .vscode
 .DS_Store
+/scripts/node_modules/
+/bench-results/

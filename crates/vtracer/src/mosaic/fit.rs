@@ -21,7 +21,7 @@ pub struct FittedSegment {
 
 /// Fits a single boundary segment. `fit_open` pins both endpoints (junction
 /// nodes must not move); `fit_ring` fits a closed loop with no pinned point.
-pub trait SegmentFitter {
+pub trait SegmentFitter: Send + Sync {
     fn fit_open(&self, seg: &Segment) -> FittedSegment;
     fn fit_ring(&self, seg: &Segment) -> FittedSegment;
 }
