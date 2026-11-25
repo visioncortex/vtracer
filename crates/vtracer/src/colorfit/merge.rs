@@ -33,14 +33,23 @@ impl ColorFitter for MergeAdjacent {
             return;
         }
         let mut merged: Vec<Layer> = Vec::with_capacity(seg.layers.len());
+        let mut remap: Vec<u32> = Vec::with_capacity(seg.layers.len());
         let mut run: Vec<Layer> = Vec::new();
         for layer in seg.layers.drain(..) {
             if run.first().is_some_and(|first| first.paint != layer.paint) {
                 flush(&mut run, &mut merged);
             }
+            remap.push(merged.len() as u32);
             run.push(layer);
         }
         flush(&mut run, &mut merged);
+        if let Some(flat) = &mut seg.flat_labels {
+            for l in flat.iter_mut() {
+                if (*l as usize) < remap.len() {
+                    *l = remap[*l as usize];
+                }
+            }
+        }
         seg.layers = merged;
     }
 }

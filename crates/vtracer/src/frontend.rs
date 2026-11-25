@@ -27,7 +27,7 @@ use crate::ir::Segmentation;
 use crate::progress::Ctx;
 
 /// A frontend segments a raster image into ordered paint layers.
-pub trait Frontend {
+pub trait Frontend: Send + Sync {
     fn segment(&self, img: &ColorImage) -> Result<Segmentation, Error>;
 
     /// Progress- and cancellation-aware segmentation.
