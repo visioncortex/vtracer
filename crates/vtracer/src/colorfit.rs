@@ -3,8 +3,9 @@
 //! * [`Identity`] — keep the frontend's mean colors (0.6.x behavior).
 //! * [`FixedPalette`] — snap each paint to the nearest entry of a fixed
 //!   palette, measured in OKLab.
-//! * [`AutoQuantize`] — reduce the palette to at most `max_colors` via
-//!   area-weighted median cut.
+//! * [`AutoQuantize`] — reduce the palette to at most `max_colors` colors the
+//!   image is actually painted with: interior fills first, then the inks of
+//!   thin marks. Anti-aliasing blends never take a slot.
 //! * [`MergeAdjacent`] — union consecutive layers that share a paint, cutting
 //!   shape count for free.
 

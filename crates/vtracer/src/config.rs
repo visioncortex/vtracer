@@ -117,7 +117,8 @@ pub struct Config {
     pub path_precision: Option<u32>,
     /// Fixed palette (empty = none). Takes priority over `max_colors`.
     pub palette: Vec<Color>,
-    /// Auto-quantize target color count (None = off).
+    /// Auto-quantize to at most this many observed colors (None = off). The
+    /// palette can come out smaller; see [`AutoQuantize`].
     pub max_colors: Option<usize>,
     /// Optimization level: 0 = off, 1 = quantize+cleanup, 2 = + shorthands/grouping.
     pub optimize: u8,
